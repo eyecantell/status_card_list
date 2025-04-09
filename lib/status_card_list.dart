@@ -54,17 +54,31 @@ class _StatusCardListState extends State<StatusCardList> {
     });
   }
 
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final Item item = items.removeAt(oldIndex);
+      items.insert(newIndex, item);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) => StatusCard(
-        key: ValueKey(items[index].id),
-        item: items[index],
-        statusIcons: widget.statusIcons,
-        swipeActions: widget.swipeActions,
-        onStatusChanged: _handleStatusChanged,
-      ),
+    return ReorderableListView(
+      onReorder: _onReorder,
+      children: [
+        for (int index = 0; index < items.length; index++)
+          StatusCard(
+            key: ValueKey(items[index].id),
+            item: items[index],
+            index: index,
+            statusIcons: widget.statusIcons,
+            swipeActions: widget.swipeActions,
+            onStatusChanged: _handleStatusChanged,
+          ),
+      ],
     );
   }
 }
@@ -72,6 +86,7 @@ class _StatusCardListState extends State<StatusCardList> {
 // Individual card with swipe functionality
 class StatusCard extends StatefulWidget {
   final Item item;
+  final int index;
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
@@ -79,6 +94,7 @@ class StatusCard extends StatefulWidget {
   const StatusCard({
     super.key,
     required this.item,
+    required this.index,
     required this.statusIcons,
     required this.swipeActions,
     required this.onStatusChanged,
@@ -205,7 +221,6 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
         _swipeState = null;
         _isActionTriggered = true;
       });
-      // Animate off-screen first, then notify the parent to remove the item
       _animateOffScreen(action == 'save' ? MediaQuery.of(context).size.width : -MediaQuery.of(context).size.width)
           .then((_) {
         widget.onStatusChanged(widget.item, newStatus);
@@ -303,66 +318,79 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      ListTile(
-                        title: Text(widget.item.title),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(widget.item.subtitle),
-                        ),
-                        contentPadding: EdgeInsets.zero,
-                        dense: true,
-                      ),
-                      if (_isExpanded)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                          child: Html(
-                            data: widget.item.html,
-                            style: {
-                              'h2': Style(
-                                fontSize: FontSize(18.0),
-                                fontWeight: FontWeight.bold,
-                                margin: Margins(bottom: Margin(8.0)),
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              title: Text(widget.item.title),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(widget.item.subtitle),
                               ),
-                              'p': Style(
-                                fontSize: FontSize(14.0),
-                                margin: Margins(bottom: Margin(8.0)),
-                              ),
-                              'table': Style(
-                                border: Border.all(color: Colors.grey),
-                              ),
-                              'th': Style(
-                                backgroundColor: Colors.grey[200],
-                                padding: HtmlPaddings.all(8.0),
-                                fontWeight: FontWeight.bold,
-                              ),
-                              'td': Style(
-                                padding: HtmlPaddings.all(8.0),
-                              ),
-                            },
-                          ),
-                        ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: widget.statusIcons.entries.map((entry) {
-                          return [
-                            IconButton(
-                              icon: Icon(
-                                entry.value,
-                                color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
-                              ),
-                              onPressed: () {
-                                final action = entry.key == 'done' ? 'save' : 'trash';
-                                _triggerAction(action);
-                              },
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
                             ),
-                            if (entry.key != widget.statusIcons.keys.last)
-                              const SizedBox(width: 16),
-                          ];
-                        }).expand((element) => element).toList(),
+                            if (_isExpanded)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                child: Html(
+                                  data: widget.item.html,
+                                  style: {
+                                    'h2': Style(
+                                      fontSize: FontSize(18.0),
+                                      fontWeight: FontWeight.bold,
+                                      margin: Margins.all(8.0),
+                                    ),
+                                    'p': Style(
+                                      fontSize: FontSize(14.0),
+                                      margin: Margins.all(8.0),
+                                    ),
+                                    'table': Style(
+                                      border: Border.all(color: Colors.grey),
+                                    ),
+                                    'th': Style(
+                                      backgroundColor: Colors.grey[200],
+                                      padding: HtmlPaddings.all(8.0),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    'td': Style(
+                                      padding: HtmlPaddings.all(8.0),
+                                    ),
+                                  },
+                                ),
+                              ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: widget.statusIcons.entries.map((entry) {
+                                return [
+                                  IconButton(
+                                    icon: Icon(
+                                      entry.value,
+                                      color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
+                                    ),
+                                    onPressed: () {
+                                      final action = entry.key == 'done' ? 'save' : 'trash';
+                                      _triggerAction(action);
+                                    },
+                                  ),
+                                  if (entry.key != widget.statusIcons.keys.last)
+                                    const SizedBox(width: 16), // Corrected here
+                                ];
+                              }).expand((element) => element).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ReorderableDragStartListener(
+                        index: widget.index,
+                        child: const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Icon(Icons.drag_handle),
+                        ),
                       ),
                     ],
                   ),
