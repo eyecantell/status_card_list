@@ -145,7 +145,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
     if (newStatus != null) {
       widget.onStatusChanged(widget.item, newStatus);
       setState(() {
-        _swipeState = null; // Reset _swipeState immediately to hide buttons
+        _swipeState = null;
       });
       _animateOffScreen(action == 'save' ? MediaQuery.of(context).size.width : -MediaQuery.of(context).size.width);
     }
@@ -169,7 +169,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
             Positioned(
               left: 0,
               child: Visibility(
-                visible: _swipeState == 'save', // Simplified condition
+                visible: _swipeState == 'save',
                 child: Container(
                   width: _buttonWidth,
                   height: _cardHeight,
@@ -198,7 +198,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
             Positioned(
               right: 0,
               child: Visibility(
-                visible: _swipeState == 'trash', // Simplified condition
+                visible: _swipeState == 'trash',
                 child: Container(
                   width: _buttonWidth,
                   height: _cardHeight,
@@ -250,14 +250,21 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: widget.statusIcons.entries.map((entry) {
-                          return IconButton(
-                            icon: Icon(
-                              entry.value,
-                              color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
+                          return [
+                            IconButton(
+                              icon: Icon(
+                                entry.value,
+                                color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
+                              ),
+                              onPressed: () {
+                                final action = entry.key == 'done' ? 'save' : 'trash';
+                                _triggerAction(action);
+                              },
                             ),
-                            onPressed: () => widget.onStatusChanged(widget.item, entry.key),
-                          );
-                        }).toList(),
+                            if (entry.key != widget.statusIcons.keys.last) // Add spacing except for the last icon
+                              const SizedBox(width: 16), // Add 16 pixels of spacing between icons
+                          ];
+                        }).expand((element) => element).toList(), // Flatten the list of widgets
                       ),
                     ],
                   ),

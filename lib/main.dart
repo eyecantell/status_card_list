@@ -47,13 +47,12 @@ class _StatusCardListExampleState extends State<StatusCardListExample> {
     return StatusCardList(
       items: _items,
       statusIcons: {
-        'pending': Icons.hourglass_empty,
         'done': Icons.check_circle,
-        'rejected': Icons.cancel,
+        'rejected': Icons.delete,
       },
       swipeActions: {
-        'save': 'done',    // Swipe right or press "Save" -> "done"
-        'trash': 'rejected', // Swipe left or press "Trash" -> "rejected"
+        'save': 'done',
+        'trash': 'rejected',
       },
       onStatusChanged: _updateStatus,
     );
