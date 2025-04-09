@@ -72,9 +72,10 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
   String? _swipeState;
   late AnimationController _controller;
   late Animation<double> _animation;
-  static const double _maxDrag = 100.0;
-  static const double _threshold = 60.0;
-  static const double _cardHeight = 140.0; // Increased height for better spacing
+  static const double _maxDrag = 150.0;
+  static const double _buttonWidth = 100.0;
+  static const double _threshold = 90.0;
+  static const double _cardHeight = 165.0;
 
   @override
   void initState() {
@@ -113,16 +114,13 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
 
   void _handleDragEnd(DragEndDetails details) {
     if (_dragOffset.abs() >= _maxDrag) {
-      // Swipe is fully completed, trigger the action
       final action = _dragOffset > 0 ? 'save' : 'trash';
       _triggerAction(action);
     } else if (_dragOffset.abs() > _threshold) {
-      // Partial swipe beyond threshold, animate to the edge but don't trigger action yet
-      final target = _dragOffset > 0 ? _maxDrag : -_maxDrag;
+      final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
       _animation = Tween<double>(begin: _dragOffset, end: target).animate(_controller);
       _controller.forward(from: 0);
     } else {
-      // Swipe didn't reach threshold, animate back to center
       _animateBack();
     }
   }
@@ -139,17 +137,16 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
 
   void _animateOffScreen(double target) {
     _animation = Tween<double>(begin: _dragOffset, end: target).animate(_controller);
-    _controller.forward(from: 0).then((_) {
-      setState(() {
-        _swipeState = null;
-      });
-    });
+    _controller.forward(from: 0);
   }
 
   void _triggerAction(String action) {
     final newStatus = widget.swipeActions[action];
     if (newStatus != null) {
       widget.onStatusChanged(widget.item, newStatus);
+      setState(() {
+        _swipeState = null; // Reset _swipeState immediately to hide buttons
+      });
       _animateOffScreen(action == 'save' ? MediaQuery.of(context).size.width : -MediaQuery.of(context).size.width);
     }
   }
@@ -157,7 +154,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: _cardHeight, // Still 140.0
+      height: _cardHeight,
       child: GestureDetector(
         onHorizontalDragUpdate: _handleDragUpdate,
         onHorizontalDragEnd: _handleDragEnd,
@@ -172,14 +169,28 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
             Positioned(
               left: 0,
               child: Visibility(
-                visible: _swipeState == 'save' || _dragOffset > 0,
+                visible: _swipeState == 'save', // Simplified condition
                 child: Container(
-                  width: _maxDrag,
+                  width: _buttonWidth,
                   height: _cardHeight,
                   color: Colors.blue,
                   child: TextButton(
                     onPressed: () => _triggerAction('save'),
-                    child: const Text('SAVE', style: TextStyle(color: Colors.white)),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'SAVE',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -187,14 +198,28 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
             Positioned(
               right: 0,
               child: Visibility(
-                visible: _swipeState == 'trash' || _dragOffset < 0,
+                visible: _swipeState == 'trash', // Simplified condition
                 child: Container(
-                  width: _maxDrag,
+                  width: _buttonWidth,
                   height: _cardHeight,
                   color: Colors.red,
                   child: TextButton(
                     onPressed: () => _triggerAction('trash'),
-                    child: const Text('TRASH', style: TextStyle(color: Colors.white)),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'TRASH',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        const SizedBox(height: 8),
+                        const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -204,23 +229,23 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
               child: Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 child: Padding(
-                  padding: const EdgeInsets.all(8.0), // Reduced from 12.0 to 8.0
+                  padding: const EdgeInsets.all(12.0),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ListTile(
-                        title: Text(widget.item.title, style: const TextStyle(fontSize: 14)), // Smaller font
+                        title: Text(widget.item.title),
                         subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 2.0), // Reduced from 4.0
-                          child: Text(widget.item.subtitle, style: const TextStyle(fontSize: 12)), // Smaller font
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(widget.item.subtitle),
                         ),
                         contentPadding: EdgeInsets.zero,
                         dense: true,
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0), // Reduced from 4.0
-                        child: Text(widget.item.text, style: const TextStyle(fontSize: 12)), // Smaller font
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+                        child: Text(widget.item.text),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
@@ -229,11 +254,8 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
                             icon: Icon(
                               entry.value,
                               color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
-                              size: 20, // Smaller icon size
                             ),
                             onPressed: () => widget.onStatusChanged(widget.item, entry.key),
-                            padding: const EdgeInsets.all(4.0), // Reduced padding
-                            constraints: const BoxConstraints(), // Remove default constraints
                           );
                         }).toList(),
                       ),
