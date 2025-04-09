@@ -68,6 +68,10 @@ class _StatusCardListState extends State<StatusCardList> {
   Widget build(BuildContext context) {
     return ReorderableListView(
       onReorder: _onReorder,
+      proxyDecorator: (child, index, animation) => Material(
+        elevation: 4,
+        child: child,
+      ),
       children: [
         for (int index = 0; index < items.length; index++)
           StatusCard(
@@ -207,7 +211,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
           _dragOffset = _animation.value;
         });
       });
-    await _controller.forward(from: 0); // Wait for the animation to complete
+    await _controller.forward(from: 0);
     setState(() {
       _dragOffset = 0;
       _isActionTriggered = false;
@@ -300,27 +304,110 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
             ),
           ),
         ),
-        GestureDetector(
-          onHorizontalDragUpdate: _handleDragUpdate,
-          onHorizontalDragEnd: _handleDragEnd,
-          onTap: () {
-            if (_dragOffset == 0) {
-              _toggleExpanded();
-            } else {
-              _animateBack();
-            }
-          },
-          child: Transform.translate(
-            offset: Offset(_dragOffset, 0),
-            child: SizedBox(
-              child: Card(
-                key: _cardKey,
-                margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: [
-                      Expanded(
+        Transform.translate(
+          offset: Offset(_dragOffset, 0),
+          child: SizedBox(
+            child: Card(
+              key: _cardKey,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center, // Changed to center vertically
+                  children: [
+                    // Drag handle on the left
+                    ReorderableDragStartListener(
+                      index: widget.index,
+                      child: Container(
+                        padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8, // Doubled from 4 to 8
+                                  height: 8, // Doubled from 4 to 8
+                                  margin: const EdgeInsets.all(3), // Slightly increased margin
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.all(3),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Card content
+                    Expanded(
+                      child: GestureDetector(
+                        onHorizontalDragUpdate: _handleDragUpdate,
+                        onHorizontalDragEnd: _handleDragEnd,
+                        onTap: () {
+                          if (_dragOffset == 0) {
+                            _toggleExpanded();
+                          } else {
+                            _animateBack();
+                          }
+                        },
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,22 +465,15 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
                                     },
                                   ),
                                   if (entry.key != widget.statusIcons.keys.last)
-                                    const SizedBox(width: 16), // Corrected here
+                                    const SizedBox(width: 16),
                                 ];
                               }).expand((element) => element).toList(),
                             ),
                           ],
                         ),
                       ),
-                      ReorderableDragStartListener(
-                        index: widget.index,
-                        child: const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Icon(Icons.drag_handle),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
