@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'package:flutter/material.dart';
 import 'status_card_list.dart';
 
@@ -6,19 +5,89 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  ThemeMode _themeMode = ThemeMode.dark; // Could be ThemeMode.system;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode =
+          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.grey[100],
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 1,
+        ),
+        cardTheme: CardTheme(
+          color: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.grey, size: 24),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Colors.black87),
+          titleLarge: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+      ),
+      darkTheme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: Colors.grey[900],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.grey[850],
+          foregroundColor: Colors.white,
+          elevation: 1,
+        ),
+        cardTheme: CardTheme(
+          color: Colors.grey[800],
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        iconTheme: const IconThemeData(color: Colors.grey, size: 24),
+        textTheme: const TextTheme(
+          bodyMedium: TextStyle(color: Colors.white70),
+          titleLarge: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+      ),
+      themeMode: _themeMode,
       home: Scaffold(
-        appBar: AppBar(title: const Text('Status Card List')),
+        appBar: AppBar(
+          title: const Text('Status Card List'),
+          actions: [
+            IconButton(
+              icon: Icon(
+                _themeMode == ThemeMode.dark
+                    ? Icons.light_mode
+                    : Icons.dark_mode,
+              ),
+              onPressed: _toggleTheme,
+            ),
+          ],
+        ),
         body: const StatusCardListExample(),
       ),
     );
   }
 }
+
 
 class StatusCardListExample extends StatefulWidget {
   const StatusCardListExample({super.key});

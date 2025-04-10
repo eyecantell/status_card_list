@@ -68,15 +68,13 @@ class _StatusCardListState extends State<StatusCardList> {
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(
-        iconTheme: const IconThemeData(
-          color: Colors.grey,
-          size: 24,
-        ),
+        iconTheme: Theme.of(context).iconTheme,
       ),
       child: ReorderableListView(
         onReorder: _onReorder,
         proxyDecorator: (child, index, animation) => Material(
           elevation: 4,
+          color: Theme.of(context).cardTheme.color,
           child: child,
         ),
         children: [
@@ -156,7 +154,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _updateCardHeight() {
-    final RenderBox? renderBox = _cardKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _cardKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && renderBox.hasSize) {
       setState(() {
         _cardHeight = renderBox.size.height;
@@ -184,7 +183,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       _triggerAction(action);
     } else if (_dragOffset.abs() > _threshold) {
       final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
-      _animation = Tween<double>(begin: _dragOffset, end: target).animate(_controller)
+      _animation = Tween<double>(begin: _dragOffset, end: target)
+          .animate(_controller)
         ..addListener(() {
           setState(() {
             _dragOffset = _animation.value;
@@ -213,7 +213,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   Future<void> _animateOffScreen(double target) async {
-    _animation = Tween<double>(begin: _dragOffset, end: target).animate(_controller)
+    _animation = Tween<double>(begin: _dragOffset, end: target)
+        .animate(_controller)
       ..addListener(() {
         setState(() {
           _dragOffset = _animation.value;
@@ -233,7 +234,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _swipeState = null;
         _isActionTriggered = true;
       });
-      _animateOffScreen(action == 'save' ? MediaQuery.of(context).size.width : -MediaQuery.of(context).size.width)
+      _animateOffScreen(action == 'save'
+              ? MediaQuery.of(context).size.width
+              : -MediaQuery.of(context).size.width)
           .then((_) {
         widget.onStatusChanged(widget.item, newStatus);
       });
@@ -251,6 +254,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -267,9 +272,12 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'SAVE',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Icon(
@@ -296,9 +304,12 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'TRASH',
-                      style: TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     const Icon(
@@ -317,11 +328,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -363,45 +374,96 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ListTile(
-                                      title: Text(widget.item.title),
+                                      title: Text(
+                                        widget.item.title,
+                                        style: Theme.of(context).textTheme.titleLarge,
+                                      ),
                                       subtitle: Padding(
                                         padding: const EdgeInsets.only(top: 4.0),
-                                        child: Text(widget.item.subtitle),
+                                        child: Text(
+                                          widget.item.subtitle,
+                                          style: Theme.of(context).textTheme.bodyMedium,
+                                        ),
                                       ),
                                       contentPadding: EdgeInsets.zero,
                                       dense: true,
                                     ),
                                     if (_isExpanded)
                                       Padding(
-                                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16.0, vertical: 8.0),
                                         child: Html(
                                           data: widget.item.html,
                                           style: {
-                                            'h2': Style(fontSize: FontSize(18.0), fontWeight: FontWeight.bold, margin: Margins.all(8.0)),
-                                            'p': Style(fontSize: FontSize(14.0), margin: Margins.all(8.0)),
-                                            'table': Style(border: Border.all(color: Colors.grey)),
-                                            'th': Style(backgroundColor: Colors.grey[200], padding: HtmlPaddings.all(8.0), fontWeight: FontWeight.bold),
-                                            'td': Style(padding: HtmlPaddings.all(8.0)),
+                                            'h2': Style(
+                                              fontSize: FontSize(18.0),
+                                              fontWeight: FontWeight.bold,
+                                              margin: Margins.all(8.0),
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                            ),
+                                            'p': Style(
+                                              fontSize: FontSize(14.0),
+                                              margin: Margins.all(8.0),
+                                              color: isDarkMode
+                                                  ? Colors.white70
+                                                  : Colors.black87,
+                                            ),
+                                            'table': Style(
+                                              border: Border.all(
+                                                  color: isDarkMode
+                                                      ? Colors.grey[600]!
+                                                      : Colors.grey),
+                                            ),
+                                            'th': Style(
+                                              backgroundColor: isDarkMode
+                                                  ? Colors.grey[700]
+                                                  : Colors.grey[200],
+                                              padding: HtmlPaddings.all(8.0),
+                                              fontWeight: FontWeight.bold,
+                                              color: isDarkMode
+                                                  ? Colors.white
+                                                  : Colors.black,
+                                            ),
+                                            'td': Style(
+                                              padding: HtmlPaddings.all(8.0),
+                                              color: isDarkMode
+                                                  ? Colors.white70
+                                                  : Colors.black87,
+                                            ),
                                           },
                                         ),
                                       ),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: widget.statusIcons.entries
-                                          .where((entry) => entry.key == 'done' || entry.key == 'trash')
+                                          .where((entry) =>
+                                              entry.key == 'done' ||
+                                              entry.key == 'trash')
                                           .map((entry) {
                                         return [
                                           IconButton(
                                             icon: Icon(
                                               entry.value,
-                                              color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
+                                              color: widget.item.status == entry.key
+                                                  ? Colors.blue
+                                                  : Theme.of(context)
+                                                      .iconTheme
+                                                      .color,
                                             ),
                                             onPressed: () {
-                                              final action = entry.key == 'done' ? 'save' : 'trash';
+                                              final action = entry.key == 'done'
+                                                  ? 'save'
+                                                  : 'trash';
                                               _triggerAction(action);
                                             },
                                           ),
-                                          if (entry.key != widget.statusIcons.keys.lastWhere((key) => key == 'done' || key == 'trash'))
+                                          if (entry.key !=
+                                              widget.statusIcons.keys.lastWhere(
+                                                  (key) =>
+                                                      key == 'done' ||
+                                                      key == 'trash'))
                                             const SizedBox(width: 16),
                                         ];
                                       }).expand((element) => element).toList(),
@@ -416,9 +478,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                Container( // box next to drag handle
+                Container(
                   width: 0,
-                  color: Colors.white,
+                  color: Theme.of(context).cardTheme.color,
                 ),
               ],
             ),
