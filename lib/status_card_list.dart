@@ -29,8 +29,17 @@ class _StatusCardListState extends State<StatusCardList> {
     items = List.from(widget.initialItems);
   }
 
+  @override
+  void didUpdateWidget(StatusCardList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialItems != oldWidget.initialItems) {
+      setState(() {
+        items = List.from(widget.initialItems);
+      });
+    }
+  }
+
   void _handleStatusChanged(Item item, String newStatus) {
-    item.status = newStatus;
     widget.onStatusChanged(item, newStatus);
     setState(() {
       items.removeWhere((i) => i.id == item.id);
