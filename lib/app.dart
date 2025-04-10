@@ -34,7 +34,7 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  void _updateStatus(Item item, String targetList) {
+  void _updateStatus(BuildContext scaffoldContext, Item item, String targetList) {
     setState(() {
       final currentListItems = _itemLists[_currentList]!;
       currentListItems.remove(item);
@@ -43,7 +43,7 @@ class _MyAppState extends State<MyApp> {
       }
       item.status = targetList.toLowerCase();
     });
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
       SnackBar(content: Text('${item.title} moved to $targetList')),
     );
   }
@@ -60,29 +60,33 @@ class _MyAppState extends State<MyApp> {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: _themeMode,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('$_currentList List'),
-          actions: [
-            IconButton(
-              icon: Icon(
-                _themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-              ),
-              onPressed: _toggleTheme,
+      home: Builder(
+        builder: (BuildContext scaffoldContext) {
+          return Scaffold(
+            appBar: AppBar(
+              title: Text('$_currentList List'),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    _themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                  ),
+                  onPressed: _toggleTheme,
+                ),
+              ],
             ),
-          ],
-        ),
-        drawer: DrawerMenu(
-          listConfigs: _listConfigs,
-          currentList: _currentList,
-          itemLists: _itemLists,
-          onListSelected: _switchList,
-        ),
-        body: StatusCardListExample(
-          items: _itemLists[_currentList]!,
-          listConfig: _listConfigs.firstWhere((c) => c.name == _currentList),
-          onStatusChanged: _updateStatus,
-        ),
+            drawer: DrawerMenu(
+              listConfigs: _listConfigs,
+              currentList: _currentList,
+              itemLists: _itemLists,
+              onListSelected: _switchList,
+            ),
+            body: StatusCardListExample(
+              items: _itemLists[_currentList]!,
+              listConfig: _listConfigs.firstWhere((c) => c.name == _currentList),
+              onStatusChanged: (item, targetList) => _updateStatus(scaffoldContext, item, targetList),
+            ),
+          );
+        },
       ),
     );
   }
