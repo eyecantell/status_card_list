@@ -7,12 +7,14 @@ class StatusCardListExample extends StatelessWidget {
   final List<Item> items;
   final ListConfig listConfig;
   final Function(Item, String) onStatusChanged;
+  final Function(int, int) onReorder; // New callback
 
   const StatusCardListExample({
     super.key,
     required this.items,
     required this.listConfig,
     required this.onStatusChanged,
+    required this.onReorder,
   });
 
   @override
@@ -25,6 +27,7 @@ class StatusCardListExample extends StatelessWidget {
       },
       swipeActions: listConfig.swipeActions,
       onStatusChanged: onStatusChanged,
+      onReorder: onReorder, // Pass it through
     );
   }
 }

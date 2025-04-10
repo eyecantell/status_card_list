@@ -7,6 +7,7 @@ class StatusCardList extends StatelessWidget {
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
+  final Function(int, int) onReorder; // New callback
 
   const StatusCardList({
     super.key,
@@ -14,24 +15,15 @@ class StatusCardList extends StatelessWidget {
     required this.statusIcons,
     required this.swipeActions,
     required this.onStatusChanged,
+    required this.onReorder,
   });
-
-  void _onReorder(int oldIndex, int newIndex) {
-    if (oldIndex < newIndex) {
-      newIndex -= 1;
-    }
-    final Item item = items.removeAt(oldIndex);
-    items.insert(newIndex, item);
-  }
 
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: Theme.of(context).copyWith(
-        iconTheme: Theme.of(context).iconTheme,
-      ),
+      data: Theme.of(context).copyWith(iconTheme: Theme.of(context).iconTheme),
       child: ReorderableListView(
-        onReorder: _onReorder,
+        onReorder: onReorder, // Use the callback directly
         proxyDecorator: (child, index, animation) => Material(
           elevation: 4,
           color: Theme.of(context).cardTheme.color,

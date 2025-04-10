@@ -54,6 +54,16 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _reorderItems(int oldIndex, int newIndex) {
+    setState(() {
+      if (oldIndex < newIndex) {
+        newIndex -= 1;
+      }
+      final Item item = _itemLists[_currentList]!.removeAt(oldIndex);
+      _itemLists[_currentList]!.insert(newIndex, item);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -84,6 +94,7 @@ class _MyAppState extends State<MyApp> {
               items: _itemLists[_currentList]!,
               listConfig: _listConfigs.firstWhere((c) => c.name == _currentList),
               onStatusChanged: (item, targetList) => _updateStatus(scaffoldContext, item, targetList),
+              onReorder: _reorderItems,
             ),
           );
         },
