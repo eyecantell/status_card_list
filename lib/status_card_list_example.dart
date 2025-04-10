@@ -3,7 +3,7 @@ import 'item.dart';
 import 'status_card_list.dart';
 import 'list_config.dart';
 
-class StatusCardListExample extends StatefulWidget {
+class StatusCardListExample extends StatelessWidget {
   final List<Item> items;
   final ListConfig listConfig;
   final Function(Item, String) onStatusChanged;
@@ -16,20 +16,15 @@ class StatusCardListExample extends StatefulWidget {
   });
 
   @override
-  State<StatusCardListExample> createState() => _StatusCardListExampleState();
-}
-
-class _StatusCardListExampleState extends State<StatusCardListExample> {
-  @override
   Widget build(BuildContext context) {
     return StatusCardList(
-      initialItems: widget.items,
+      items: items,
       statusIcons: {
-        for (var entry in widget.listConfig.buttons.entries)
+        for (var entry in listConfig.buttons.entries)
           entry.value: iconMap[entry.key]!,
       },
-      swipeActions: widget.listConfig.swipeActions,
-      onStatusChanged: widget.onStatusChanged,
+      swipeActions: listConfig.swipeActions,
+      onStatusChanged: onStatusChanged,
     );
   }
 }

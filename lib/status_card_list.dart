@@ -2,58 +2,26 @@ import 'package:flutter/material.dart';
 import 'item.dart';
 import 'status_card.dart';
 
-class StatusCardList extends StatefulWidget {
-  final List<Item> initialItems;
+class StatusCardList extends StatelessWidget {
+  final List<Item> items;
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
 
   const StatusCardList({
     super.key,
-    required this.initialItems,
+    required this.items,
     required this.statusIcons,
     required this.swipeActions,
     required this.onStatusChanged,
   });
 
-  @override
-  State<StatusCardList> createState() => _StatusCardListState();
-}
-
-class _StatusCardListState extends State<StatusCardList> {
-  late List<Item> items;
-
-  @override
-  void initState() {
-    super.initState();
-    items = List.from(widget.initialItems);
-  }
-
-  @override
-  void didUpdateWidget(StatusCardList oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialItems != oldWidget.initialItems) {
-      setState(() {
-        items = List.from(widget.initialItems);
-      });
-    }
-  }
-
-  void _handleStatusChanged(Item item, String newStatus) {
-    widget.onStatusChanged(item, newStatus);
-    setState(() {
-      items.removeWhere((i) => i.id == item.id);
-    });
-  }
-
   void _onReorder(int oldIndex, int newIndex) {
-    setState(() {
-      if (oldIndex < newIndex) {
-        newIndex -= 1;
-      }
-      final Item item = items.removeAt(oldIndex);
-      items.insert(newIndex, item);
-    });
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final Item item = items.removeAt(oldIndex);
+    items.insert(newIndex, item);
   }
 
   @override
@@ -75,9 +43,9 @@ class _StatusCardListState extends State<StatusCardList> {
               key: ValueKey(items[index].id),
               item: items[index],
               index: index,
-              statusIcons: widget.statusIcons,
-              swipeActions: widget.swipeActions,
-              onStatusChanged: _handleStatusChanged,
+              statusIcons: statusIcons,
+              swipeActions: swipeActions,
+              onStatusChanged: onStatusChanged,
             ),
         ],
       ),
