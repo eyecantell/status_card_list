@@ -1,11 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 
-// Model for list configuration
 class ListConfig {
   final String name;
-  final Map<String, String> swipeActions; // e.g., {'left': 'saved', 'right': 'dismissed'}
-  final Map<String, String> buttons; // e.g., {'check_circle': 'saved', 'delete': 'dismissed'}
+  final Map<String, String> swipeActions;
+  final Map<String, String> buttons;
 
   ListConfig({
     required this.name,
@@ -22,43 +21,52 @@ class ListConfig {
   }
 }
 
-// Sample JSON configuration
 final String listConfigJson = '''
 [
-  {
-    "name": "Review",
-    "swipeActions": {
-      "right": "saved",
-      "left": "dismissed"
+    {
+        "name": "Review",
+        "swipeActions": {
+            "right": "Saved",
+            "left": "Trash"
+        },
+        "buttons": {
+            "check_circle": "Saved",
+            "delete": "Trash"
+        }
     },
-    "buttons": {
-      "check_circle": "saved",
-      "delete": "dismissed"
-    }
-  },
-  {
-    "name": "Saved",
-    "swipeActions": {
-      "right": "pending",
-      "left": "dismissed"
+    {
+        "name": "Saved",
+        "swipeActions": {
+            "right": "Review",
+            "left": "Trash"
+        },
+        "buttons": {
+            "refresh": "Review",
+            "delete": "Trash"
+        }
     },
-    "buttons": {
-      "refresh": "pending",
-      "delete": "dismissed"
+    {
+        "name": "Trash",
+        "swipeActions": {
+            "right": "Review",
+            "left": "Trash"
+        },
+        "buttons": {
+            "refresh": "Review",
+            "delete_forever": "Trash"
+        }
     }
-  }
 ]
 ''';
 
-// Parse JSON into List<ListConfig>
 List<ListConfig> parseListConfigs(String jsonString) {
   final List<dynamic> jsonList = jsonDecode(jsonString);
   return jsonList.map((json) => ListConfig.fromJson(json)).toList();
 }
 
-// Map icon names to IconData
 final Map<String, IconData> iconMap = {
   'check_circle': Icons.check_circle,
   'delete': Icons.delete,
   'refresh': Icons.refresh,
+  'delete_forever': Icons.delete_forever,
 };

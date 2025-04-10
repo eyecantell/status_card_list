@@ -5,13 +5,13 @@ class Item {
   final String title;
   final String subtitle;
   final String html;
-  String status;
+  String status; // Optional, can be removed if not needed later
 
   Item({
     required this.id,
     required this.title,
     required this.subtitle,
     required this.html,
-    required this.status,
+    this.status = 'pending', // Default value
   });
 }
