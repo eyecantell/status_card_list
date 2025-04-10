@@ -108,11 +108,15 @@ class StatusCard extends StatefulWidget {
   State<StatusCard> createState() => _StatusCardState();
 }
 
-class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateMixin {
+class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   double _dragOffset = 0.0;
   String? _swipeState;
   late AnimationController _controller;
   late Animation<double> _animation;
+  late AnimationController _scaleController; // For drag handle tap animation
+  late Animation<double> _scaleAnimation; // Scale animation for drag handle tap
+  bool _isDragging = false; // Track if dragging is active
+
   static const double _maxDrag = 150.0;
   static const double _buttonWidth = 100.0;
   static const double _threshold = 90.0;
@@ -125,6 +129,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
+    // Controller for swipe animation
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -136,6 +141,15 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
         });
       });
 
+    // Controller for drag handle tap animation
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateCardHeight();
     });
@@ -144,6 +158,7 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
   @override
   void dispose() {
     _controller.dispose();
+    _scaleController.dispose();
     super.dispose();
   }
 
@@ -241,6 +256,22 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
     });
   }
 
+  void _onDragHandleTap() {
+    _scaleController.forward(from: 0); // Play tap animation
+  }
+
+  void _onDragStarted() {
+    setState(() {
+      _isDragging = true;
+    });
+  }
+
+  void _onDragEnded() {
+    setState(() {
+      _isDragging = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -310,89 +341,103 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
             child: Card(
               key: _cardKey,
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              elevation: _isDragging ? 8 : 1, // Increase elevation when dragging
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center, // Changed to center vertically
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     // Drag handle on the left
-                    ReorderableDragStartListener(
-                      index: widget.index,
-                      child: Container(
-                        padding: const EdgeInsets.only(right: 16.0, top: 8.0, bottom: 8.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8, // Doubled from 4 to 8
-                                  height: 8, // Doubled from 4 to 8
-                                  margin: const EdgeInsets.all(3), // Slightly increased margin
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey,
-                                  ),
+                    GestureDetector(
+                      onTap: _onDragHandleTap, // Trigger tap animation
+                      onLongPress: _onDragStarted, // Detect drag start
+                      onLongPressEnd: (_) => _onDragEnded(), // Detect drag end
+                      child: ReorderableDragStartListener(
+                        index: widget.index,
+                        child: AnimatedBuilder(
+                          animation: _scaleAnimation, // Only scale animation
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: _isDragging ? 1.3 : _scaleAnimation.value, // Scale up when dragging or tapped
+                              child: Container(
+                                padding: const EdgeInsets.only(right: 16.0, top: 16.0, bottom: 16.0, left: 8.0), // Increased padding for larger touch target
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 10, // Slightly larger dots
+                                          height: 10,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          margin: const EdgeInsets.all(3),
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.all(3),
-                                  decoration: const BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -408,68 +453,73 @@ class _StatusCardState extends State<StatusCard> with SingleTickerProviderStateM
                             _animateBack();
                           }
                         },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ListTile(
-                              title: Text(widget.item.title),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(widget.item.subtitle),
-                              ),
-                              contentPadding: EdgeInsets.zero,
-                              dense: true,
-                            ),
-                            if (_isExpanded)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                child: Html(
-                                  data: widget.item.html,
-                                  style: {
-                                    'h2': Style(
-                                      fontSize: FontSize(18.0),
-                                      fontWeight: FontWeight.bold,
-                                      margin: Margins.all(8.0),
-                                    ),
-                                    'p': Style(
-                                      fontSize: FontSize(14.0),
-                                      margin: Margins.all(8.0),
-                                    ),
-                                    'table': Style(
-                                      border: Border.all(color: Colors.grey),
-                                    ),
-                                    'th': Style(
-                                      backgroundColor: Colors.grey[200],
-                                      padding: HtmlPaddings.all(8.0),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    'td': Style(
-                                      padding: HtmlPaddings.all(8.0),
-                                    ),
-                                  },
+                        child: Container(
+                          color: Colors.transparent, // Ensure the entire area is tappable
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ListTile(
+                                title: Text(widget.item.title),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Text(widget.item.subtitle),
                                 ),
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
                               ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: widget.statusIcons.entries.map((entry) {
-                                return [
-                                  IconButton(
-                                    icon: Icon(
-                                      entry.value,
-                                      color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
-                                    ),
-                                    onPressed: () {
-                                      final action = entry.key == 'done' ? 'save' : 'trash';
-                                      _triggerAction(action);
+                              if (_isExpanded)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                                  child: Html(
+                                    data: widget.item.html,
+                                    style: {
+                                      'h2': Style(
+                                        fontSize: FontSize(18.0),
+                                        fontWeight: FontWeight.bold,
+                                        margin: Margins.all(8.0),
+                                      ),
+                                      'p': Style(
+                                        fontSize: FontSize(14.0),
+                                        margin: Margins.all(8.0),
+                                      ),
+                                      'table': Style(
+                                        border: Border.all(color: Colors.grey),
+                                      ),
+                                      'th': Style(
+                                        backgroundColor: Colors.grey[200],
+                                        padding: HtmlPaddings.all(8.0),
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      'td': Style(
+                                        padding: HtmlPaddings.all(8.0),
+                                      ),
                                     },
                                   ),
-                                  if (entry.key != widget.statusIcons.keys.last)
-                                    const SizedBox(width: 16),
-                                ];
-                              }).expand((element) => element).toList(),
-                            ),
-                          ],
+                                ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: widget.statusIcons.entries
+                                    .where((entry) => entry.key == 'done' || entry.key == 'trash') // Only include 'done' and 'trash'
+                                    .map((entry) {
+                                  return [
+                                    IconButton(
+                                      icon: Icon(
+                                        entry.value,
+                                        color: widget.item.status == entry.key ? Colors.blue : Colors.grey,
+                                      ),
+                                      onPressed: () {
+                                        final action = entry.key == 'done' ? 'save' : 'trash';
+                                        _triggerAction(action);
+                                      },
+                                    ),
+                                    if (entry.key != widget.statusIcons.keys.lastWhere((key) => key == 'done' || key == 'trash'))
+                                      const SizedBox(width: 16),
+                                  ];
+                                }).expand((element) => element).toList(),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

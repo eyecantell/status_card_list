@@ -84,12 +84,12 @@ class _StatusCardListExampleState extends State<StatusCardListExample> {
     return StatusCardList(
       initialItems: _items,
       statusIcons: {
-        'done': Icons.check_circle,
-        'rejected': Icons.delete,
+        'saved': Icons.check_circle,
+        'dismissed': Icons.delete,
       },
       swipeActions: {
-        'save': 'done',
-        'trash': 'rejected',
+        'save': 'saved',
+        'trash': 'dismissed',
       },
       onStatusChanged: _updateStatus,
     );
