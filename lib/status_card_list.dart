@@ -416,8 +416,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                Container(
-                  width: 16,
+                Container( // box next to drag handle
+                  width: 0,
                   color: Colors.white,
                 ),
               ],
