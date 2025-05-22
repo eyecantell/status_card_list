@@ -11,7 +11,7 @@ class StatusCardList extends StatelessWidget {
   final Function(int, int) onReorder;
   final String dueDateLabel;
   final Color listColor;
-  final List<ListConfig> allConfigs; // New field to pass all list configs
+  final List<ListConfig> allConfigs;
 
   const StatusCardList({
     super.key,
@@ -30,6 +30,7 @@ class StatusCardList extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(iconTheme: Theme.of(context).iconTheme),
       child: ReorderableListView(
+        buildDefaultDragHandles: false, // Disable default drag handles
         onReorder: onReorder,
         proxyDecorator: (child, index, animation) => Material(
           elevation: 4,
@@ -47,7 +48,7 @@ class StatusCardList extends StatelessWidget {
               onStatusChanged: onStatusChanged,
               dueDateLabel: dueDateLabel,
               listColor: listColor,
-              allConfigs: allConfigs, // Pass all configs
+              allConfigs: allConfigs,
             ),
         ],
       ),

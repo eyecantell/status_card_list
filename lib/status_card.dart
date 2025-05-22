@@ -274,140 +274,146 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               ],
             ),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: Card(
-                    key: _cardKey,
-                    margin: EdgeInsets.zero,
-                    elevation: 0,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        bottomLeft: Radius.circular(8),
-                      ),
+                // Chevron for expanding/collapsing
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                  child: GestureDetector(
+                    onTap: _toggleExpanded,
+                    child: Icon(
+                      _isExpanded ? Icons.expand_less : Icons.expand_more,
+                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                      size: 24.0,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: GestureDetector(
-                              onHorizontalDragUpdate: _handleDragUpdate,
-                              onHorizontalDragEnd: _handleDragEnd,
-                              onTap: () {
-                                if (_dragOffset == 0) {
-                                  _toggleExpanded();
-                                } else {
-                                  _animateBack();
-                                }
-                              },
-                              child: Container(
-                                color: Colors.transparent,
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ListTile(
-                                      title: Text(
-                                        widget.item.title,
-                                        style: Theme.of(context).textTheme.titleLarge,
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4.0),
-                                            child: Text(
-                                              widget.item.subtitle,
-                                              style: Theme.of(context).textTheme.bodyMedium,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4.0),
-                                            child: Text(
-                                              '${widget.dueDateLabel}: ${widget.item.dueDate.toLocal().toString().split(' ')[0]}',
-                                              style: Theme.of(context).textTheme.bodyMedium,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      contentPadding: EdgeInsets.zero,
-                                      dense: true,
-                                    ),
-                                    if (_isExpanded)
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16.0,
-                                          vertical: 8.0,
+                  ),
+                ),
+                Expanded(
+                  child: ReorderableDelayedDragStartListener(
+                    index: widget.index,
+                    child: Card(
+                      key: _cardKey,
+                      margin: EdgeInsets.zero,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onHorizontalDragUpdate: _handleDragUpdate,
+                                onHorizontalDragEnd: _handleDragEnd,
+                                child: Container(
+                                  color: Colors.transparent,
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      ListTile(
+                                        title: Text(
+                                          widget.item.title,
+                                          style: Theme.of(context).textTheme.titleLarge,
                                         ),
-                                        child: Html(
-                                          data: widget.item.html,
-                                          style: {
-                                            'h2': Style(
-                                              fontSize: FontSize(18.0),
-                                              fontWeight: FontWeight.bold,
-                                              margin: Margins.all(8.0),
-                                              color: isDarkMode
-                                                  ? Colors.white
-                                                  : Colors.black,
-                                            ),
-                                            'p': Style(
-                                              fontSize: FontSize(14.0),
-                                              margin: Margins.all(8.0),
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black87,
-                                            ),
-                                            'table': Style(
-                                              border: Border.all(
-                                                color: isDarkMode
-                                                    ? Colors.grey[600]!
-                                                    : Colors.grey,
+                                        subtitle: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 4.0),
+                                              child: Text(
+                                                widget.item.subtitle,
+                                                style: Theme.of(context).textTheme.bodyMedium,
                                               ),
                                             ),
-                                            'th': Style(
-                                              backgroundColor: isDarkMode
-                                                  ? Colors.grey[700]
-                                                  : Colors.grey[200],
-                                              padding: HtmlPaddings.all(8.0),
-                                              fontWeight: FontWeight.bold,
-                                              color: isDarkMode
-                                                  ? Colors.white
-                                                  : Colors.black,
+                                            Padding(
+                                              padding: const EdgeInsets.only(top: 4.0),
+                                              child: Text(
+                                                '${widget.dueDateLabel}: ${widget.item.dueDate.toLocal().toString().split(' ')[0]}',
+                                                style: Theme.of(context).textTheme.bodyMedium,
+                                              ),
                                             ),
-                                            'td': Style(
-                                              padding: HtmlPaddings.all(8.0),
-                                              color: isDarkMode
-                                                  ? Colors.white70
-                                                  : Colors.black87,
-                                            ),
-                                          },
+                                          ],
                                         ),
+                                        contentPadding: EdgeInsets.zero,
+                                        dense: true,
                                       ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: widget.statusIcons.entries.map((entry) {
-                                        final action = widget.swipeActions.entries
-                                            .firstWhere(
-                                              (e) => e.value == entry.key,
-                                              orElse: () => const MapEntry('', ''),
-                                            )
-                                            .key;
-                                        return IconButton(
-                                          icon: Icon(entry.value),
-                                          onPressed: () => _triggerAction(
-                                            action.isEmpty ? 'right' : action,
+                                      if (_isExpanded)
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16.0,
+                                            vertical: 8.0,
                                           ),
-                                        );
-                                      }).toList(),
-                                    ),
-                                  ],
+                                          child: Html(
+                                            data: widget.item.html,
+                                            style: {
+                                              'h2': Style(
+                                                fontSize: FontSize(18.0),
+                                                fontWeight: FontWeight.bold,
+                                                margin: Margins.all(8.0),
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                              ),
+                                              'p': Style(
+                                                fontSize: FontSize(14.0),
+                                                margin: Margins.all(8.0),
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : Colors.black87,
+                                              ),
+                                              'table': Style(
+                                                border: Border.all(
+                                                  color: isDarkMode
+                                                      ? Colors.grey[600]!
+                                                      : Colors.grey,
+                                                ),
+                                              ),
+                                              'th': Style(
+                                                backgroundColor: isDarkMode
+                                                    ? Colors.grey[700]
+                                                    : Colors.grey[200],
+                                                padding: HtmlPaddings.all(8.0),
+                                                fontWeight: FontWeight.bold,
+                                                color: isDarkMode
+                                                    ? Colors.white
+                                                    : Colors.black,
+                                              ),
+                                              'td': Style(
+                                                padding: HtmlPaddings.all(8.0),
+                                                color: isDarkMode
+                                                    ? Colors.white70
+                                                    : Colors.black87,
+                                              ),
+                                            },
+                                          ),
+                                        ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.end,
+                                        children: widget.statusIcons.entries.map((entry) {
+                                          final action = widget.swipeActions.entries
+                                              .firstWhere(
+                                                (e) => e.value == entry.key,
+                                                orElse: () => const MapEntry('', ''),
+                                              )
+                                              .key;
+                                          return IconButton(
+                                            icon: Icon(entry.value),
+                                            onPressed: () => _triggerAction(
+                                              action.isEmpty ? 'right' : action,
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
