@@ -7,6 +7,7 @@ import 'widgets/list_settings_dialog.dart';
 import 'item.dart';
 import 'status_card_list.dart';
 import 'list_config.dart';
+import 'dart:convert';
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -25,6 +26,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _listConfigs = parseListConfigs(listConfigJson);
+    _sanitizeConfigs(); // Sanitize initial configs
     _itemLists = initializeItemLists(_listConfigs);
     _sortItems(); // Initial sort
   }
@@ -103,6 +105,17 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _sanitizeConfigs() {
+    // Validate and sanitize swipeActions and buttons
+    final listNames = _listConfigs.map((config) => config.name).toSet();
+    for (var config in _listConfigs) {
+      // Validate swipeActions
+      config.swipeActions.removeWhere((key, target) => !listNames.contains(target));
+      // Validate buttons
+      config.buttons.removeWhere((key, target) => !listNames.contains(target));
+    }
+  }
+
   void _showSettingsDialog(BuildContext context, ListConfig config) {
     showDialog(
       context: context,
@@ -114,10 +127,29 @@ class _MyAppState extends State<MyApp> {
             // Update the config in _listConfigs
             final index = _listConfigs.indexWhere((c) => c.name == updatedConfig.name);
             _listConfigs[index] = updatedConfig;
+            _sanitizeConfigs(); // Sanitize after updating
           });
         },
       ),
     );
+  }
+
+  // Example method to sync with API (not implemented, for illustration)
+  Future<void> syncWithApi() async {
+    // Serialize to JSON
+    List<Map<String, dynamic>> listConfigsJson = _listConfigs.map((config) => config.toJson()).toList();
+    String jsonString = jsonEncode(listConfigsJson);
+
+    // TODO: Send jsonString to API (e.g., via HTTP POST)
+    // Example: await http.post(apiUrl, body: jsonString);
+
+    // Example: Receive updated configs from API
+    String apiResponse = jsonString; // Replace with actual API response
+    List<dynamic> jsonList = jsonDecode(apiResponse);
+    setState(() {
+      _listConfigs = jsonList.map((json) => ListConfig.fromJson(json)).toList();
+      _sanitizeConfigs(); // Sanitize after receiving from API
+    });
   }
 
   @override
@@ -208,7 +240,7 @@ class _MyAppState extends State<MyApp> {
               onStatusChanged: (item, targetList) =>
                   _updateStatus(scaffoldContext, item, targetList),
               onReorder: _reorderItems,
-              allConfigs: _listConfigs, // Pass all configs
+              allConfigs: _listConfigs,
             ),
           );
         },

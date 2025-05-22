@@ -16,7 +16,7 @@ class ListConfig {
   final String dueDateLabel;
   SortMode sortMode;
   IconData icon;
-  Color color; // Field for list color
+  Color color;
 
   ListConfig({
     required this.name,
@@ -29,6 +29,26 @@ class ListConfig {
   });
 
   factory ListConfig.fromJson(Map<String, dynamic> json) {
+    // Parse color with validation
+    Color parseColor(String? colorStr) {
+      try {
+        if (colorStr == null) return Colors.blue; // Default fallback
+        String hexStr = colorStr;
+        // Handle different formats
+        if (hexStr.startsWith('#')) {
+          hexStr = '0xFF${hexStr.substring(1)}'; // Convert #FF2196F3 to 0xFFFF2196F3
+        } else if (hexStr.startsWith('0x')) {
+          // Already in the correct format
+        } else {
+          hexStr = '0xFF$hexStr'; // Assume no prefix, e.g., "2196F3" -> "0xFF2196F3"
+        }
+        return Color(int.parse(hexStr));
+      } catch (e) {
+        // Log error in production, but for now return default
+        return Colors.blue; // Fallback
+      }
+    }
+
     return ListConfig(
       name: json['name'] as String,
       swipeActions: Map<String, String>.from(json['swipeActions']),
@@ -39,7 +59,7 @@ class ListConfig {
         orElse: () => SortMode.dateAscending,
       ),
       icon: iconMapForLists[json['icon']] ?? Icons.list,
-      color: Color(int.parse(json['color'] as String? ?? '0xFF2196F3')), // Default to blue
+      color: parseColor(json['color'] as String?),
     );
   }
 
