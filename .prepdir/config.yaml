@@ -1,0 +1,47 @@
+exclude:
+  directories:
+    - __pycache__
+    - .cache
+    - .dart_tool
+    - .eggs
+    - .git
+    - .idea
+    - .mypy_cache
+    - .pdm-build
+    - .prepdir
+    - .pytest_cache
+    - .tox
+    - .venv
+    - android # flutter
+    - build
+    - dist
+    - ios # flutter
+    - linux # flutter
+    - macos # flutter
+    - node_modules
+    - venv
+    - web # flutter
+    - windows # flutter
+    - "*.egg-info"
+  files:
+    - .coverage
+    - .DS_Store
+    - .env
+    - .env.production
+    - .gitignore
+    - .metadata
+    - .pdm-python
+    - analysis_options.yaml
+    - coverage.xml
+    - LICENSE
+    - pdm.lock
+    - pubspec.lock
+    - Thumbs.db
+    - "tmp.*"
+    - "*.iml"
+    - "*.pyc"
+    - "*.pyo"
+    - "*.log"
+    - "*.bak"
+    - "*.swp"
+    - "**/*.log"
