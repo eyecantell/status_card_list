@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'item.dart';
+import 'list_config.dart';
 
 class StatusCard extends StatefulWidget {
   final Item item;
@@ -9,6 +10,8 @@ class StatusCard extends StatefulWidget {
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
   final String dueDateLabel;
+  final Color listColor;
+  final List<ListConfig> allConfigs; // New field to access all list configs
 
   const StatusCard({
     super.key,
@@ -18,6 +21,8 @@ class StatusCard extends StatefulWidget {
     required this.swipeActions,
     required this.onStatusChanged,
     required this.dueDateLabel,
+    required this.listColor,
+    required this.allConfigs,
   });
 
   @override
@@ -147,7 +152,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       _animateOffScreen(action == 'right'
           ? MediaQuery.of(context).size.width
           : -MediaQuery.of(context).size.width)
-        .then((_) {
+          .then((_) {
         widget.onStatusChanged(widget.item, targetList);
       });
     }
@@ -160,6 +165,18 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _updateCardHeight();
       });
     });
+  }
+
+  Color _getTargetColor(String action) {
+    final targetListName = widget.swipeActions[action];
+    if (targetListName != null) {
+      final targetConfig = widget.allConfigs.firstWhere(
+        (config) => config.name == targetListName,
+        orElse: () => widget.allConfigs[0], // Fallback to first config if not found
+      );
+      return targetConfig.color;
+    }
+    return widget.listColor; // Fallback to current list color if no target
   }
 
   @override
@@ -178,7 +195,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             child: Container(
               width: _buttonWidth,
               height: _cardHeight ?? _defaultCardHeight,
-              color: Colors.blue,
+              color: _getTargetColor('right'), // Use target list color for swipe right
               child: TextButton(
                 onPressed: () => _triggerAction('right'),
                 child: Column(
@@ -207,7 +224,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             child: Container(
               width: _buttonWidth,
               height: _cardHeight ?? _defaultCardHeight,
-              color: Colors.red,
+              color: _getTargetColor('left'), // Use target list color for swipe left
               child: TextButton(
                 onPressed: () => _triggerAction('left'),
                 child: Column(

@@ -8,6 +8,7 @@ class StatusCardListExample extends StatelessWidget {
   final ListConfig listConfig;
   final Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
+  final List<ListConfig> allConfigs; // New field to pass all list configs
 
   const StatusCardListExample({
     super.key,
@@ -15,6 +16,7 @@ class StatusCardListExample extends StatelessWidget {
     required this.listConfig,
     required this.onStatusChanged,
     required this.onReorder,
+    required this.allConfigs,
   });
 
   @override
@@ -28,7 +30,9 @@ class StatusCardListExample extends StatelessWidget {
       swipeActions: listConfig.swipeActions,
       onStatusChanged: onStatusChanged,
       onReorder: onReorder,
-      dueDateLabel: listConfig.dueDateLabel, // Pass the dueDateLabel from listConfig
+      dueDateLabel: listConfig.dueDateLabel,
+      listColor: listConfig.color,
+      allConfigs: allConfigs, // Pass all configs
     );
   }
 }

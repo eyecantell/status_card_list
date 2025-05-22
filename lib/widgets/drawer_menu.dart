@@ -36,19 +36,32 @@ class DrawerMenu extends StatelessWidget {
           ...listConfigs.map((config) {
             final isSelected = currentList == config.name;
             return ListTile(
-              leading: Icon(
-                config.icon, // Use the icon from ListConfig
-                color: isSelected
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).iconTheme.color,
-              ),
-              title: Text(
-                '${config.name} (${itemLists[config.name]?.length ?? 0})',
-                style: TextStyle(
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : null,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              leading: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: config.color, width: 2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      config.icon,
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : config.color,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${config.name} (${itemLists[config.name]?.length ?? 0})',
+                      style: TextStyle(
+                        color: isSelected
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               tileColor: isSelected

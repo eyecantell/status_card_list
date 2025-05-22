@@ -135,9 +135,20 @@ class _MyAppState extends State<MyApp> {
             appBar: AppBar(
               title: Row(
                 children: [
-                  Icon(currentConfig.icon),
-                  const SizedBox(width: 8),
-                  Text('$_currentList List'),
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: currentConfig.color, width: 2),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(currentConfig.icon, color: currentConfig.color),
+                        const SizedBox(width: 8),
+                        Text('$_currentList List'),
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.settings),
@@ -197,6 +208,7 @@ class _MyAppState extends State<MyApp> {
               onStatusChanged: (item, targetList) =>
                   _updateStatus(scaffoldContext, item, targetList),
               onReorder: _reorderItems,
+              allConfigs: _listConfigs, // Pass all configs
             ),
           );
         },

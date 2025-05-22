@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:status_card_list/list_config.dart';
 import 'item.dart';
 import 'status_card.dart';
 
@@ -8,7 +9,9 @@ class StatusCardList extends StatelessWidget {
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
-  final String dueDateLabel; // New field to pass to StatusCard
+  final String dueDateLabel;
+  final Color listColor;
+  final List<ListConfig> allConfigs; // New field to pass all list configs
 
   const StatusCardList({
     super.key,
@@ -18,6 +21,8 @@ class StatusCardList extends StatelessWidget {
     required this.onStatusChanged,
     required this.onReorder,
     required this.dueDateLabel,
+    required this.listColor,
+    required this.allConfigs,
   });
 
   @override
@@ -40,7 +45,9 @@ class StatusCardList extends StatelessWidget {
               statusIcons: statusIcons,
               swipeActions: swipeActions,
               onStatusChanged: onStatusChanged,
-              dueDateLabel: dueDateLabel, // Pass the label to StatusCard
+              dueDateLabel: dueDateLabel,
+              listColor: listColor,
+              allConfigs: allConfigs, // Pass all configs
             ),
         ],
       ),

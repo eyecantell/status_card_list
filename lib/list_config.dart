@@ -15,7 +15,8 @@ class ListConfig {
   final Map<String, String> buttons;
   final String dueDateLabel;
   SortMode sortMode;
-  IconData icon; // New field for list icon
+  IconData icon;
+  Color color; // Field for list color
 
   ListConfig({
     required this.name,
@@ -24,6 +25,7 @@ class ListConfig {
     required this.dueDateLabel,
     required this.sortMode,
     required this.icon,
+    required this.color,
   });
 
   factory ListConfig.fromJson(Map<String, dynamic> json) {
@@ -37,6 +39,7 @@ class ListConfig {
         orElse: () => SortMode.dateAscending,
       ),
       icon: iconMapForLists[json['icon']] ?? Icons.list,
+      color: Color(int.parse(json['color'] as String? ?? '0xFF2196F3')), // Default to blue
     );
   }
 
@@ -50,6 +53,7 @@ class ListConfig {
       'icon': iconMapForLists.entries
           .firstWhere((entry) => entry.value == icon, orElse: () => MapEntry('list', Icons.list))
           .key,
+      'color': '0x${color.value.toRadixString(16).padLeft(8, '0')}',
     };
   }
 }
@@ -68,7 +72,8 @@ final String listConfigJson = '''
         },
         "dueDateLabel": "Due Date",
         "sortMode": "dateAscending",
-        "icon": "rate_review"
+        "icon": "rate_review",
+        "color": "0xFF2196F3"
     },
     {
         "name": "Saved",
@@ -82,7 +87,8 @@ final String listConfigJson = '''
         },
         "dueDateLabel": "Due Date",
         "sortMode": "dateAscending",
-        "icon": "bookmark"
+        "icon": "bookmark",
+        "color": "0xFF4CAF50"
     },
     {
         "name": "Trash",
@@ -96,7 +102,8 @@ final String listConfigJson = '''
         },
         "dueDateLabel": "Due Date",
         "sortMode": "dateAscending",
-        "icon": "delete"
+        "icon": "delete",
+        "color": "0xFFF44336"
     }
 ]
 ''';
@@ -124,3 +131,15 @@ final Map<String, IconData> iconMapForLists = {
   'inbox': Icons.inbox,
   'archive': Icons.archive,
 };
+
+// List of available colors for the settings dialog
+final List<Color> availableColors = [
+  Colors.blue,
+  Colors.green,
+  Colors.red,
+  Colors.orange,
+  Colors.purple,
+  Colors.teal,
+  Colors.pink,
+  Colors.amber,
+];
