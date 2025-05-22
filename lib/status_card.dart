@@ -276,18 +276,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Chevron for expanding/collapsing
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                  child: GestureDetector(
-                    onTap: _toggleExpanded,
-                    child: Icon(
-                      _isExpanded ? Icons.expand_less : Icons.expand_more,
-                      color: isDarkMode ? Colors.white70 : Colors.black87,
-                      size: 24.0,
-                    ),
-                  ),
-                ),
                 Expanded(
                   child: ReorderableDelayedDragStartListener(
                     index: widget.index,
