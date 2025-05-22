@@ -13,6 +13,7 @@ class StatusCard extends StatefulWidget {
   final String dueDateLabel;
   final Color listColor;
   final List<ListConfig> allConfigs;
+  final List<MapEntry<String, String>> cardIcons;
 
   const StatusCard({
     super.key,
@@ -25,6 +26,7 @@ class StatusCard extends StatefulWidget {
     required this.dueDateLabel,
     required this.listColor,
     required this.allConfigs,
+    required this.cardIcons,
   });
 
   @override
@@ -272,7 +274,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               height: _cardHeight ?? _defaultCardHeight,
               color: _getTargetColor('right'),
               child: TextButton(
-                onPressed: () => _triggerAction('right'),
+                onPressed: () {
+                  final targetUuid = widget.swipeActions['right'];
+                  if (targetUuid != null) _triggerAction('right');
+                },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -301,7 +306,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               height: _cardHeight ?? _defaultCardHeight,
               color: _getTargetColor('left'),
               child: TextButton(
-                onPressed: () => _triggerAction('left'),
+                onPressed: () {
+                  final targetUuid = widget.swipeActions['left'];
+                  if (targetUuid != null) _triggerAction('left');
+                },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -455,8 +463,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                           ),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.end,
-                                          children: widget.swipeActions.entries.map((entry) {
-                                            final action = entry.key;
+                                          children: widget.cardIcons.map((entry) {
+                                            final iconName = entry.key;
                                             final targetListUuid = entry.value;
                                             final targetConfig = widget.allConfigs.firstWhere(
                                               (config) => config.uuid == targetListUuid,
@@ -469,8 +477,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                             return IconButton(
                                               icon: Icon(icon),
                                               color: color,
-                                              iconSize: 48.0, // Doubled from default 24 to 48
-                                              onPressed: () => _triggerAction(action),
+                                              iconSize: 48.0,
+                                              onPressed: () => _triggerAction(targetListUuid),
                                             );
                                           }).toList(),
                                         ),

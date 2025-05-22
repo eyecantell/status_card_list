@@ -38,6 +38,7 @@ class StatusCardListExample extends StatelessWidget {
       dueDateLabel: listConfig.dueDateLabel,
       listColor: listConfig.color,
       allConfigs: allConfigs,
+      cardIcons: listConfig.cardIcons, // Pass cardIcons
     );
   }
 }

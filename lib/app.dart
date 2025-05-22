@@ -111,6 +111,7 @@ class _MyAppState extends State<MyApp> {
     for (var config in _listConfigs) {
       config.swipeActions.removeWhere((key, targetUuid) => !listUuids.contains(targetUuid));
       config.buttons.removeWhere((key, targetUuid) => !listUuids.contains(targetUuid));
+      config.cardIcons.removeWhere((entry) => !listUuids.contains(entry.value));
     }
   }
 

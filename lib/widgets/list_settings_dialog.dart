@@ -22,6 +22,7 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
   late String _swipeLeftTargetUuid;
   late String _swipeRightTargetUuid;
   late Color _selectedColor;
+  late List<MapEntry<String, String>> _selectedCardIcons;
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
     _swipeLeftTargetUuid = widget.listConfig.swipeActions['left'] ?? '';
     _swipeRightTargetUuid = widget.listConfig.swipeActions['right'] ?? '';
     _selectedColor = widget.listConfig.color;
+    _selectedCardIcons = List.from(widget.listConfig.cardIcons);
   }
 
   @override
@@ -119,6 +121,37 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
                 }
               },
             ),
+            const SizedBox(height: 16),
+            const Text('Icons to Show on Card (up to 5):'),
+            const SizedBox(height: 8),
+            ...widget.listConfig.buttons.entries.map((entry) {
+              final iconName = entry.key;
+              final targetUuid = entry.value;
+              final targetConfig = widget.allConfigs.firstWhere((config) => config.uuid == targetUuid);
+              final isSelected = _selectedCardIcons.any((e) => e.key == iconName && e.value == targetUuid);
+
+              return CheckboxListTile(
+                title: Row(
+                  children: [
+                    Icon(iconMap[iconName]),
+                    const SizedBox(width: 8),
+                    Text('To ${targetConfig.name}'),
+                  ],
+                ),
+                value: isSelected,
+                onChanged: (bool? value) {
+                  setState(() {
+                    if (value == true) {
+                      if (_selectedCardIcons.length < 5) {
+                        _selectedCardIcons.add(MapEntry(iconName, targetUuid));
+                      }
+                    } else {
+                      _selectedCardIcons.removeWhere((e) => e.key == iconName && e.value == targetUuid);
+                    }
+                  });
+                },
+              );
+            }).toList(),
           ],
         ),
       ),
@@ -133,6 +166,7 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             widget.listConfig.color = _selectedColor;
             widget.listConfig.swipeActions['left'] = _swipeLeftTargetUuid;
             widget.listConfig.swipeActions['right'] = _swipeRightTargetUuid;
+            widget.listConfig.cardIcons = _selectedCardIcons;
             widget.onSave(widget.listConfig);
             Navigator.pop(context);
           },

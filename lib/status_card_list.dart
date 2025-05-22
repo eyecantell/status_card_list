@@ -12,6 +12,7 @@ class StatusCardList extends StatelessWidget {
   final String dueDateLabel;
   final Color listColor;
   final List<ListConfig> allConfigs;
+  final List<MapEntry<String, String>> cardIcons; // New prop
 
   const StatusCardList({
     super.key,
@@ -23,6 +24,7 @@ class StatusCardList extends StatelessWidget {
     required this.dueDateLabel,
     required this.listColor,
     required this.allConfigs,
+    required this.cardIcons, // Add this to the constructor
   });
 
   @override
@@ -50,6 +52,7 @@ class StatusCardList extends StatelessWidget {
               dueDateLabel: dueDateLabel,
               listColor: listColor,
               allConfigs: allConfigs,
+              cardIcons: cardIcons, // Pass cardIcons
             ),
         ],
       ),
