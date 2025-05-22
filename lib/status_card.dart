@@ -305,6 +305,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                           children: [
                             Expanded(
                               child: GestureDetector(
+                                onTap: () {
+                                  if (_dragOffset == 0) {
+                                    _toggleExpanded();
+                                  }
+                                },
                                 onHorizontalDragUpdate: _handleDragUpdate,
                                 onHorizontalDragEnd: _handleDragEnd,
                                 child: Container(
