@@ -455,18 +455,22 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                           ),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.end,
-                                          children: widget.statusIcons.entries.map((entry) {
-                                            final action = widget.swipeActions.entries
-                                                .firstWhere(
-                                                  (e) => e.value == entry.key,
-                                                  orElse: () => const MapEntry('', ''),
-                                                )
-                                                .key;
+                                          children: widget.swipeActions.entries.map((entry) {
+                                            final action = entry.key;
+                                            final targetListUuid = entry.value;
+                                            final targetConfig = widget.allConfigs.firstWhere(
+                                              (config) => config.uuid == targetListUuid,
+                                              orElse: () => widget.allConfigs[0],
+                                            );
+                                            final targetName = targetConfig.name;
+                                            final icon = widget.statusIcons[targetName] ?? Icons.check;
+                                            final color = targetConfig.color;
+
                                             return IconButton(
-                                              icon: Icon(entry.value),
-                                              onPressed: () => _triggerAction(
-                                                action.isEmpty ? 'right' : action,
-                                              ),
+                                              icon: Icon(icon),
+                                              color: color,
+                                              iconSize: 48.0, // Doubled from default 24 to 48
+                                              onPressed: () => _triggerAction(action),
                                             );
                                           }).toList(),
                                         ),
