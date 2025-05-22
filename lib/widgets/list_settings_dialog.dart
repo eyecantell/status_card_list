@@ -19,16 +19,16 @@ class ListSettingsDialog extends StatefulWidget {
 
 class _ListSettingsDialogState extends State<ListSettingsDialog> {
   late IconData _selectedIcon;
-  late String _swipeLeftTarget;
-  late String _swipeRightTarget;
+  late String _swipeLeftTargetUuid;
+  late String _swipeRightTargetUuid;
   late Color _selectedColor;
 
   @override
   void initState() {
     super.initState();
     _selectedIcon = widget.listConfig.icon;
-    _swipeLeftTarget = widget.listConfig.swipeActions['left'] ?? '';
-    _swipeRightTarget = widget.listConfig.swipeActions['right'] ?? '';
+    _swipeLeftTargetUuid = widget.listConfig.swipeActions['left'] ?? '';
+    _swipeRightTargetUuid = widget.listConfig.swipeActions['right'] ?? '';
     _selectedColor = widget.listConfig.color;
   }
 
@@ -84,18 +84,18 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             const SizedBox(height: 16),
             const Text('Swipe Left Action:'),
             DropdownButton<String>(
-              value: _swipeLeftTarget,
+              value: _swipeLeftTargetUuid,
               isExpanded: true,
               items: widget.allConfigs.map((config) {
                 return DropdownMenuItem<String>(
-                  value: config.name,
+                  value: config.uuid,
                   child: Text(config.name),
                 );
               }).toList(),
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
-                    _swipeLeftTarget = value;
+                    _swipeLeftTargetUuid = value;
                   });
                 }
               },
@@ -103,18 +103,18 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             const SizedBox(height: 16),
             const Text('Swipe Right Action:'),
             DropdownButton<String>(
-              value: _swipeRightTarget,
+              value: _swipeRightTargetUuid,
               isExpanded: true,
               items: widget.allConfigs.map((config) {
                 return DropdownMenuItem<String>(
-                  value: config.name,
+                  value: config.uuid,
                   child: Text(config.name),
                 );
               }).toList(),
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
-                    _swipeRightTarget = value;
+                    _swipeRightTargetUuid = value;
                   });
                 }
               },
@@ -131,8 +131,8 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
           onPressed: () {
             widget.listConfig.icon = _selectedIcon;
             widget.listConfig.color = _selectedColor;
-            widget.listConfig.swipeActions['left'] = _swipeLeftTarget;
-            widget.listConfig.swipeActions['right'] = _swipeRightTarget;
+            widget.listConfig.swipeActions['left'] = _swipeLeftTargetUuid;
+            widget.listConfig.swipeActions['right'] = _swipeRightTargetUuid;
             widget.onSave(widget.listConfig);
             Navigator.pop(context);
           },

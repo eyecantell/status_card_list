@@ -19,16 +19,16 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.dark;
   late List<ListConfig> _listConfigs;
-  String _currentList = 'Review';
+  String _currentListUuid = '550e8400-e29b-41d4-a716-446655440000'; // UUID for Review
   late Map<String, List<Item>> _itemLists;
 
   @override
   void initState() {
     super.initState();
     _listConfigs = parseListConfigs(listConfigJson);
-    _sanitizeConfigs(); // Sanitize initial configs
+    _sanitizeConfigs();
     _itemLists = initializeItemLists(_listConfigs);
-    _sortItems(); // Initial sort
+    _sortItems();
   }
 
   void _toggleTheme() {
@@ -41,7 +41,7 @@ class _MyAppState extends State<MyApp> {
   void _setSortMode(SortMode newMode) {
     setState(() {
       final currentConfig =
-          _listConfigs.firstWhere((c) => c.name == _currentList);
+          _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
       currentConfig.sortMode = newMode;
       _sortItems();
     });
@@ -49,10 +49,10 @@ class _MyAppState extends State<MyApp> {
 
   void _sortItems() {
     final currentConfig =
-        _listConfigs.firstWhere((c) => c.name == _currentList);
+        _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
     if (currentConfig.sortMode == SortMode.manual) return;
 
-    final items = _itemLists[_currentList]!;
+    final items = _itemLists[_currentListUuid]!;
     switch (currentConfig.sortMode) {
       case SortMode.dateAscending:
         items.sort((a, b) => a.dueDate.compareTo(b.dueDate));
@@ -68,25 +68,27 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  void _updateStatus(BuildContext scaffoldContext, Item item, String targetList) {
+  void _updateStatus(BuildContext scaffoldContext, Item item, String targetListUuid) {
     setState(() {
-      final currentListItems = _itemLists[_currentList]!;
+      final currentListItems = _itemLists[_currentListUuid]!;
       currentListItems.remove(item);
-      if (_itemLists.containsKey(targetList)) {
-        _itemLists[targetList]!.add(item);
+      if (_itemLists.containsKey(targetListUuid)) {
+        _itemLists[targetListUuid]!.add(item);
       }
-      item.status = targetList.toLowerCase();
-      _sortItems(); // Re-sort after updating the list
+      final targetConfig = _listConfigs.firstWhere((c) => c.uuid == targetListUuid);
+      item.status = targetConfig.name.toLowerCase();
+      _sortItems();
     });
+    final targetConfig = _listConfigs.firstWhere((c) => c.uuid == targetListUuid);
     ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-      SnackBar(content: Text('${item.title} moved to $targetList')),
+      SnackBar(content: Text('${item.title} moved to ${targetConfig.name}')),
     );
   }
 
-  void _switchList(String listName) {
+  void _switchList(String listUuid) {
     setState(() {
-      _currentList = listName;
-      _sortItems(); // Sort the new list
+      _currentListUuid = listUuid;
+      _sortItems();
     });
   }
 
@@ -95,24 +97,20 @@ class _MyAppState extends State<MyApp> {
       if (oldIndex < newIndex) {
         newIndex -= 1;
       }
-      final Item item = _itemLists[_currentList]!.removeAt(oldIndex);
-      _itemLists[_currentList]!.insert(newIndex, item);
+      final Item item = _itemLists[_currentListUuid]!.removeAt(oldIndex);
+      _itemLists[_currentListUuid]!.insert(newIndex, item);
 
-      // Switch to manual sorting after reordering
       final currentConfig =
-          _listConfigs.firstWhere((c) => c.name == _currentList);
+          _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
       currentConfig.sortMode = SortMode.manual;
     });
   }
 
   void _sanitizeConfigs() {
-    // Validate and sanitize swipeActions and buttons
-    final listNames = _listConfigs.map((config) => config.name).toSet();
+    final listUuids = _listConfigs.map((config) => config.uuid).toSet();
     for (var config in _listConfigs) {
-      // Validate swipeActions
-      config.swipeActions.removeWhere((key, target) => !listNames.contains(target));
-      // Validate buttons
-      config.buttons.removeWhere((key, target) => !listNames.contains(target));
+      config.swipeActions.removeWhere((key, targetUuid) => !listUuids.contains(targetUuid));
+      config.buttons.removeWhere((key, targetUuid) => !listUuids.contains(targetUuid));
     }
   }
 
@@ -124,38 +122,30 @@ class _MyAppState extends State<MyApp> {
         allConfigs: _listConfigs,
         onSave: (updatedConfig) {
           setState(() {
-            // Update the config in _listConfigs
-            final index = _listConfigs.indexWhere((c) => c.name == updatedConfig.name);
+            final index = _listConfigs.indexWhere((c) => c.uuid == updatedConfig.uuid);
             _listConfigs[index] = updatedConfig;
-            _sanitizeConfigs(); // Sanitize after updating
+            _sanitizeConfigs();
           });
         },
       ),
     );
   }
 
-  // Example method to sync with API (not implemented, for illustration)
   Future<void> syncWithApi() async {
-    // Serialize to JSON
     List<Map<String, dynamic>> listConfigsJson = _listConfigs.map((config) => config.toJson()).toList();
     String jsonString = jsonEncode(listConfigsJson);
-
-    // TODO: Send jsonString to API (e.g., via HTTP POST)
-    // Example: await http.post(apiUrl, body: jsonString);
-
-    // Example: Receive updated configs from API
-    String apiResponse = jsonString; // Replace with actual API response
+    String apiResponse = jsonString;
     List<dynamic> jsonList = jsonDecode(apiResponse);
     setState(() {
       _listConfigs = jsonList.map((json) => ListConfig.fromJson(json)).toList();
-      _sanitizeConfigs(); // Sanitize after receiving from API
+      _sanitizeConfigs();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final currentConfig =
-        _listConfigs.firstWhere((c) => c.name == _currentList);
+        _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
 
     return MaterialApp(
       theme: lightTheme,
@@ -177,7 +167,7 @@ class _MyAppState extends State<MyApp> {
                       children: [
                         Icon(currentConfig.icon, color: currentConfig.color),
                         const SizedBox(width: 8),
-                        Text('$_currentList List'),
+                        Text('${currentConfig.name} List'),
                       ],
                     ),
                   ),
@@ -230,15 +220,15 @@ class _MyAppState extends State<MyApp> {
             ),
             drawer: DrawerMenu(
               listConfigs: _listConfigs,
-              currentList: _currentList,
+              currentListUuid: _currentListUuid,
               itemLists: _itemLists,
               onListSelected: _switchList,
             ),
             body: StatusCardListExample(
-              items: _itemLists[_currentList]!,
+              items: _itemLists[_currentListUuid]!,
               listConfig: currentConfig,
-              onStatusChanged: (item, targetList) =>
-                  _updateStatus(scaffoldContext, item, targetList),
+              onStatusChanged: (item, targetListUuid) =>
+                  _updateStatus(scaffoldContext, item, targetListUuid),
               onReorder: _reorderItems,
               allConfigs: _listConfigs,
             ),

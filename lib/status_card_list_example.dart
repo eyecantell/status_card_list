@@ -8,7 +8,7 @@ class StatusCardListExample extends StatelessWidget {
   final ListConfig listConfig;
   final Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
-  final List<ListConfig> allConfigs; // New field to pass all list configs
+  final List<ListConfig> allConfigs;
 
   const StatusCardListExample({
     super.key,
@@ -21,18 +21,23 @@ class StatusCardListExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Map buttons to use target list names for statusIcons, since statusIcons keys are names
+    final Map<String, IconData> statusIcons = {};
+    for (var entry in listConfig.buttons.entries) {
+      final targetUuid = entry.value;
+      final targetConfig = allConfigs.firstWhere((config) => config.uuid == targetUuid);
+      statusIcons[targetConfig.name] = iconMap[entry.key]!;
+    }
+
     return StatusCardList(
       items: items,
-      statusIcons: {
-        for (var entry in listConfig.buttons.entries)
-          entry.value: iconMap[entry.key]!,
-      },
+      statusIcons: statusIcons,
       swipeActions: listConfig.swipeActions,
       onStatusChanged: onStatusChanged,
       onReorder: onReorder,
       dueDateLabel: listConfig.dueDateLabel,
       listColor: listConfig.color,
-      allConfigs: allConfigs, // Pass all configs
+      allConfigs: allConfigs,
     );
   }
 }

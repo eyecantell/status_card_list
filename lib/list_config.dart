@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
 
 // Enum to represent sorting modes
 enum SortMode {
@@ -10,15 +11,17 @@ enum SortMode {
 }
 
 class ListConfig {
+  final String uuid; // New field for unique identifier
   final String name;
-  final Map<String, String> swipeActions;
-  final Map<String, String> buttons;
+  final Map<String, String> swipeActions; // Now maps to target UUIDs
+  final Map<String, String> buttons; // Now maps to target UUIDs
   final String dueDateLabel;
   SortMode sortMode;
   IconData icon;
   Color color;
 
   ListConfig({
+    String? uuid, // Allow passing a UUID, or generate one if null
     required this.name,
     required this.swipeActions,
     required this.buttons,
@@ -26,30 +29,29 @@ class ListConfig {
     required this.sortMode,
     required this.icon,
     required this.color,
-  });
+  }) : uuid = uuid ?? const Uuid().v4();
 
   factory ListConfig.fromJson(Map<String, dynamic> json) {
     // Parse color with validation
     Color parseColor(String? colorStr) {
       try {
-        if (colorStr == null) return Colors.blue; // Default fallback
+        if (colorStr == null) return Colors.blue;
         String hexStr = colorStr;
-        // Handle different formats
         if (hexStr.startsWith('#')) {
-          hexStr = '0xFF${hexStr.substring(1)}'; // Convert #FF2196F3 to 0xFFFF2196F3
+          hexStr = '0xFF${hexStr.substring(1)}';
         } else if (hexStr.startsWith('0x')) {
           // Already in the correct format
         } else {
-          hexStr = '0xFF$hexStr'; // Assume no prefix, e.g., "2196F3" -> "0xFF2196F3"
+          hexStr = '0xFF$hexStr';
         }
         return Color(int.parse(hexStr));
       } catch (e) {
-        // Log error in production, but for now return default
-        return Colors.blue; // Fallback
+        return Colors.blue;
       }
     }
 
     return ListConfig(
+      uuid: json['uuid'] as String,
       name: json['name'] as String,
       swipeActions: Map<String, String>.from(json['swipeActions']),
       buttons: Map<String, String>.from(json['buttons']),
@@ -65,6 +67,7 @@ class ListConfig {
 
   Map<String, dynamic> toJson() {
     return {
+      'uuid': uuid,
       'name': name,
       'swipeActions': swipeActions,
       'buttons': buttons,
@@ -81,14 +84,15 @@ class ListConfig {
 final String listConfigJson = '''
 [
     {
+        "uuid": "550e8400-e29b-41d4-a716-446655440000",
         "name": "Review",
         "swipeActions": {
-            "right": "Saved",
-            "left": "Trash"
+            "right": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "left": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
         },
         "buttons": {
-            "check_circle": "Saved",
-            "delete": "Trash"
+            "check_circle": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
+            "delete": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
         },
         "dueDateLabel": "Due Date",
         "sortMode": "dateAscending",
@@ -96,14 +100,15 @@ final String listConfigJson = '''
         "color": "0xFF2196F3"
     },
     {
+        "uuid": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11",
         "name": "Saved",
         "swipeActions": {
-            "right": "Review",
-            "left": "Trash"
+            "right": "550e8400-e29b-41d4-a716-446655440000",
+            "left": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
         },
         "buttons": {
-            "refresh": "Review",
-            "delete": "Trash"
+            "refresh": "550e8400-e29b-41d4-a716-446655440000",
+            "delete": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
         },
         "dueDateLabel": "Due Date",
         "sortMode": "dateAscending",
@@ -111,14 +116,15 @@ final String listConfigJson = '''
         "color": "0xFF4CAF50"
     },
     {
+        "uuid": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e",
         "name": "Trash",
         "swipeActions": {
-            "right": "Review",
-            "left": "Trash"
+            "right": "550e8400-e29b-41d4-a716-446655440000",
+            "left": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
         },
         "buttons": {
-            "refresh": "Review",
-            "delete_forever": "Trash"
+            "refresh": "550e8400-e29b-41d4-a716-446655440000",
+            "delete_forever": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
         },
         "dueDateLabel": "Due Date",
         "sortMode": "dateAscending",
@@ -140,7 +146,6 @@ final Map<String, IconData> iconMap = {
   'delete_forever': Icons.delete_forever,
 };
 
-// Map for list icons (used in settings dialog)
 final Map<String, IconData> iconMapForLists = {
   'list': Icons.list,
   'rate_review': Icons.rate_review,
@@ -152,7 +157,6 @@ final Map<String, IconData> iconMapForLists = {
   'archive': Icons.archive,
 };
 
-// List of available colors for the settings dialog
 final List<Color> availableColors = [
   Colors.blue,
   Colors.green,

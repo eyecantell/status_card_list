@@ -11,7 +11,7 @@ class StatusCard extends StatefulWidget {
   final Function(Item, String) onStatusChanged;
   final String dueDateLabel;
   final Color listColor;
-  final List<ListConfig> allConfigs; // New field to access all list configs
+  final List<ListConfig> allConfigs;
 
   const StatusCard({
     super.key,
@@ -143,8 +143,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _triggerAction(String action) {
-    final targetList = widget.swipeActions[action];
-    if (targetList != null) {
+    final targetListUuid = widget.swipeActions[action];
+    if (targetListUuid != null) {
       setState(() {
         _swipeState = null;
         _isActionTriggered = true;
@@ -153,7 +153,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           ? MediaQuery.of(context).size.width
           : -MediaQuery.of(context).size.width)
           .then((_) {
-        widget.onStatusChanged(widget.item, targetList);
+        widget.onStatusChanged(widget.item, targetListUuid);
       });
     }
   }
@@ -168,22 +168,34 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   Color _getTargetColor(String action) {
-    final targetListName = widget.swipeActions[action];
-    if (targetListName != null) {
+    final targetListUuid = widget.swipeActions[action];
+    if (targetListUuid != null) {
       final targetConfig = widget.allConfigs.firstWhere(
-        (config) => config.name == targetListName,
-        orElse: () => widget.allConfigs[0], // Fallback to first config if not found
+        (config) => config.uuid == targetListUuid,
+        orElse: () => widget.allConfigs[0],
       );
       return targetConfig.color;
     }
-    return widget.listColor; // Fallback to current list color if no target
+    return widget.listColor;
+  }
+
+  String _getTargetName(String action) {
+    final targetListUuid = widget.swipeActions[action];
+    if (targetListUuid != null) {
+      final targetConfig = widget.allConfigs.firstWhere(
+        (config) => config.uuid == targetListUuid,
+        orElse: () => widget.allConfigs[0],
+      );
+      return targetConfig.name;
+    }
+    return 'ACTION';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final rightList = widget.swipeActions['right'];
-    final leftList = widget.swipeActions['left'];
+    final rightListName = _getTargetName('right');
+    final leftListName = _getTargetName('left');
 
     return Stack(
       alignment: Alignment.center,
@@ -195,19 +207,19 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             child: Container(
               width: _buttonWidth,
               height: _cardHeight ?? _defaultCardHeight,
-              color: _getTargetColor('right'), // Use target list color for swipe right
+              color: _getTargetColor('right'),
               child: TextButton(
                 onPressed: () => _triggerAction('right'),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      rightList?.toUpperCase() ?? 'ACTION',
+                      rightListName.toUpperCase(),
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     Icon(
-                      widget.statusIcons[rightList] ?? Icons.check,
+                      widget.statusIcons[rightListName] ?? Icons.check,
                       color: Colors.white,
                       size: 36,
                     ),
@@ -224,19 +236,19 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             child: Container(
               width: _buttonWidth,
               height: _cardHeight ?? _defaultCardHeight,
-              color: _getTargetColor('left'), // Use target list color for swipe left
+              color: _getTargetColor('left'),
               child: TextButton(
                 onPressed: () => _triggerAction('left'),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      leftList?.toUpperCase() ?? 'ACTION',
+                      leftListName.toUpperCase(),
                       style: const TextStyle(color: Colors.white, fontSize: 16),
                     ),
                     const SizedBox(height: 8),
                     Icon(
-                      widget.statusIcons[leftList] ?? Icons.delete,
+                      widget.statusIcons[leftListName] ?? Icons.delete,
                       color: Colors.white,
                       size: 36,
                     ),

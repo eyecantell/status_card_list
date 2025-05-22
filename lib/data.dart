@@ -3,11 +3,11 @@ import 'list_config.dart';
 
 Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
   final Map<String, List<Item>> itemLists = {
-    for (var config in listConfigs) config.name: <Item>[],
+    for (var config in listConfigs) config.uuid: <Item>[],
   };
 
-  // Review List
-  itemLists['Review'] = [
+  // Review List (uuid: 550e8400-e29b-41d4-a716-446655440000)
+  itemLists['550e8400-e29b-41d4-a716-446655440000'] = [
     Item(
       id: '1',
       title: 'Task 1',
@@ -21,7 +21,7 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           <li>Conclusion</li>
         </ul>
       ''',
-      dueDate: DateTime(2025, 5, 21), // Today
+      dueDate: DateTime(2025, 5, 21),
     ),
     Item(
       id: '2',
@@ -45,7 +45,7 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           </tr>
         </table>
       ''',
-      dueDate: DateTime(2025, 5, 22), // Tomorrow
+      dueDate: DateTime(2025, 5, 22),
     ),
     Item(
       id: '3',
@@ -60,12 +60,12 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           <li>Next Steps</li>
         </ul>
       ''',
-      dueDate: DateTime(2025, 5, 24), // 3 days from today
+      dueDate: DateTime(2025, 5, 24),
     ),
   ];
 
-  // Saved List
-  itemLists['Saved'] = [
+  // Saved List (uuid: a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11)
+  itemLists['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'] = [
     Item(
       id: '4',
       title: 'Client Meeting Notes',
@@ -78,12 +78,12 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           <li>Schedule next meeting</li>
         </ul>
       ''',
-      dueDate: DateTime(2025, 5, 28), // 1 week from today
+      dueDate: DateTime(2025, 5, 28),
     ),
   ];
 
-  // Trash List
-  itemLists['Trash'] = [
+  // Trash List (uuid: c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e)
+  itemLists['c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e'] = [
     Item(
       id: '5',
       title: 'Old Draft',
@@ -96,7 +96,7 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           <li>Old data</li>
         </ul>
       ''',
-      dueDate: DateTime(2025, 5, 14), // 1 week before today
+      dueDate: DateTime(2025, 5, 14),
     ),
   ];
 

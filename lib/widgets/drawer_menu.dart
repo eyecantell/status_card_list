@@ -4,14 +4,14 @@ import '../list_config.dart';
 
 class DrawerMenu extends StatelessWidget {
   final List<ListConfig> listConfigs;
-  final String currentList;
+  final String currentListUuid;
   final Map<String, List<Item>> itemLists;
   final Function(String) onListSelected;
 
   const DrawerMenu({
     super.key,
     required this.listConfigs,
-    required this.currentList,
+    required this.currentListUuid,
     required this.itemLists,
     required this.onListSelected,
   });
@@ -34,7 +34,7 @@ class DrawerMenu extends StatelessWidget {
             ),
           ),
           ...listConfigs.map((config) {
-            final isSelected = currentList == config.name;
+            final isSelected = currentListUuid == config.uuid;
             return ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(4),
@@ -53,7 +53,7 @@ class DrawerMenu extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      '${config.name} (${itemLists[config.name]?.length ?? 0})',
+                      '${config.name} (${itemLists[config.uuid]?.length ?? 0})',
                       style: TextStyle(
                         color: isSelected
                             ? Theme.of(context).colorScheme.primary
@@ -68,7 +68,7 @@ class DrawerMenu extends StatelessWidget {
                   ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                   : null,
               onTap: () {
-                onListSelected(config.name);
+                onListSelected(config.uuid);
                 Navigator.pop(context);
               },
             );
