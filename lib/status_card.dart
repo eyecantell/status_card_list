@@ -9,6 +9,7 @@ class StatusCard extends StatefulWidget {
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
+  final Function(int, int) onReorder;
   final String dueDateLabel;
   final Color listColor;
   final List<ListConfig> allConfigs;
@@ -20,6 +21,7 @@ class StatusCard extends StatefulWidget {
     required this.statusIcons,
     required this.swipeActions,
     required this.onStatusChanged,
+    required this.onReorder,
     required this.dueDateLabel,
     required this.listColor,
     required this.allConfigs,
@@ -42,6 +44,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   bool _isActionTriggered = false;
   final GlobalKey _cardKey = GlobalKey();
   double? _cardHeight;
+  bool _isMouseDragging = false;
+  Offset _dragStartOffset = Offset.zero;
+  bool _isReordering = false;
+  double _verticalDragOffset = 0.0;
+  int _newIndex = -1;
 
   @override
   void initState() {
@@ -60,6 +67,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateCardHeight();
     });
+    _newIndex = widget.index;
   }
 
   @override
@@ -79,35 +87,48 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    setState(() {
-      _dragOffset += details.delta.dx;
-      _dragOffset = _dragOffset.clamp(-_maxDrag, _maxDrag);
-      if (_dragOffset > 0) {
-        _swipeState = 'right';
-      } else if (_dragOffset < 0) {
-        _swipeState = 'left';
-      } else {
-        _swipeState = null;
-      }
-    });
+    if (!_isReordering) {
+      setState(() {
+        _dragOffset += details.delta.dx;
+        _dragOffset = _dragOffset.clamp(-_maxDrag, _maxDrag);
+        if (_dragOffset > 0) {
+          _swipeState = 'right';
+        } else if (_dragOffset < 0) {
+          _swipeState = 'left';
+        } else {
+          _swipeState = null;
+        }
+      });
+    }
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    if (_dragOffset.abs() >= _maxDrag) {
-      final action = _dragOffset > 0 ? 'right' : 'left';
-      _triggerAction(action);
-    } else if (_dragOffset.abs() > _threshold) {
-      final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
-      _animation = Tween<double>(begin: _dragOffset, end: target)
-          .animate(_controller)
-        ..addListener(() {
-          setState(() {
-            _dragOffset = _animation.value;
-          });
-        });
-      _controller.forward(from: 0);
+    if (_isReordering) {
+      if (_newIndex != widget.index && _newIndex >= 0 && _newIndex < widget.allConfigs.length) {
+        widget.onReorder(widget.index, _newIndex);
+      }
+      setState(() {
+        _isReordering = false;
+        _verticalDragOffset = 0.0;
+        _isMouseDragging = false;
+      });
     } else {
-      _animateBack();
+      if (_dragOffset.abs() >= _maxDrag) {
+        final action = _dragOffset > 0 ? 'right' : 'left';
+        _triggerAction(action);
+      } else if (_dragOffset.abs() > _threshold) {
+        final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
+        _animation = Tween<double>(begin: _dragOffset, end: target)
+            .animate(_controller)
+          ..addListener(() {
+            setState(() {
+              _dragOffset = _animation.value;
+            });
+          });
+        _controller.forward(from: 0);
+      } else {
+        _animateBack();
+      }
     }
   }
 
@@ -165,6 +186,48 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _updateCardHeight();
       });
     });
+  }
+
+  void _handlePanStart(DragStartDetails details) {
+    setState(() {
+      _isMouseDragging = true;
+      _dragStartOffset = details.globalPosition;
+      _newIndex = widget.index;
+      _verticalDragOffset = 0.0;
+    });
+  }
+
+  void _handlePanUpdate(DragUpdateDetails details) {
+    if (!_isMouseDragging) return;
+
+    final currentOffset = details.globalPosition;
+    final deltaX = currentOffset.dx - _dragStartOffset.dx;
+    final deltaY = currentOffset.dy - _dragStartOffset.dy;
+
+    // Determine dominant direction
+    if (deltaX.abs() > deltaY.abs() && deltaX.abs() > 10.0) {
+      // Horizontal drag: Swipe
+      setState(() {
+        _isReordering = false;
+      });
+      _handleDragUpdate(details);
+    } else if (deltaY.abs() > 10.0) {
+      // Vertical drag: Reorder
+      setState(() {
+        _isReordering = true;
+        _verticalDragOffset += details.delta.dy;
+
+        // Calculate new index based on vertical drag
+        final cardHeight = _cardHeight ?? _defaultCardHeight;
+        final itemsCount = widget.allConfigs.length; // Approximation
+        final indexChange = (_verticalDragOffset / cardHeight).round();
+        _newIndex = (widget.index + indexChange).clamp(0, itemsCount - 1);
+      });
+    }
+  }
+
+  void _handlePanEnd(DragEndDetails details) {
+    _handleDragEnd(details);
   }
 
   Color _getTargetColor(String action) {
@@ -259,7 +322,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           ),
         ),
         Transform.translate(
-          offset: Offset(_dragOffset, 0),
+          offset: _isReordering
+              ? Offset(_dragOffset, _verticalDragOffset)
+              : Offset(_dragOffset, 0),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
@@ -267,7 +332,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(8),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+                  color: _isReordering
+                      ? Colors.black.withOpacity(isDarkMode ? 0.4 : 0.3)
+                      : Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -279,133 +346,137 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                 Expanded(
                   child: ReorderableDelayedDragStartListener(
                     index: widget.index,
-                    child: Card(
-                      key: _cardKey,
-                      margin: EdgeInsets.zero,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  if (_dragOffset == 0) {
-                                    _toggleExpanded();
-                                  }
-                                },
-                                onHorizontalDragUpdate: _handleDragUpdate,
-                                onHorizontalDragEnd: _handleDragEnd,
-                                child: Container(
-                                  color: Colors.transparent,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      ListTile(
-                                        title: Text(
-                                          widget.item.title,
-                                          style: Theme.of(context).textTheme.titleLarge,
-                                        ),
-                                        subtitle: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 4.0),
-                                              child: Text(
-                                                widget.item.subtitle,
-                                                style: Theme.of(context).textTheme.bodyMedium,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(top: 4.0),
-                                              child: Text(
-                                                '${widget.dueDateLabel}: ${widget.item.dueDate.toLocal().toString().split(' ')[0]}',
-                                                style: Theme.of(context).textTheme.bodyMedium,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                        contentPadding: EdgeInsets.zero,
-                                        dense: true,
-                                      ),
-                                      if (_isExpanded)
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16.0,
-                                            vertical: 8.0,
+                    child: MouseRegion(
+                      onEnter: (_) => setState(() => _isMouseDragging = false),
+                      child: GestureDetector(
+                        onTap: () {
+                          if (_dragOffset == 0 && !_isMouseDragging) {
+                            _toggleExpanded();
+                          }
+                        },
+                        onPanStart: _handlePanStart,
+                        onPanUpdate: _handlePanUpdate,
+                        onPanEnd: _handlePanEnd,
+                        child: Card(
+                          key: _cardKey,
+                          margin: EdgeInsets.zero,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    color: Colors.transparent,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        ListTile(
+                                          title: Text(
+                                            widget.item.title,
+                                            style: Theme.of(context).textTheme.titleLarge,
                                           ),
-                                          child: Html(
-                                            data: widget.item.html,
-                                            style: {
-                                              'h2': Style(
-                                                fontSize: FontSize(18.0),
-                                                fontWeight: FontWeight.bold,
-                                                margin: Margins.all(8.0),
-                                                color: isDarkMode
-                                                    ? Colors.white
-                                                    : Colors.black,
-                                              ),
-                                              'p': Style(
-                                                fontSize: FontSize(14.0),
-                                                margin: Margins.all(8.0),
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black87,
-                                              ),
-                                              'table': Style(
-                                                border: Border.all(
-                                                  color: isDarkMode
-                                                      ? Colors.grey[600]!
-                                                      : Colors.grey,
+                                          subtitle: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 4.0),
+                                                child: Text(
+                                                  widget.item.subtitle,
+                                                  style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                               ),
-                                              'th': Style(
-                                                backgroundColor: isDarkMode
-                                                    ? Colors.grey[700]
-                                                    : Colors.grey[200],
-                                                padding: HtmlPaddings.all(8.0),
-                                                fontWeight: FontWeight.bold,
-                                                color: isDarkMode
-                                                    ? Colors.white
-                                                    : Colors.black,
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 4.0),
+                                                child: Text(
+                                                  '${widget.dueDateLabel}: ${widget.item.dueDate.toLocal().toString().split(' ')[0]}',
+                                                  style: Theme.of(context).textTheme.bodyMedium,
+                                                ),
                                               ),
-                                              'td': Style(
-                                                padding: HtmlPaddings.all(8.0),
-                                                color: isDarkMode
-                                                    ? Colors.white70
-                                                    : Colors.black87,
-                                              ),
-                                            },
+                                            ],
                                           ),
+                                          contentPadding: EdgeInsets.zero,
+                                          dense: true,
                                         ),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: widget.statusIcons.entries.map((entry) {
-                                          final action = widget.swipeActions.entries
-                                              .firstWhere(
-                                                (e) => e.value == entry.key,
-                                                orElse: () => const MapEntry('', ''),
-                                              )
-                                              .key;
-                                          return IconButton(
-                                            icon: Icon(entry.value),
-                                            onPressed: () => _triggerAction(
-                                              action.isEmpty ? 'right' : action,
+                                        if (_isExpanded)
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 16.0,
+                                              vertical: 8.0,
                                             ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
+                                            child: Html(
+                                              data: widget.item.html,
+                                              style: {
+                                                'h2': Style(
+                                                  fontSize: FontSize(18.0),
+                                                  fontWeight: FontWeight.bold,
+                                                  margin: Margins.all(8.0),
+                                                  color: isDarkMode
+                                                      ? Colors.white
+                                                      : Colors.black,
+                                                ),
+                                                'p': Style(
+                                                  fontSize: FontSize(14.0),
+                                                  margin: Margins.all(8.0),
+                                                  color: isDarkMode
+                                                      ? Colors.white70
+                                                      : Colors.black87,
+                                                ),
+                                                'table': Style(
+                                                  border: Border.all(
+                                                    color: isDarkMode
+                                                        ? Colors.grey[600]!
+                                                        : Colors.grey,
+                                                  ),
+                                                ),
+                                                'th': Style(
+                                                  backgroundColor: isDarkMode
+                                                      ? Colors.grey[700]
+                                                      : Colors.grey[200],
+                                                  padding: HtmlPaddings.all(8.0),
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isDarkMode
+                                                      ? Colors.white
+                                                      : Colors.black,
+                                                ),
+                                                'td': Style(
+                                                  padding: HtmlPaddings.all(8.0),
+                                                  color: isDarkMode
+                                                      ? Colors.white70
+                                                      : Colors.black87,
+                                                ),
+                                              },
+                                            ),
+                                          ),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: widget.statusIcons.entries.map((entry) {
+                                            final action = widget.swipeActions.entries
+                                                .firstWhere(
+                                                  (e) => e.value == entry.key,
+                                                  orElse: () => const MapEntry('', ''),
+                                                )
+                                                .key;
+                                            return IconButton(
+                                              icon: Icon(entry.value),
+                                              onPressed: () => _triggerAction(
+                                                action.isEmpty ? 'right' : action,
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                     ),

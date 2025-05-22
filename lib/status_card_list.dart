@@ -30,7 +30,7 @@ class StatusCardList extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(iconTheme: Theme.of(context).iconTheme),
       child: ReorderableListView(
-        buildDefaultDragHandles: false, // Disable default drag handles
+        buildDefaultDragHandles: false,
         onReorder: onReorder,
         proxyDecorator: (child, index, animation) => Material(
           elevation: 4,
@@ -46,6 +46,7 @@ class StatusCardList extends StatelessWidget {
               statusIcons: statusIcons,
               swipeActions: swipeActions,
               onStatusChanged: onStatusChanged,
+              onReorder: onReorder,
               dueDateLabel: dueDateLabel,
               listColor: listColor,
               allConfigs: allConfigs,
