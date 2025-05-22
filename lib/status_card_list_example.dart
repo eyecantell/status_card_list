@@ -21,12 +21,12 @@ class StatusCardListExample extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Map buttons to use target list names for statusIcons, since statusIcons keys are names
+    // Map buttons to use target list icons for statusIcons
     final Map<String, IconData> statusIcons = {};
     for (var entry in listConfig.buttons.entries) {
       final targetUuid = entry.value;
       final targetConfig = allConfigs.firstWhere((config) => config.uuid == targetUuid);
-      statusIcons[targetConfig.name] = iconMap[entry.key]!;
+      statusIcons[targetConfig.name] = targetConfig.icon; // Use the target list's icon
     }
 
     return StatusCardList(
@@ -38,7 +38,7 @@ class StatusCardListExample extends StatelessWidget {
       dueDateLabel: listConfig.dueDateLabel,
       listColor: listConfig.color,
       allConfigs: allConfigs,
-      cardIcons: listConfig.cardIcons, // Pass cardIcons
+      cardIcons: listConfig.cardIcons,
     );
   }
 }
