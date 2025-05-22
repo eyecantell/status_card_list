@@ -25,6 +25,7 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _listConfigs = parseListConfigs(listConfigJson);
     _itemLists = initializeItemLists(_listConfigs);
+    _sortItems(); // Initial sort
   }
 
   void _toggleTheme() {
@@ -32,6 +33,36 @@ class _MyAppState extends State<MyApp> {
       _themeMode =
           _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     });
+  }
+
+  void _setSortMode(SortMode newMode) {
+    setState(() {
+      final currentConfig =
+          _listConfigs.firstWhere((c) => c.name == _currentList);
+      currentConfig.sortMode = newMode;
+      _sortItems();
+    });
+  }
+
+  void _sortItems() {
+    final currentConfig =
+        _listConfigs.firstWhere((c) => c.name == _currentList);
+    if (currentConfig.sortMode == SortMode.manual) return;
+
+    final items = _itemLists[_currentList]!;
+    switch (currentConfig.sortMode) {
+      case SortMode.dateAscending:
+        items.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        break;
+      case SortMode.dateDescending:
+        items.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+        break;
+      case SortMode.title:
+        items.sort((a, b) => a.title.compareTo(b.title));
+        break;
+      case SortMode.manual:
+        break;
+    }
   }
 
   void _updateStatus(BuildContext scaffoldContext, Item item, String targetList) {
@@ -42,6 +73,7 @@ class _MyAppState extends State<MyApp> {
         _itemLists[targetList]!.add(item);
       }
       item.status = targetList.toLowerCase();
+      _sortItems(); // Re-sort after updating the list
     });
     ScaffoldMessenger.of(scaffoldContext).showSnackBar(
       SnackBar(content: Text('${item.title} moved to $targetList')),
@@ -51,6 +83,7 @@ class _MyAppState extends State<MyApp> {
   void _switchList(String listName) {
     setState(() {
       _currentList = listName;
+      _sortItems(); // Sort the new list
     });
   }
 
@@ -61,11 +94,19 @@ class _MyAppState extends State<MyApp> {
       }
       final Item item = _itemLists[_currentList]!.removeAt(oldIndex);
       _itemLists[_currentList]!.insert(newIndex, item);
+
+      // Switch to manual sorting after reordering
+      final currentConfig =
+          _listConfigs.firstWhere((c) => c.name == _currentList);
+      currentConfig.sortMode = SortMode.manual;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentConfig =
+        _listConfigs.firstWhere((c) => c.name == _currentList);
+
     return MaterialApp(
       theme: lightTheme,
       darkTheme: darkTheme,
@@ -76,6 +117,36 @@ class _MyAppState extends State<MyApp> {
             appBar: AppBar(
               title: Text('$_currentList List'),
               actions: [
+                DropdownButton<SortMode>(
+                  value: currentConfig.sortMode,
+                  icon: const Icon(Icons.sort),
+                  onChanged: (SortMode? newValue) {
+                    if (newValue != null) {
+                      _setSortMode(newValue);
+                    }
+                  },
+                  items: SortMode.values.map((SortMode mode) {
+                    String label;
+                    switch (mode) {
+                      case SortMode.dateAscending:
+                        label = 'Date Ascending';
+                        break;
+                      case SortMode.dateDescending:
+                        label = 'Date Descending';
+                        break;
+                      case SortMode.title:
+                        label = 'Title';
+                        break;
+                      case SortMode.manual:
+                        label = 'Manual';
+                        break;
+                    }
+                    return DropdownMenuItem<SortMode>(
+                      value: mode,
+                      child: Text(label),
+                    );
+                  }).toList(),
+                ),
                 IconButton(
                   icon: Icon(
                     _themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
@@ -92,8 +163,9 @@ class _MyAppState extends State<MyApp> {
             ),
             body: StatusCardListExample(
               items: _itemLists[_currentList]!,
-              listConfig: _listConfigs.firstWhere((c) => c.name == _currentList),
-              onStatusChanged: (item, targetList) => _updateStatus(scaffoldContext, item, targetList),
+              listConfig: currentConfig,
+              onStatusChanged: (item, targetList) =>
+                  _updateStatus(scaffoldContext, item, targetList),
               onReorder: _reorderItems,
             ),
           );
