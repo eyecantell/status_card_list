@@ -5,11 +5,13 @@ class ListConfig {
   final String name;
   final Map<String, String> swipeActions;
   final Map<String, String> buttons;
+  final String dueDateLabel; // New field for configurable due date label
 
   ListConfig({
     required this.name,
     required this.swipeActions,
     required this.buttons,
+    required this.dueDateLabel,
   });
 
   factory ListConfig.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class ListConfig {
       name: json['name'] as String,
       swipeActions: Map<String, String>.from(json['swipeActions']),
       buttons: Map<String, String>.from(json['buttons']),
+      dueDateLabel: json['dueDateLabel'] as String? ?? 'Due Date', // Default to 'Due Date'
     );
   }
 }
@@ -32,7 +35,8 @@ final String listConfigJson = '''
         "buttons": {
             "check_circle": "Saved",
             "delete": "Trash"
-        }
+        },
+        "dueDateLabel": "Due Date"
     },
     {
         "name": "Saved",
@@ -43,7 +47,8 @@ final String listConfigJson = '''
         "buttons": {
             "refresh": "Review",
             "delete": "Trash"
-        }
+        },
+        "dueDateLabel": "Due Date"
     },
     {
         "name": "Trash",
@@ -54,7 +59,8 @@ final String listConfigJson = '''
         "buttons": {
             "refresh": "Review",
             "delete_forever": "Trash"
-        }
+        },
+        "dueDateLabel": "Due Date"
     }
 ]
 ''';

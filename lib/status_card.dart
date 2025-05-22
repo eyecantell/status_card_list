@@ -5,9 +5,10 @@ import 'item.dart';
 class StatusCard extends StatefulWidget {
   final Item item;
   final int index;
-  final Map<String, IconData> statusIcons; // Now maps list names to icons
-  final Map<String, String> swipeActions;  // Maps 'left'/'right' to list names
+  final Map<String, IconData> statusIcons;
+  final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
+  final String dueDateLabel;
 
   const StatusCard({
     super.key,
@@ -16,6 +17,7 @@ class StatusCard extends StatefulWidget {
     required this.statusIcons,
     required this.swipeActions,
     required this.onStatusChanged,
+    required this.dueDateLabel,
   });
 
   @override
@@ -143,9 +145,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _isActionTriggered = true;
       });
       _animateOffScreen(action == 'right'
-              ? MediaQuery.of(context).size.width
-              : -MediaQuery.of(context).size.width)
-          .then((_) {
+          ? MediaQuery.of(context).size.width
+          : -MediaQuery.of(context).size.width)
+        .then((_) {
         widget.onStatusChanged(widget.item, targetList);
       });
     }
@@ -282,12 +284,24 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                         widget.item.title,
                                         style: Theme.of(context).textTheme.titleLarge,
                                       ),
-                                      subtitle: Padding(
-                                        padding: const EdgeInsets.only(top: 4.0),
-                                        child: Text(
-                                          widget.item.subtitle,
-                                          style: Theme.of(context).textTheme.bodyMedium,
-                                        ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4.0),
+                                            child: Text(
+                                              widget.item.subtitle,
+                                              style: Theme.of(context).textTheme.bodyMedium,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4.0),
+                                            child: Text(
+                                              '${widget.dueDateLabel}: ${widget.item.dueDate.toLocal().toString().split(' ')[0]}',
+                                              style: Theme.of(context).textTheme.bodyMedium,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       contentPadding: EdgeInsets.zero,
                                       dense: true,
@@ -295,7 +309,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                     if (_isExpanded)
                                       Padding(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 16.0, vertical: 8.0),
+                                          horizontal: 16.0,
+                                          vertical: 8.0,
+                                        ),
                                         child: Html(
                                           data: widget.item.html,
                                           style: {
@@ -316,9 +332,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                             ),
                                             'table': Style(
                                               border: Border.all(
-                                                  color: isDarkMode
-                                                      ? Colors.grey[600]!
-                                                      : Colors.grey),
+                                                color: isDarkMode
+                                                    ? Colors.grey[600]!
+                                                    : Colors.grey,
+                                              ),
                                             ),
                                             'th': Style(
                                               backgroundColor: isDarkMode
@@ -344,13 +361,15 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                       children: widget.statusIcons.entries.map((entry) {
                                         final action = widget.swipeActions.entries
                                             .firstWhere(
-                                                (e) => e.value == entry.key,
-                                                orElse: () => const MapEntry('', ''))
+                                              (e) => e.value == entry.key,
+                                              orElse: () => const MapEntry('', ''),
+                                            )
                                             .key;
                                         return IconButton(
                                           icon: Icon(entry.value),
-                                          onPressed: () =>
-                                              _triggerAction(action.isEmpty ? 'right' : action),
+                                          onPressed: () => _triggerAction(
+                                            action.isEmpty ? 'right' : action,
+                                          ),
                                         );
                                       }).toList(),
                                     ),

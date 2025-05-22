@@ -7,7 +7,8 @@ class StatusCardList extends StatelessWidget {
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
   final Function(Item, String) onStatusChanged;
-  final Function(int, int) onReorder; // New callback
+  final Function(int, int) onReorder;
+  final String dueDateLabel; // New field to pass to StatusCard
 
   const StatusCardList({
     super.key,
@@ -16,6 +17,7 @@ class StatusCardList extends StatelessWidget {
     required this.swipeActions,
     required this.onStatusChanged,
     required this.onReorder,
+    required this.dueDateLabel,
   });
 
   @override
@@ -23,7 +25,7 @@ class StatusCardList extends StatelessWidget {
     return Theme(
       data: Theme.of(context).copyWith(iconTheme: Theme.of(context).iconTheme),
       child: ReorderableListView(
-        onReorder: onReorder, // Use the callback directly
+        onReorder: onReorder,
         proxyDecorator: (child, index, animation) => Material(
           elevation: 4,
           color: Theme.of(context).cardTheme.color,
@@ -38,6 +40,7 @@ class StatusCardList extends StatelessWidget {
               statusIcons: statusIcons,
               swipeActions: swipeActions,
               onStatusChanged: onStatusChanged,
+              dueDateLabel: dueDateLabel, // Pass the label to StatusCard
             ),
         ],
       ),

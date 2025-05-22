@@ -7,7 +7,7 @@ class StatusCardListExample extends StatelessWidget {
   final List<Item> items;
   final ListConfig listConfig;
   final Function(Item, String) onStatusChanged;
-  final Function(int, int) onReorder; // New callback
+  final Function(int, int) onReorder;
 
   const StatusCardListExample({
     super.key,
@@ -27,7 +27,8 @@ class StatusCardListExample extends StatelessWidget {
       },
       swipeActions: listConfig.swipeActions,
       onStatusChanged: onStatusChanged,
-      onReorder: onReorder, // Pass it through
+      onReorder: onReorder,
+      dueDateLabel: listConfig.dueDateLabel, // Pass the dueDateLabel from listConfig
     );
   }
 }

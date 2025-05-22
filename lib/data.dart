@@ -19,6 +19,7 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           <li>Conclusion</li>
         </ul>
       ''',
+      dueDate: DateTime(2025, 5, 21),
     ),
     Item(
       id: '2',
@@ -42,6 +43,7 @@ Map<String, List<Item>> initializeItemLists(List<ListConfig> listConfigs) {
           </tr>
         </table>
       ''',
+      dueDate: DateTime(2025, 5, 22),
     ),
   ];
   return itemLists;
