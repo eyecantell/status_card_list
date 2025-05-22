@@ -16,19 +16,6 @@ class DrawerMenu extends StatelessWidget {
     required this.onListSelected,
   });
 
-  IconData _getIconForList(String listName) {
-    switch (listName) {
-      case 'Review':
-        return Icons.rate_review;
-      case 'Saved':
-        return Icons.bookmark;
-      case 'Trash':
-        return Icons.delete;
-      default:
-        return Icons.list;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -50,7 +37,7 @@ class DrawerMenu extends StatelessWidget {
             final isSelected = currentList == config.name;
             return ListTile(
               leading: Icon(
-                _getIconForList(config.name),
+                config.icon, // Use the icon from ListConfig
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
                     : Theme.of(context).iconTheme.color,

@@ -14,7 +14,8 @@ class ListConfig {
   final Map<String, String> swipeActions;
   final Map<String, String> buttons;
   final String dueDateLabel;
-  SortMode sortMode; // New field for sort mode
+  SortMode sortMode;
+  IconData icon; // New field for list icon
 
   ListConfig({
     required this.name,
@@ -22,6 +23,7 @@ class ListConfig {
     required this.buttons,
     required this.dueDateLabel,
     required this.sortMode,
+    required this.icon,
   });
 
   factory ListConfig.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class ListConfig {
         (e) => e.toString() == 'SortMode.${json['sortMode']}',
         orElse: () => SortMode.dateAscending,
       ),
+      icon: iconMapForLists[json['icon']] ?? Icons.list,
     );
   }
 
@@ -44,6 +47,9 @@ class ListConfig {
       'buttons': buttons,
       'dueDateLabel': dueDateLabel,
       'sortMode': sortMode.toString().split('.').last,
+      'icon': iconMapForLists.entries
+          .firstWhere((entry) => entry.value == icon, orElse: () => MapEntry('list', Icons.list))
+          .key,
     };
   }
 }
@@ -61,7 +67,8 @@ final String listConfigJson = '''
             "delete": "Trash"
         },
         "dueDateLabel": "Due Date",
-        "sortMode": "dateAscending"
+        "sortMode": "dateAscending",
+        "icon": "rate_review"
     },
     {
         "name": "Saved",
@@ -74,7 +81,8 @@ final String listConfigJson = '''
             "delete": "Trash"
         },
         "dueDateLabel": "Due Date",
-        "sortMode": "dateAscending"
+        "sortMode": "dateAscending",
+        "icon": "bookmark"
     },
     {
         "name": "Trash",
@@ -87,7 +95,8 @@ final String listConfigJson = '''
             "delete_forever": "Trash"
         },
         "dueDateLabel": "Due Date",
-        "sortMode": "dateAscending"
+        "sortMode": "dateAscending",
+        "icon": "delete"
     }
 ]
 ''';
@@ -102,4 +111,16 @@ final Map<String, IconData> iconMap = {
   'delete': Icons.delete,
   'refresh': Icons.refresh,
   'delete_forever': Icons.delete_forever,
+};
+
+// Map for list icons (used in settings dialog)
+final Map<String, IconData> iconMapForLists = {
+  'list': Icons.list,
+  'rate_review': Icons.rate_review,
+  'bookmark': Icons.bookmark,
+  'delete': Icons.delete,
+  'folder': Icons.folder,
+  'star': Icons.star,
+  'inbox': Icons.inbox,
+  'archive': Icons.archive,
 };

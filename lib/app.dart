@@ -3,6 +3,7 @@ import 'data.dart';
 import 'theme_config.dart';
 import 'status_card_list_example.dart';
 import 'widgets/drawer_menu.dart';
+import 'widgets/list_settings_dialog.dart';
 import 'item.dart';
 import 'status_card_list.dart';
 import 'list_config.dart';
@@ -102,6 +103,23 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void _showSettingsDialog(BuildContext context, ListConfig config) {
+    showDialog(
+      context: context,
+      builder: (context) => ListSettingsDialog(
+        listConfig: config,
+        allConfigs: _listConfigs,
+        onSave: (updatedConfig) {
+          setState(() {
+            // Update the config in _listConfigs
+            final index = _listConfigs.indexWhere((c) => c.name == updatedConfig.name);
+            _listConfigs[index] = updatedConfig;
+          });
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentConfig =
@@ -115,7 +133,19 @@ class _MyAppState extends State<MyApp> {
         builder: (BuildContext scaffoldContext) {
           return Scaffold(
             appBar: AppBar(
-              title: Text('$_currentList List'),
+              title: Row(
+                children: [
+                  Icon(currentConfig.icon),
+                  const SizedBox(width: 8),
+                  Text('$_currentList List'),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.settings),
+                    onPressed: () => _showSettingsDialog(scaffoldContext, currentConfig),
+                    tooltip: 'List Settings',
+                  ),
+                ],
+              ),
               actions: [
                 DropdownButton<SortMode>(
                   value: currentConfig.sortMode,
