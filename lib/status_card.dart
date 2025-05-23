@@ -553,14 +553,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                           ],
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8.0),
-                        child: Icon(
-                          Icons.drag_handle,
-                          color: isDarkMode ? Colors.white70 : Colors.black54,
-                          size: 24.0,
-                        ),
-                      ),
                     ],
                   ),
                 ),

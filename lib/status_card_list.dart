@@ -54,6 +54,7 @@ class _StatusCardListState extends State<StatusCardList> {
         child: ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
+          buildDefaultDragHandles: false, // Disable default drag handle
           onReorder: (oldIndex, newIndex) {
             print('Reordering from $oldIndex to $newIndex'); // Debug log
             widget.onReorder(oldIndex, newIndex);
@@ -78,23 +79,26 @@ class _StatusCardListState extends State<StatusCardList> {
           },
           children: [
             for (int index = 0; index < widget.items.length; index++)
-              StatusCard(
+              ReorderableDelayedDragStartListener(
                 key: ValueKey(widget.items[index].id),
-                item: widget.items[index],
                 index: index,
-                statusIcons: widget.statusIcons,
-                swipeActions: widget.swipeActions,
-                onStatusChanged: widget.onStatusChanged,
-                onReorder: widget.onReorder,
-                dueDateLabel: widget.dueDateLabel,
-                listColor: widget.listColor,
-                allConfigs: widget.allConfigs,
-                cardIcons: widget.cardIcons,
-                itemMap: widget.itemMap,
-                itemLists: widget.itemLists,
-                onNavigateToItem: widget.onNavigateToItem,
-                isExpanded: widget.expandedItemId == widget.items[index].id,
-                isNavigated: widget.navigatedItemId == widget.items[index].id,
+                child: StatusCard(
+                  item: widget.items[index],
+                  index: index,
+                  statusIcons: widget.statusIcons,
+                  swipeActions: widget.swipeActions,
+                  onStatusChanged: widget.onStatusChanged,
+                  onReorder: widget.onReorder,
+                  dueDateLabel: widget.dueDateLabel,
+                  listColor: widget.listColor,
+                  allConfigs: widget.allConfigs,
+                  cardIcons: widget.cardIcons,
+                  itemMap: widget.itemMap,
+                  itemLists: widget.itemLists,
+                  onNavigateToItem: widget.onNavigateToItem,
+                  isExpanded: widget.expandedItemId == widget.items[index].id,
+                  isNavigated: widget.navigatedItemId == widget.items[index].id,
+                ),
               ),
           ],
         ),
