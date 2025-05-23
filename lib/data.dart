@@ -31,7 +31,7 @@ class Data {
           </ul>
         ''',
         dueDate: DateTime(2025, 5, 21),
-        status: 'review',
+        status: 'Open',
       ),
       Item(
         id: '2',
@@ -56,7 +56,7 @@ class Data {
           </table>
         ''',
         dueDate: DateTime(2025, 5, 22),
-        status: 'review',
+        status: 'Open',
       ),
       Item(
         id: '3',
@@ -72,7 +72,7 @@ class Data {
           </ul>
         ''',
         dueDate: DateTime(2025, 5, 24),
-        status: 'review',
+        status: 'Open',
       ),
       Item(
         id: '4',
@@ -87,7 +87,7 @@ class Data {
           </ul>
         ''',
         dueDate: DateTime(2025, 5, 28),
-        status: 'saved',
+        status: 'Awarded',
       ),
       Item(
         id: '5',
@@ -102,7 +102,7 @@ class Data {
           </ul>
         ''',
         dueDate: DateTime(2025, 5, 14),
-        status: 'trash',
+        status: 'Expired',
       ),
     ];
 

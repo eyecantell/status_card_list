@@ -165,19 +165,17 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _triggerAction({String? action, String? targetListUuid}) {
-    // Determine targetListUuid: either from swipeActions (if action is provided) or directly passed
     targetListUuid = targetListUuid ?? (action != null ? widget.swipeActions[action] : null);
     if (targetListUuid != null) {
       setState(() {
         _swipeState = null;
         _isActionTriggered = true;
       });
-      // Determine animation direction: use action if provided, otherwise default to right for card icon actions
       final animationDirection = action == 'right'
           ? MediaQuery.of(context).size.width
           : action == 'left'
               ? -MediaQuery.of(context).size.width
-              : MediaQuery.of(context).size.width; // Default to right for card icons
+              : MediaQuery.of(context).size.width;
       _animateOffScreen(animationDirection).then((_) {
         widget.onStatusChanged(widget.item, targetListUuid!);
       });
@@ -252,7 +250,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       );
       return targetConfig.icon;
     }
-    return widget.allConfigs[0].icon; // Fallback to first config's icon
+    return widget.allConfigs[0].icon;
   }
 
   String _getTargetName(String action) {
@@ -265,6 +263,28 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       return targetConfig.name;
     }
     return 'ACTION';
+  }
+
+  String _formatDueDateAndDays(DateTime dueDate) {
+    final today = DateTime(2025, 5, 22); // Current date based on system info
+    final difference = dueDate.difference(today).inDays;
+    String daysText;
+
+    if (difference == 0) {
+      daysText = 'today';
+    } else if (difference == 1) {
+      daysText = 'tomorrow';
+    } else if (difference == -1) {
+      daysText = 'yesterday';
+    } else if (difference > 0) {
+      daysText = 'in $difference days';
+    } else {
+      daysText = '${-difference} days ago';
+    }
+
+    final formattedDate =
+        '${dueDate.month}/${dueDate.day}/${dueDate.year}';
+    return '${widget.dueDateLabel}: $formattedDate ($daysText)';
   }
 
   @override
@@ -406,14 +426,14 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                               Padding(
                                                 padding: const EdgeInsets.only(top: 4.0),
                                                 child: Text(
-                                                  widget.item.subtitle,
+                                                  'Status: ${widget.item.status}',
                                                   style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                               ),
                                               Padding(
                                                 padding: const EdgeInsets.only(top: 4.0),
                                                 child: Text(
-                                                  '${widget.dueDateLabel}: ${widget.item.dueDate.toLocal().toString().split(' ')[0]}',
+                                                  _formatDueDateAndDays(widget.item.dueDate),
                                                   style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                               ),

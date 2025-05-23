@@ -71,7 +71,7 @@ class _MyAppState extends State<MyApp> {
         _data.itemLists[targetListUuid]!.add(item.id);
       }
       final targetConfig = _data.listConfigs.firstWhere((c) => c.uuid == targetListUuid);
-      item.status = targetConfig.name.toLowerCase();
+      // Removed: item.status = targetConfig.name.toLowerCase();
       _sortItems();
       ScaffoldMessenger.of(scaffoldContext).showSnackBar(
         SnackBar(content: Text('${item.title} moved to ${targetConfig.name}')),
