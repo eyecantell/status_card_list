@@ -116,7 +116,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     } else {
       if (_dragOffset.abs() >= _maxDrag) {
         final action = _dragOffset > 0 ? 'right' : 'left';
-        _triggerAction(action);
+        _triggerAction(action: action);
       } else if (_dragOffset.abs() > _threshold) {
         final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
         _animation = Tween<double>(begin: _dragOffset, end: target)
@@ -164,18 +164,22 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     });
   }
 
-  void _triggerAction(String action) {
-    final targetListUuid = widget.swipeActions[action];
+  void _triggerAction({String? action, String? targetListUuid}) {
+    // Determine targetListUuid: either from swipeActions (if action is provided) or directly passed
+    targetListUuid = targetListUuid ?? (action != null ? widget.swipeActions[action] : null);
     if (targetListUuid != null) {
       setState(() {
         _swipeState = null;
         _isActionTriggered = true;
       });
-      _animateOffScreen(action == 'right'
+      // Determine animation direction: use action if provided, otherwise default to right for card icon actions
+      final animationDirection = action == 'right'
           ? MediaQuery.of(context).size.width
-          : -MediaQuery.of(context).size.width)
-          .then((_) {
-        widget.onStatusChanged(widget.item, targetListUuid);
+          : action == 'left'
+              ? -MediaQuery.of(context).size.width
+              : MediaQuery.of(context).size.width; // Default to right for card icons
+      _animateOffScreen(animationDirection).then((_) {
+        widget.onStatusChanged(widget.item, targetListUuid!);
       });
     }
   }
@@ -283,7 +287,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               child: TextButton(
                 onPressed: () {
                   final targetUuid = widget.swipeActions['right'];
-                  if (targetUuid != null) _triggerAction('right');
+                  if (targetUuid != null) _triggerAction(action: 'right');
                 },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -315,7 +319,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               child: TextButton(
                 onPressed: () {
                   final targetUuid = widget.swipeActions['left'];
-                  if (targetUuid != null) _triggerAction('left');
+                  if (targetUuid != null) _triggerAction(action: 'left');
                 },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -468,27 +472,26 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                               },
                                             ),
                                           ),
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
-                                          children: widget.cardIcons.map((entry) {
-                                            final iconName = entry.key;
-                                            final targetListUuid = entry.value;
-                                            final targetConfig = widget.allConfigs.firstWhere(
-                                              (config) => config.uuid == targetListUuid,
-                                              orElse: () => widget.allConfigs[0],
-                                            );
-                                            final targetName = targetConfig.name;
-                                            final icon = targetConfig.icon; // Use target list's icon
-                                            final color = targetConfig.color;
+                                        if (widget.cardIcons.isNotEmpty)
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: widget.cardIcons.map((entry) {
+                                              final targetListUuid = entry.value;
+                                              final targetConfig = widget.allConfigs.firstWhere(
+                                                (config) => config.uuid == targetListUuid,
+                                                orElse: () => widget.allConfigs[0],
+                                              );
+                                              final icon = targetConfig.icon;
+                                              final color = targetConfig.color;
 
-                                            return IconButton(
-                                              icon: Icon(icon),
-                                              color: color,
-                                              iconSize: 48.0,
-                                              onPressed: () => _triggerAction(targetListUuid),
-                                            );
-                                          }).toList(),
-                                        ),
+                                              return IconButton(
+                                                icon: Icon(icon),
+                                                color: color,
+                                                iconSize: 48.0,
+                                                onPressed: () => _triggerAction(targetListUuid: targetListUuid),
+                                              );
+                                            }).toList(),
+                                          ),
                                       ],
                                     ),
                                   ),
