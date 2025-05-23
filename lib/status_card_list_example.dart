@@ -13,7 +13,8 @@ class StatusCardListExample extends StatelessWidget {
   final Map<String, List<String>> itemLists;
   final Function(String, String) onNavigateToItem;
   final String? expandedItemId;
-  final String? navigatedItemId; // Added
+  final String? navigatedItemId;
+  final ScrollController? scrollController; // Added
 
   const StatusCardListExample({
     super.key,
@@ -26,7 +27,8 @@ class StatusCardListExample extends StatelessWidget {
     required this.itemLists,
     required this.onNavigateToItem,
     required this.expandedItemId,
-    required this.navigatedItemId, // Added
+    required this.navigatedItemId,
+    this.scrollController, // Added
   });
 
   @override
@@ -52,7 +54,8 @@ class StatusCardListExample extends StatelessWidget {
       itemLists: itemLists,
       onNavigateToItem: onNavigateToItem,
       expandedItemId: expandedItemId,
-      navigatedItemId: navigatedItemId, // Added
+      navigatedItemId: navigatedItemId,
+      scrollController: scrollController, // Added
     );
   }
 }

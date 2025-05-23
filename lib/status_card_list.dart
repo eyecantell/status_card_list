@@ -17,7 +17,8 @@ class StatusCardList extends StatelessWidget {
   final Map<String, List<String>> itemLists;
   final Function(String, String) onNavigateToItem;
   final String? expandedItemId;
-  final String? navigatedItemId; // Added
+  final String? navigatedItemId;
+  final ScrollController? scrollController; // Added
 
   const StatusCardList({
     super.key,
@@ -34,42 +35,47 @@ class StatusCardList extends StatelessWidget {
     required this.itemLists,
     required this.onNavigateToItem,
     required this.expandedItemId,
-    required this.navigatedItemId, // Added
+    required this.navigatedItemId,
+    this.scrollController, // Added
   });
 
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(iconTheme: Theme.of(context).iconTheme),
-      child: ReorderableListView(
-        buildDefaultDragHandles: false,
-        onReorder: onReorder,
-        proxyDecorator: (child, index, animation) => Material(
-          elevation: 4,
-          color: Theme.of(context).cardTheme.color,
-          child: child,
+      child: SingleChildScrollView(
+        controller: scrollController, // Added
+        child: ReorderableListView(
+          shrinkWrap: true, // Added to ensure proper sizing
+          buildDefaultDragHandles: false,
+          onReorder: onReorder,
+          proxyDecorator: (child, index, animation) => Material(
+            elevation: 4,
+            color: Theme.of(context).cardTheme.color,
+            child: child,
+          ),
+          children: [
+            for (int index = 0; index < items.length; index++)
+              StatusCard(
+                key: ValueKey(items[index].id),
+                item: items[index],
+                index: index,
+                statusIcons: statusIcons,
+                swipeActions: swipeActions,
+                onStatusChanged: onStatusChanged,
+                onReorder: onReorder,
+                dueDateLabel: dueDateLabel,
+                listColor: listColor,
+                allConfigs: allConfigs,
+                cardIcons: cardIcons,
+                itemMap: itemMap,
+                itemLists: itemLists,
+                onNavigateToItem: onNavigateToItem,
+                isExpanded: expandedItemId == items[index].id,
+                isNavigated: navigatedItemId == items[index].id,
+              ),
+          ],
         ),
-        children: [
-          for (int index = 0; index < items.length; index++)
-            StatusCard(
-              key: ValueKey(items[index].id),
-              item: items[index],
-              index: index,
-              statusIcons: statusIcons,
-              swipeActions: swipeActions,
-              onStatusChanged: onStatusChanged,
-              onReorder: onReorder,
-              dueDateLabel: dueDateLabel,
-              listColor: listColor,
-              allConfigs: allConfigs,
-              cardIcons: cardIcons,
-              itemMap: itemMap,
-              itemLists: itemLists,
-              onNavigateToItem: onNavigateToItem,
-              isExpanded: expandedItemId == items[index].id,
-              isNavigated: navigatedItemId == items[index].id, // Added
-            ),
-        ],
       ),
     );
   }

@@ -22,6 +22,7 @@ class _MyAppState extends State<MyApp> {
   String _currentListUuid = '550e8400-e29b-41d4-a716-446655440000'; // Review
   String? _expandedItemId; // Tracks expanded item
   String? _navigatedItemId; // Tracks navigated item for highlight
+  final ScrollController _scrollController = ScrollController(); // Added
 
   @override
   void initState() {
@@ -29,6 +30,12 @@ class _MyAppState extends State<MyApp> {
     _data = Data.initialize();
     _sanitizeConfigs();
     _sortItems();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose(); // Added
+    super.dispose();
   }
 
   void _toggleTheme() {
@@ -100,6 +107,23 @@ class _MyAppState extends State<MyApp> {
     ScaffoldMessenger.of(scaffoldContext).showSnackBar(
       SnackBar(content: Text('Navigated to ${targetConfig.name}')),
     );
+    // Scroll to the item
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentItems = _data.itemLists[_currentListUuid]!.map((uuid) => _data.itemMap[uuid]!).toList();
+      final targetIndex = currentItems.indexWhere((item) => item.id == itemId);
+      if (targetIndex >= 0) {
+        // Approximate card height: 165 for collapsed, 300+ for expanded
+        double offset = targetIndex * 165.0; // Base height
+        if (_expandedItemId == itemId) {
+          offset += 135.0; // Additional height for expanded content
+        }
+        _scrollController.animateTo(
+          offset,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   void _reorderItems(int oldIndex, int newIndex) {
@@ -293,7 +317,8 @@ class _MyAppState extends State<MyApp> {
               itemLists: _data.itemLists,
               onNavigateToItem: (targetListUuid, itemId) => _navigateToItem(scaffoldContext, targetListUuid, itemId),
               expandedItemId: _expandedItemId,
-              navigatedItemId: _navigatedItemId, // Added
+              navigatedItemId: _navigatedItemId,
+              scrollController: _scrollController, // Added
             ),
           );
         },
