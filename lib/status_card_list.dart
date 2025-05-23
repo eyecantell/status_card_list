@@ -3,7 +3,7 @@ import 'package:status_card_list/list_config.dart';
 import 'item.dart';
 import 'status_card.dart';
 
-class StatusCardList extends StatelessWidget {
+class StatusCardList extends StatefulWidget {
   final List<Item> items;
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
@@ -18,7 +18,7 @@ class StatusCardList extends StatelessWidget {
   final Function(String, String) onNavigateToItem;
   final String? expandedItemId;
   final String? navigatedItemId;
-  final ScrollController? scrollController; // Added
+  final ScrollController? scrollController;
 
   const StatusCardList({
     super.key,
@@ -36,43 +36,65 @@ class StatusCardList extends StatelessWidget {
     required this.onNavigateToItem,
     required this.expandedItemId,
     required this.navigatedItemId,
-    this.scrollController, // Added
+    this.scrollController,
   });
 
+  @override
+  State<StatusCardList> createState() => _StatusCardListState();
+}
+
+class _StatusCardListState extends State<StatusCardList> {
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: Theme.of(context).copyWith(iconTheme: Theme.of(context).iconTheme),
       child: SingleChildScrollView(
-        controller: scrollController, // Added
+        controller: widget.scrollController,
+        physics: const ClampingScrollPhysics(),
         child: ReorderableListView(
-          shrinkWrap: true, // Added to ensure proper sizing
-          buildDefaultDragHandles: false,
-          onReorder: onReorder,
-          proxyDecorator: (child, index, animation) => Material(
-            elevation: 4,
-            color: Theme.of(context).cardTheme.color,
-            child: child,
-          ),
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          onReorder: (oldIndex, newIndex) {
+            print('Reordering from $oldIndex to $newIndex'); // Debug log
+            widget.onReorder(oldIndex, newIndex);
+          },
+          proxyDecorator: (child, index, animation) {
+            return Material(
+              elevation: 4.0,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                width: MediaQuery.of(context).size.width - 32,
+                padding: const EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardTheme.color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.items[index].title,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+            );
+          },
           children: [
-            for (int index = 0; index < items.length; index++)
+            for (int index = 0; index < widget.items.length; index++)
               StatusCard(
-                key: ValueKey(items[index].id),
-                item: items[index],
+                key: ValueKey(widget.items[index].id),
+                item: widget.items[index],
                 index: index,
-                statusIcons: statusIcons,
-                swipeActions: swipeActions,
-                onStatusChanged: onStatusChanged,
-                onReorder: onReorder,
-                dueDateLabel: dueDateLabel,
-                listColor: listColor,
-                allConfigs: allConfigs,
-                cardIcons: cardIcons,
-                itemMap: itemMap,
-                itemLists: itemLists,
-                onNavigateToItem: onNavigateToItem,
-                isExpanded: expandedItemId == items[index].id,
-                isNavigated: navigatedItemId == items[index].id,
+                statusIcons: widget.statusIcons,
+                swipeActions: widget.swipeActions,
+                onStatusChanged: widget.onStatusChanged,
+                onReorder: widget.onReorder,
+                dueDateLabel: widget.dueDateLabel,
+                listColor: widget.listColor,
+                allConfigs: widget.allConfigs,
+                cardIcons: widget.cardIcons,
+                itemMap: widget.itemMap,
+                itemLists: widget.itemLists,
+                onNavigateToItem: widget.onNavigateToItem,
+                isExpanded: widget.expandedItemId == widget.items[index].id,
+                isNavigated: widget.navigatedItemId == widget.items[index].id,
               ),
           ],
         ),

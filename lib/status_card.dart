@@ -19,7 +19,7 @@ class StatusCard extends StatefulWidget {
   final Map<String, List<String>> itemLists;
   final Function(String, String) onNavigateToItem;
   final bool isExpanded;
-  final bool isNavigated; // Added for highlight effect
+  final bool isNavigated;
 
   const StatusCard({
     super.key,
@@ -37,7 +37,7 @@ class StatusCard extends StatefulWidget {
     required this.itemLists,
     required this.onNavigateToItem,
     this.isExpanded = false,
-    this.isNavigated = false, // Default to false
+    this.isNavigated = false,
   });
 
   @override
@@ -49,8 +49,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   String? _swipeState;
   late AnimationController _controller;
   late Animation<double> _animation;
-  late AnimationController _highlightController; // Added for highlight
-  late Animation<double> _highlightAnimation; // Added for highlight
+  late AnimationController _highlightController;
+  late Animation<double> _highlightAnimation;
   static const double _maxDrag = 150.0;
   static const double _buttonWidth = 100.0;
   static const double _threshold = 90.0;
@@ -59,11 +59,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   bool _isActionTriggered = false;
   final GlobalKey _cardKey = GlobalKey();
   double? _cardHeight;
-  bool _isMouseDragging = false;
-  Offset _dragStartOffset = Offset.zero;
-  bool _isReordering = false;
-  double _verticalDragOffset = 0.0;
-  int _newIndex = -1;
 
   @override
   void initState() {
@@ -80,7 +75,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         });
       });
 
-    // Initialize highlight animation
     _highlightController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -91,10 +85,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         curve: Curves.easeOut,
       ),
     )..addListener(() {
-        setState(() {}); // Trigger rebuild for highlight fade
+        setState(() {});
       });
 
-    // Start highlight animation if navigated and expanded
     if (widget.isNavigated && widget.isExpanded) {
       _highlightController.forward();
     }
@@ -102,7 +95,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateCardHeight();
     });
-    _newIndex = widget.index;
   }
 
   @override
@@ -113,7 +105,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _isExpanded = widget.isExpanded;
       });
     }
-    // Restart highlight animation if newly navigated
     if (widget.isNavigated && !oldWidget.isNavigated && widget.isExpanded) {
       _highlightController.reset();
       _highlightController.forward();
@@ -123,7 +114,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   @override
   void dispose() {
     _controller.dispose();
-    _highlightController.dispose(); // Dispose highlight controller
+    _highlightController.dispose();
     super.dispose();
   }
 
@@ -136,49 +127,46 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     }
   }
 
-  void _handleDragUpdate(DragUpdateDetails details) {
-    if (!_isReordering) {
-      setState(() {
-        _dragOffset += details.delta.dx;
-        _dragOffset = _dragOffset.clamp(-_maxDrag, _maxDrag);
-        if (_dragOffset > 0) {
-          _swipeState = 'right';
-        } else if (_dragOffset < 0) {
-          _swipeState = 'left';
-        } else {
-          _swipeState = null;
-        }
-      });
-    }
+  void _handleHorizontalDragStart(DragStartDetails details) {
+    print('Horizontal drag started on card: ${widget.item.title}');
+    setState(() {
+      _dragOffset = 0.0;
+      _swipeState = null;
+    });
   }
 
-  void _handleDragEnd(DragEndDetails details) {
-    if (_isReordering) {
-      if (_newIndex != widget.index && _newIndex >= 0 && _newIndex < widget.allConfigs.length) {
-        widget.onReorder(widget.index, _newIndex);
-      }
-      setState(() {
-        _isReordering = false;
-        _verticalDragOffset = 0.0;
-        _isMouseDragging = false;
-      });
-    } else {
-      if (_dragOffset.abs() >= _maxDrag) {
-        final action = _dragOffset > 0 ? 'right' : 'left';
-        _triggerAction(action: action);
-      } else if (_dragOffset.abs() > _threshold) {
-        final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
-        _animation = Tween<double>(begin: _dragOffset, end: target)
-            .animate(_controller)
-          ..addListener(() {
-            setState(() {
-              _dragOffset = _animation.value;
-            });
-          });
-        _controller.forward(from: 0);
+  void _handleHorizontalDragUpdate(DragUpdateDetails details) {
+    print('Horizontal drag update: dx=${details.delta.dx}, dy=${details.delta.dy}');
+    setState(() {
+      _dragOffset += details.delta.dx;
+      _dragOffset = _dragOffset.clamp(-_maxDrag, _maxDrag);
+      if (_dragOffset > 0) {
+        _swipeState = 'right';
+      } else if (_dragOffset < 0) {
+        _swipeState = 'left';
       } else {
-        _animateBack();
+        _swipeState = null;
       }
+    });
+  }
+
+  void _handleHorizontalDragEnd(DragEndDetails details) {
+    print('Horizontal drag ended');
+    if (_dragOffset.abs() >= _maxDrag) {
+      final action = _dragOffset > 0 ? 'right' : 'left';
+      _triggerAction(action: action);
+    } else if (_dragOffset.abs() > _threshold) {
+      final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
+      _animation = Tween<double>(begin: _dragOffset, end: target)
+          .animate(_controller)
+        ..addListener(() {
+          setState(() {
+            _dragOffset = _animation.value;
+          });
+        });
+      _controller.forward(from: 0);
+    } else {
+      _animateBack();
     }
   }
 
@@ -232,50 +220,13 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _toggleExpanded() {
+    print('Card tapped: ${widget.item.title}');
     setState(() {
       _isExpanded = !_isExpanded;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _updateCardHeight();
       });
     });
-  }
-
-  void _handlePanStart(DragStartDetails details) {
-    setState(() {
-      _isMouseDragging = true;
-      _dragStartOffset = details.globalPosition;
-      _newIndex = widget.index;
-      _verticalDragOffset = 0.0;
-    });
-  }
-
-  void _handlePanUpdate(DragUpdateDetails details) {
-    if (!_isMouseDragging) return;
-
-    final currentOffset = details.globalPosition;
-    final deltaX = currentOffset.dx - _dragStartOffset.dx;
-    final deltaY = currentOffset.dy - _dragStartOffset.dy;
-
-    if (deltaX.abs() > deltaY.abs() && deltaX.abs() > 10.0) {
-      setState(() {
-        _isReordering = false;
-      });
-      _handleDragUpdate(details);
-    } else if (deltaY.abs() > 10.0) {
-      setState(() {
-        _isReordering = true;
-        _verticalDragOffset += details.delta.dy;
-
-        final cardHeight = _cardHeight ?? _defaultCardHeight;
-        final itemsCount = widget.allConfigs.length;
-        final indexChange = (_verticalDragOffset / cardHeight).round();
-        _newIndex = (widget.index + indexChange).clamp(0, itemsCount - 1);
-      });
-    }
-  }
-
-  void _handlePanEnd(DragEndDetails details) {
-    _handleDragEnd(details);
   }
 
   Color _getTargetColor(String action) {
@@ -315,7 +266,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   String _formatDueDateAndDays(DateTime dueDate) {
-    final today = DateTime(2025, 5, 22); // Current date based on system info
+    final today = DateTime(2025, 5, 22);
     final difference = dueDate.difference(today).inDays;
     String daysText;
 
@@ -409,9 +360,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           ),
         ),
         Transform.translate(
-          offset: _isReordering
-              ? Offset(_dragOffset, _verticalDragOffset)
-              : Offset(_dragOffset, 0),
+          offset: Offset(_dragOffset, 0),
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             decoration: BoxDecoration(
@@ -425,214 +374,197 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                   : null,
               boxShadow: [
                 BoxShadow(
-                  color: _isReordering
-                      ? Colors.black.withOpacity(isDarkMode ? 0.4 : 0.3)
-                      : Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: ReorderableDelayedDragStartListener(
-                    index: widget.index,
-                    child: MouseRegion(
-                      onEnter: (_) => setState(() => _isMouseDragging = false),
-                      child: GestureDetector(
-                        onTap: () {
-                          if (_dragOffset == 0 && !_isMouseDragging) {
-                            _toggleExpanded();
-                          }
-                        },
-                        onPanStart: _handlePanStart,
-                        onPanUpdate: _handlePanUpdate,
-                        onPanEnd: _handlePanEnd,
-                        child: Card(
-                          key: _cardKey,
-                          margin: EdgeInsets.zero,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    color: Colors.transparent,
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        ListTile(
-                                          title: Text(
-                                            widget.item.title,
-                                            style: Theme.of(context).textTheme.titleLarge,
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(top: 4.0),
-                                                child: Text(
-                                                  'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
-                                                  style: Theme.of(context).textTheme.bodyMedium,
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding: const EdgeInsets.only(top: 4.0),
-                                                child: Text(
-                                                  _formatDueDateAndDays(widget.item.dueDate),
-                                                  style: Theme.of(context).textTheme.bodyMedium,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          contentPadding: EdgeInsets.zero,
-                                          dense: true,
-                                        ),
-                                        if (_isExpanded) ...[
-                                          if (widget.item.relatedItemIds.isNotEmpty)
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 16.0,
-                                                vertical: 8.0,
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Related Items:',
-                                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                                          fontWeight: FontWeight.bold,
-                                                          color: isDarkMode ? Colors.white : Colors.black,
-                                                        ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  ListView.builder(
-                                                    shrinkWrap: true,
-                                                    physics: const NeverScrollableScrollPhysics(),
-                                                    itemCount: widget.item.relatedItemIds.length,
-                                                    itemBuilder: (context, index) {
-                                                      final relatedId = widget.item.relatedItemIds[index];
-                                                      final relatedItem = widget.itemMap[relatedId];
-                                                      final targetListUuid = widget.itemLists.entries
-                                                          .firstWhere(
-                                                            (entry) => entry.value.contains(relatedId),
-                                                            orElse: () => MapEntry('', <String>[]),
-                                                          )
-                                                          .key;
-                                                      final targetConfig = widget.allConfigs.firstWhere(
-                                                        (config) => config.uuid == targetListUuid,
-                                                        orElse: () => ListConfig(
-                                                          name: 'Unknown List',
-                                                          swipeActions: {},
-                                                          buttons: {},
-                                                          dueDateLabel: 'Due Date',
-                                                          sortMode: SortMode.dateAscending,
-                                                          icon: Icons.list,
-                                                          color: Colors.grey,
-                                                        ),
-                                                      );
-                                                      return TextButton(
-                                                        onPressed: targetListUuid.isNotEmpty
-                                                            ? () {
-                                                                widget.onNavigateToItem(targetListUuid, relatedId);
-                                                              }
-                                                            : null,
-                                                        child: Text(
-                                                          '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'} (${targetConfig.name})',
-                                                          style: TextStyle(
-                                                            color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
-                                                            decoration: TextDecoration.underline,
-                                                          ),
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 16.0,
-                                              vertical: 8.0,
-                                            ),
-                                            child: Html(
-                                              data: widget.item.html,
-                                              style: {
-                                                'h2': Style(
-                                                  fontSize: FontSize(18.0),
-                                                  fontWeight: FontWeight.bold,
-                                                  margin: Margins.all(8.0),
-                                                  color: isDarkMode ? Colors.white : Colors.black,
-                                                ),
-                                                'p': Style(
-                                                  fontSize: FontSize(14.0),
-                                                  margin: Margins.all(8.0),
-                                                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                                                ),
-                                                'table': Style(
-                                                  border: Border.all(
-                                                    color: isDarkMode ? Colors.grey[600]! : Colors.grey,
-                                                  ),
-                                                ),
-                                                'th': Style(
-                                                  backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-                                                  padding: HtmlPaddings.all(8.0),
-                                                  fontWeight: FontWeight.bold,
-                                                  color: isDarkMode ? Colors.white : Colors.black,
-                                                ),
-                                                'td': Style(
-                                                  padding: HtmlPaddings.all(8.0),
-                                                  color: isDarkMode ? Colors.white70 : Colors.black87,
-                                                ),
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                        if (widget.cardIcons.isNotEmpty)
-                                          Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
-                                            children: widget.cardIcons.map((entry) {
-                                              final targetListUuid = entry.value;
-                                              final targetConfig = widget.allConfigs.firstWhere(
-                                                (config) => config.uuid == targetListUuid,
-                                                orElse: () => widget.allConfigs[0],
-                                              );
-                                              final icon = targetConfig.icon;
-                                              final color = targetConfig.color;
-
-                                              return IconButton(
-                                                icon: Icon(icon),
-                                                color: color,
-                                                iconSize: 48.0,
-                                                onPressed: () => _triggerAction(targetListUuid: targetListUuid),
-                                              );
-                                            }).toList(),
-                                          ),
-                                      ],
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: _toggleExpanded,
+              onHorizontalDragStart: _handleHorizontalDragStart,
+              onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+              onHorizontalDragEnd: _handleHorizontalDragEnd,
+              child: Card(
+                key: _cardKey,
+                margin: EdgeInsets.zero,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ListTile(
+                              title: Text(
+                                widget.item.title,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
+                                      style: Theme.of(context).textTheme.bodyMedium,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4.0),
+                                    child: Text(
+                                      _formatDueDateAndDays(widget.item.dueDate),
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              contentPadding: EdgeInsets.zero,
+                              dense: true,
                             ),
-                          ),
+                            if (_isExpanded) ...[
+                              if (widget.item.relatedItemIds.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 8.0,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Related Items:',
+                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: isDarkMode ? Colors.white : Colors.black,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(),
+                                        itemCount: widget.item.relatedItemIds.length,
+                                        itemBuilder: (context, index) {
+                                          final relatedId = widget.item.relatedItemIds[index];
+                                          final relatedItem = widget.itemMap[relatedId];
+                                          final targetListUuid = widget.itemLists.entries
+                                              .firstWhere(
+                                                (entry) => entry.value.contains(relatedId),
+                                                orElse: () => MapEntry('', <String>[]),
+                                              )
+                                              .key;
+                                          final targetConfig = widget.allConfigs.firstWhere(
+                                            (config) => config.uuid == targetListUuid,
+                                            orElse: () => ListConfig(
+                                              name: 'Unknown List',
+                                              swipeActions: {},
+                                              buttons: {},
+                                              dueDateLabel: 'Due Date',
+                                              sortMode: SortMode.dateAscending,
+                                              icon: Icons.list,
+                                              color: Colors.grey,
+                                            ),
+                                          );
+                                          return TextButton(
+                                            onPressed: targetListUuid.isNotEmpty
+                                                ? () {
+                                                    widget.onNavigateToItem(targetListUuid, relatedId);
+                                                  }
+                                                : null,
+                                            child: Text(
+                                              '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'} (${targetConfig.name})',
+                                              style: TextStyle(
+                                                color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                                decoration: TextDecoration.underline,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 8.0,
+                                ),
+                                child: Html(
+                                  data: widget.item.html,
+                                  style: {
+                                    'h2': Style(
+                                      fontSize: FontSize(18.0),
+                                      fontWeight: FontWeight.bold,
+                                      margin: Margins.all(8.0),
+                                      color: isDarkMode ? Colors.white : Colors.black,
+                                    ),
+                                    'p': Style(
+                                      fontSize: FontSize(14.0),
+                                      margin: Margins.all(8.0),
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                    ),
+                                    'table': Style(
+                                      border: Border.all(
+                                        color: isDarkMode ? Colors.grey[600]! : Colors.grey,
+                                      ),
+                                    ),
+                                    'th': Style(
+                                      backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                                      padding: HtmlPaddings.all(8.0),
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? Colors.white : Colors.black,
+                                    ),
+                                    'td': Style(
+                                      padding: HtmlPaddings.all(8.0),
+                                      color: isDarkMode ? Colors.white70 : Colors.black87,
+                                    ),
+                                  },
+                                ),
+                              ),
+                            ],
+                            if (widget.cardIcons.isNotEmpty)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: widget.cardIcons.map((entry) {
+                                  final targetListUuid = entry.value;
+                                  final targetConfig = widget.allConfigs.firstWhere(
+                                    (config) => config.uuid == targetListUuid,
+                                    orElse: () => widget.allConfigs[0],
+                                  );
+                                  final icon = targetConfig.icon;
+                                  final color = targetConfig.color;
+
+                                  return IconButton(
+                                    icon: Icon(icon),
+                                    color: color,
+                                    iconSize: 48.0,
+                                    onPressed: () => _triggerAction(targetListUuid: targetListUuid),
+                                  );
+                                }).toList(),
+                              ),
+                          ],
                         ),
                       ),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: Icon(
+                          Icons.drag_handle,
+                          color: isDarkMode ? Colors.white70 : Colors.black54,
+                          size: 24.0,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Container(
-                  width: 0,
-                  color: Theme.of(context).cardTheme.color,
-                ),
-              ],
+              ),
             ),
           ),
         ),
