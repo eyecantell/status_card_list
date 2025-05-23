@@ -79,8 +79,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _updateCardHeight() {
-    final RenderBox? renderBox =
-        _cardKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox = _cardKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && renderBox.hasSize) {
       setState(() {
         _cardHeight = renderBox.size.height;
@@ -206,22 +205,18 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     final deltaX = currentOffset.dx - _dragStartOffset.dx;
     final deltaY = currentOffset.dy - _dragStartOffset.dy;
 
-    // Determine dominant direction
     if (deltaX.abs() > deltaY.abs() && deltaX.abs() > 10.0) {
-      // Horizontal drag: Swipe
       setState(() {
         _isReordering = false;
       });
       _handleDragUpdate(details);
     } else if (deltaY.abs() > 10.0) {
-      // Vertical drag: Reorder
       setState(() {
         _isReordering = true;
         _verticalDragOffset += details.delta.dy;
 
-        // Calculate new index based on vertical drag
         final cardHeight = _cardHeight ?? _defaultCardHeight;
-        final itemsCount = widget.allConfigs.length; // Approximation
+        final itemsCount = widget.allConfigs.length;
         final indexChange = (_verticalDragOffset / cardHeight).round();
         _newIndex = (widget.index + indexChange).clamp(0, itemsCount - 1);
       });
@@ -242,6 +237,18 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       return targetConfig.color;
     }
     return widget.listColor;
+  }
+
+  IconData _getTargetIcon(String action) {
+    final targetListUuid = widget.swipeActions[action];
+    if (targetListUuid != null) {
+      final targetConfig = widget.allConfigs.firstWhere(
+        (config) => config.uuid == targetListUuid,
+        orElse: () => widget.allConfigs[0],
+      );
+      return targetConfig.icon;
+    }
+    return widget.allConfigs[0].icon; // Fallback to first config's icon
   }
 
   String _getTargetName(String action) {
@@ -287,7 +294,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     Icon(
-                      widget.statusIcons[rightListName] ?? Icons.check,
+                      _getTargetIcon('right'),
                       color: Colors.white,
                       size: 36,
                     ),
@@ -319,7 +326,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     Icon(
-                      widget.statusIcons[leftListName] ?? Icons.delete,
+                      _getTargetIcon('left'),
                       color: Colors.white,
                       size: 36,
                     ),
@@ -471,7 +478,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                               orElse: () => widget.allConfigs[0],
                                             );
                                             final targetName = targetConfig.name;
-                                            final icon = widget.statusIcons[targetName] ?? Icons.check;
+                                            final icon = targetConfig.icon; // Use target list's icon
                                             final color = targetConfig.color;
 
                                             return IconButton(
