@@ -11,18 +11,18 @@ enum SortMode {
 }
 
 class ListConfig {
-  final String uuid; // New field for unique identifier
+  final String uuid;
   final String name;
-  final Map<String, String> swipeActions; // Now maps to target UUIDs
-  final Map<String, String> buttons; // Now maps to target UUIDs
+  final Map<String, String> swipeActions;
+  final Map<String, String> buttons;
   final String dueDateLabel;
   SortMode sortMode;
   IconData icon;
   Color color;
-  List<MapEntry<String, String>> cardIcons; // New field for card icons (iconName -> targetUuid)
+  List<MapEntry<String, String>> cardIcons;
 
   ListConfig({
-    String? uuid, // Allow passing a UUID, or generate one if null
+    String? uuid,
     required this.name,
     required this.swipeActions,
     required this.buttons,
@@ -30,12 +30,11 @@ class ListConfig {
     required this.sortMode,
     required this.icon,
     required this.color,
-    List<MapEntry<String, String>>? cardIcons, // Optional, defaults to buttons entries
+    List<MapEntry<String, String>>? cardIcons,
   })  : uuid = uuid ?? const Uuid().v4(),
         cardIcons = cardIcons ?? buttons.entries.toList().take(5).toList();
 
   factory ListConfig.fromJson(Map<String, dynamic> json) {
-    // Parse color with validation
     Color parseColor(String? colorStr) {
       try {
         if (colorStr == null) return Colors.blue;
@@ -53,7 +52,6 @@ class ListConfig {
       }
     }
 
-    // Parse cardIcons as a list of [iconName, targetUuid] pairs
     List<MapEntry<String, String>> parseCardIcons(dynamic jsonIcons) {
       if (jsonIcons == null) {
         final buttons = Map<String, String>.from(json['buttons']);
@@ -145,7 +143,7 @@ final String listConfigJson = '''
         "name": "Trash",
         "swipeActions": {
             "right": "550e8400-e29b-41d4-a716-446655440000",
-            "left": "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"
+            "left": "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"
         },
         "buttons": {
             "refresh": "550e8400-e29b-41d4-a716-446655440000",
@@ -157,7 +155,7 @@ final String listConfigJson = '''
         "color": "0xFFF44336",
         "cardIcons": [
             ["refresh", "550e8400-e29b-41d4-a716-446655440000"],
-            ["delete_forever", "c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e"]
+            ["check_circle", "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"]
         ]
     }
 ]

@@ -1,11 +1,9 @@
-//import 'package:flutter/material.dart';
-
 class Item {
   final String id;
   final String title;
   final String subtitle;
   final String html;
-  String status; // Optional, can be removed if not needed later
+  String status;
   DateTime dueDate;
 
   Item({
@@ -14,6 +12,6 @@ class Item {
     required this.subtitle,
     required this.html,
     required this.dueDate,
-    this.status = 'pending', // Default value
+    this.status = 'pending',
   });
 }

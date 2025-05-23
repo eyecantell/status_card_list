@@ -5,7 +5,7 @@ import '../list_config.dart';
 class DrawerMenu extends StatelessWidget {
   final List<ListConfig> listConfigs;
   final String currentListUuid;
-  final Map<String, List<Item>> itemLists;
+  final Map<String, List<String>> itemLists; // Updated to use UUID lists
   final Function(String) onListSelected;
 
   const DrawerMenu({

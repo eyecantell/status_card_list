@@ -18,50 +18,45 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.dark;
-  late List<ListConfig> _listConfigs;
-  String _currentListUuid = '550e8400-e29b-41d4-a716-446655440000'; // UUID for Review
-  late Map<String, List<Item>> _itemLists;
+  late Data _data;
+  String _currentListUuid = '550e8400-e29b-41d4-a716-446655440000'; // Review
 
   @override
   void initState() {
     super.initState();
-    _listConfigs = parseListConfigs(listConfigJson);
+    _data = Data.initialize();
     _sanitizeConfigs();
-    _itemLists = initializeItemLists(_listConfigs);
     _sortItems();
   }
 
   void _toggleTheme() {
     setState(() {
-      _themeMode =
-          _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     });
   }
 
   void _setSortMode(SortMode newMode) {
     setState(() {
-      final currentConfig =
-          _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
+      final currentConfig = _data.listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
       currentConfig.sortMode = newMode;
       _sortItems();
     });
   }
 
   void _sortItems() {
-    final currentConfig =
-        _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
+    final currentConfig = _data.listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
     if (currentConfig.sortMode == SortMode.manual) return;
 
-    final items = _itemLists[_currentListUuid]!;
+    final itemUuids = _data.itemLists[_currentListUuid]!;
     switch (currentConfig.sortMode) {
       case SortMode.dateAscending:
-        items.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+        itemUuids.sort((a, b) => _data.itemMap[a]!.dueDate.compareTo(_data.itemMap[b]!.dueDate));
         break;
       case SortMode.dateDescending:
-        items.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+        itemUuids.sort((a, b) => _data.itemMap[b]!.dueDate.compareTo(_data.itemMap[a]!.dueDate));
         break;
       case SortMode.title:
-        items.sort((a, b) => a.title.compareTo(b.title));
+        itemUuids.sort((a, b) => _data.itemMap[a]!.title.compareTo(_data.itemMap[b]!.title));
         break;
       case SortMode.manual:
         break;
@@ -70,19 +65,18 @@ class _MyAppState extends State<MyApp> {
 
   void _updateStatus(BuildContext scaffoldContext, Item item, String targetListUuid) {
     setState(() {
-      final currentListItems = _itemLists[_currentListUuid]!;
-      currentListItems.remove(item);
-      if (_itemLists.containsKey(targetListUuid)) {
-        _itemLists[targetListUuid]!.add(item);
+      final currentConfig = _data.listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
+      _data.itemLists[_currentListUuid]!.remove(item.id);
+      if (_data.itemLists.containsKey(targetListUuid)) {
+        _data.itemLists[targetListUuid]!.add(item.id);
       }
-      final targetConfig = _listConfigs.firstWhere((c) => c.uuid == targetListUuid);
+      final targetConfig = _data.listConfigs.firstWhere((c) => c.uuid == targetListUuid);
       item.status = targetConfig.name.toLowerCase();
       _sortItems();
+      ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+        SnackBar(content: Text('${item.title} moved to ${targetConfig.name}')),
+      );
     });
-    final targetConfig = _listConfigs.firstWhere((c) => c.uuid == targetListUuid);
-    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
-      SnackBar(content: Text('${item.title} moved to ${targetConfig.name}')),
-    );
   }
 
   void _switchList(String listUuid) {
@@ -97,21 +91,23 @@ class _MyAppState extends State<MyApp> {
       if (oldIndex < newIndex) {
         newIndex -= 1;
       }
-      final Item item = _itemLists[_currentListUuid]!.removeAt(oldIndex);
-      _itemLists[_currentListUuid]!.insert(newIndex, item);
-
-      final currentConfig =
-          _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
+      final itemUuid = _data.itemLists[_currentListUuid]!.removeAt(oldIndex);
+      _data.itemLists[_currentListUuid]!.insert(newIndex, itemUuid);
+      final currentConfig = _data.listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
       currentConfig.sortMode = SortMode.manual;
     });
   }
 
   void _sanitizeConfigs() {
-    final listUuids = _listConfigs.map((config) => config.uuid).toSet();
-    for (var config in _listConfigs) {
+    final listUuids = _data.listConfigs.map((config) => config.uuid).toSet();
+    for (var config in _data.listConfigs) {
       config.swipeActions.removeWhere((key, targetUuid) => !listUuids.contains(targetUuid));
       config.buttons.removeWhere((key, targetUuid) => !listUuids.contains(targetUuid));
       config.cardIcons.removeWhere((entry) => !listUuids.contains(entry.value));
+    }
+    _data.itemLists.removeWhere((listUuid, _) => !listUuids.contains(listUuid));
+    for (var itemList in _data.itemLists.values) {
+      itemList.removeWhere((itemUuid) => !_data.itemMap.containsKey(itemUuid));
     }
   }
 
@@ -120,11 +116,11 @@ class _MyAppState extends State<MyApp> {
       context: context,
       builder: (context) => ListSettingsDialog(
         listConfig: config,
-        allConfigs: _listConfigs,
+        allConfigs: _data.listConfigs,
         onSave: (updatedConfig) {
           setState(() {
-            final index = _listConfigs.indexWhere((c) => c.uuid == updatedConfig.uuid);
-            _listConfigs[index] = updatedConfig;
+            final index = _data.listConfigs.indexWhere((c) => c.uuid == updatedConfig.uuid);
+            _data.listConfigs[index] = updatedConfig;
             _sanitizeConfigs();
           });
         },
@@ -133,20 +129,59 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> syncWithApi() async {
-    List<Map<String, dynamic>> listConfigsJson = _listConfigs.map((config) => config.toJson()).toList();
-    String jsonString = jsonEncode(listConfigsJson);
-    String apiResponse = jsonString;
-    List<dynamic> jsonList = jsonDecode(apiResponse);
+    final dataJson = {
+      'items': _data.items.map((item) => {
+            'id': item.id,
+            'title': item.title,
+            'subtitle': item.subtitle,
+            'html': item.html,
+            'dueDate': item.dueDate.toIso8601String(),
+            'status': item.status,
+          }).toList(),
+      'listConfigs': _data.listConfigs.map((config) => config.toJson()).toList(),
+      'itemLists': _data.itemLists,
+    };
+    String jsonString = jsonEncode(dataJson);
+    String apiResponse = jsonString; // Placeholder for actual API call
+    final responseJson = jsonDecode(apiResponse);
     setState(() {
-      _listConfigs = jsonList.map((json) => ListConfig.fromJson(json)).toList();
+      _data = Data(
+        items: (responseJson['items'] as List<dynamic>)
+            .map((json) => Item(
+                  id: json['id'],
+                  title: json['title'],
+                  subtitle: json['subtitle'],
+                  html: json['html'],
+                  dueDate: DateTime.parse(json['dueDate']),
+                  status: json['status'],
+                ))
+            .toList(),
+        itemMap: {
+          for (var item in (responseJson['items'] as List<dynamic>)
+              .map((json) => Item(
+                    id: json['id'],
+                    title: json['title'],
+                    subtitle: json['subtitle'],
+                    html: json['html'],
+                    dueDate: DateTime.parse(json['dueDate']),
+                    status: json['status'],
+                  )))
+            item.id: item
+        },
+        listConfigs: (responseJson['listConfigs'] as List<dynamic>)
+            .map((json) => ListConfig.fromJson(json))
+            .toList(),
+        itemLists: Map<String, List<String>>.from(
+            responseJson['itemLists'].map((key, value) => MapEntry(key, List<String>.from(value)))),
+      );
       _sanitizeConfigs();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final currentConfig =
-        _listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
+    final currentConfig = _data.listConfigs.firstWhere((c) => c.uuid == _currentListUuid);
+    final currentItems = _data.itemLists[_currentListUuid]!.map((uuid) => _data.itemMap[uuid]!).toList();
 
     return MaterialApp(
       theme: lightTheme,
@@ -220,18 +255,17 @@ class _MyAppState extends State<MyApp> {
               ],
             ),
             drawer: DrawerMenu(
-              listConfigs: _listConfigs,
+              listConfigs: _data.listConfigs,
               currentListUuid: _currentListUuid,
-              itemLists: _itemLists,
+              itemLists: _data.itemLists,
               onListSelected: _switchList,
             ),
             body: StatusCardListExample(
-              items: _itemLists[_currentListUuid]!,
+              items: currentItems,
               listConfig: currentConfig,
-              onStatusChanged: (item, targetListUuid) =>
-                  _updateStatus(scaffoldContext, item, targetListUuid),
+              onStatusChanged: (item, targetListUuid) => _updateStatus(scaffoldContext, item, targetListUuid),
               onReorder: _reorderItems,
-              allConfigs: _listConfigs,
+              allConfigs: _data.listConfigs,
             ),
           );
         },

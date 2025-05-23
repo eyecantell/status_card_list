@@ -1,30 +1,39 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:status_card_list/main.dart';
+import 'package:status_card_list/app.dart'; // Updated import
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('StatusCardList renders items and switches lists correctly', (WidgetTester tester) async {
+    // Build the app and trigger a frame
     await tester.pumpWidget(const MyApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Verify initial list (Review) with 3 items
+    expect(find.text('Task 1'), findsOneWidget);
+    expect(find.text('Task 2'), findsOneWidget);
+    expect(find.text('Prepare Presentation'), findsOneWidget);
+    expect(find.text('Review List'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    // Open drawer and switch to Saved list
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Saved (1)'));
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify Saved list with 1 item
+    expect(find.text('Client Meeting Notes'), findsOneWidget);
+    expect(find.text('Task 1'), findsNothing);
+    expect(find.text('Saved List'), findsOneWidget);
+
+    // Switch to Trash list
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Trash (1)'));
+    await tester.pumpAndSettle();
+
+    // Verify Trash list with 1 item
+    expect(find.text('Old Draft'), findsOneWidget);
+    expect(find.text('Client Meeting Notes'), findsNothing);
+    expect(find.text('Trash List'), findsOneWidget);
   });
 }
