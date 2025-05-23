@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'item.dart';
 import 'list_config.dart';
+import '../data.dart'; // Import Data to access itemMap
 
 class StatusCard extends StatefulWidget {
   final Item item;
@@ -14,6 +15,10 @@ class StatusCard extends StatefulWidget {
   final Color listColor;
   final List<ListConfig> allConfigs;
   final List<MapEntry<String, String>> cardIcons;
+  final Map<String, Item> itemMap; // Added to access related items
+  final Map<String, List<String>> itemLists; // Added to find item lists
+  final Function(String, String) onNavigateToItem; // Added for navigation
+  final bool isExpanded; // Added to control initial expansion
 
   const StatusCard({
     super.key,
@@ -27,6 +32,10 @@ class StatusCard extends StatefulWidget {
     required this.listColor,
     required this.allConfigs,
     required this.cardIcons,
+    required this.itemMap,
+    required this.itemLists,
+    required this.onNavigateToItem,
+    this.isExpanded = false, // Default to collapsed
   });
 
   @override
@@ -42,7 +51,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   static const double _buttonWidth = 100.0;
   static const double _threshold = 90.0;
   static const double _defaultCardHeight = 165.0;
-  bool _isExpanded = false;
+  late bool _isExpanded; // Changed to late to initialize with widget.isExpanded
   bool _isActionTriggered = false;
   final GlobalKey _cardKey = GlobalKey();
   double? _cardHeight;
@@ -55,6 +64,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _isExpanded = widget.isExpanded; // Initialize with prop
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -70,6 +80,16 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       _updateCardHeight();
     });
     _newIndex = widget.index;
+  }
+
+  @override
+  void didUpdateWidget(StatusCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isExpanded != oldWidget.isExpanded) {
+      setState(() {
+        _isExpanded = widget.isExpanded;
+      });
+    }
   }
 
   @override
@@ -426,7 +446,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                               Padding(
                                                 padding: const EdgeInsets.only(top: 4.0),
                                                 child: Text(
-                                                  'Status: ${widget.item.status}',
+                                                  'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
                                                   style: Theme.of(context).textTheme.bodyMedium,
                                                 ),
                                               ),
@@ -442,7 +462,50 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
                                         ),
-                                        if (_isExpanded)
+                                        if (_isExpanded) ...[
+                                          if (widget.item.relatedItemIds.isNotEmpty)
+                                            Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 16.0,
+                                                vertical: 8.0,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Related Items:',
+                                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                                          fontWeight: FontWeight.bold,
+                                                          color: isDarkMode ? Colors.white : Colors.black,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  ...widget.item.relatedItemIds.map((relatedId) {
+                                                    final relatedItem = widget.itemMap[relatedId];
+                                                    final targetListUuid = widget.itemLists.entries
+                                                        .firstWhere(
+                                                          (entry) => entry.value.contains(relatedId),
+                                                          orElse: () => MapEntry('', <String>[]),
+                                                        )
+                                                        .key;
+                                                    return TextButton(
+                                                      onPressed: targetListUuid.isNotEmpty
+                                                          ? () {
+                                                              widget.onNavigateToItem(targetListUuid, relatedId);
+                                                            }
+                                                          : null,
+                                                      child: Text(
+                                                        relatedItem?.title ?? 'Unknown Item',
+                                                        style: TextStyle(
+                                                          color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                                          decoration: TextDecoration.underline,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }).toList(),
+                                                ],
+                                              ),
+                                            ),
                                           Padding(
                                             padding: const EdgeInsets.symmetric(
                                               horizontal: 16.0,
@@ -455,43 +518,32 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                                   fontSize: FontSize(18.0),
                                                   fontWeight: FontWeight.bold,
                                                   margin: Margins.all(8.0),
-                                                  color: isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black,
+                                                  color: isDarkMode ? Colors.white : Colors.black,
                                                 ),
                                                 'p': Style(
                                                   fontSize: FontSize(14.0),
                                                   margin: Margins.all(8.0),
-                                                  color: isDarkMode
-                                                      ? Colors.white70
-                                                      : Colors.black87,
+                                                  color: isDarkMode ? Colors.white70 : Colors.black87,
                                                 ),
                                                 'table': Style(
                                                   border: Border.all(
-                                                    color: isDarkMode
-                                                        ? Colors.grey[600]!
-                                                        : Colors.grey,
+                                                    color: isDarkMode ? Colors.grey[600]! : Colors.grey,
                                                   ),
                                                 ),
                                                 'th': Style(
-                                                  backgroundColor: isDarkMode
-                                                      ? Colors.grey[700]
-                                                      : Colors.grey[200],
+                                                  backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
                                                   padding: HtmlPaddings.all(8.0),
                                                   fontWeight: FontWeight.bold,
-                                                  color: isDarkMode
-                                                      ? Colors.white
-                                                      : Colors.black,
+                                                  color: isDarkMode ? Colors.white : Colors.black,
                                                 ),
                                                 'td': Style(
                                                   padding: HtmlPaddings.all(8.0),
-                                                  color: isDarkMode
-                                                      ? Colors.white70
-                                                      : Colors.black87,
+                                                  color: isDarkMode ? Colors.white70 : Colors.black87,
                                                 ),
                                               },
                                             ),
                                           ),
+                                        ],
                                         if (widget.cardIcons.isNotEmpty)
                                           Row(
                                             mainAxisAlignment: MainAxisAlignment.end,

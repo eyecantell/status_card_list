@@ -12,7 +12,11 @@ class StatusCardList extends StatelessWidget {
   final String dueDateLabel;
   final Color listColor;
   final List<ListConfig> allConfigs;
-  final List<MapEntry<String, String>> cardIcons; // New prop
+  final List<MapEntry<String, String>> cardIcons;
+  final Map<String, Item> itemMap; // Added
+  final Map<String, List<String>> itemLists; // Added
+  final Function(String, String) onNavigateToItem; // Added
+  final String? expandedItemId; // Added
 
   const StatusCardList({
     super.key,
@@ -24,7 +28,11 @@ class StatusCardList extends StatelessWidget {
     required this.dueDateLabel,
     required this.listColor,
     required this.allConfigs,
-    required this.cardIcons, // Add this to the constructor
+    required this.cardIcons,
+    required this.itemMap, // Added
+    required this.itemLists, // Added
+    required this.onNavigateToItem, // Added
+    required this.expandedItemId, // Added
   });
 
   @override
@@ -52,7 +60,11 @@ class StatusCardList extends StatelessWidget {
               dueDateLabel: dueDateLabel,
               listColor: listColor,
               allConfigs: allConfigs,
-              cardIcons: cardIcons, // Pass cardIcons
+              cardIcons: cardIcons,
+              itemMap: itemMap, // Added
+              itemLists: itemLists, // Added
+              onNavigateToItem: onNavigateToItem, // Added
+              isExpanded: expandedItemId == items[index].id, // Added
             ),
         ],
       ),

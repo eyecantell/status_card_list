@@ -20,6 +20,7 @@ class _MyAppState extends State<MyApp> {
   ThemeMode _themeMode = ThemeMode.dark;
   late Data _data;
   String _currentListUuid = '550e8400-e29b-41d4-a716-446655440000'; // Review
+  String? _expandedItemId; // Tracks expanded item
 
   @override
   void initState() {
@@ -71,7 +72,6 @@ class _MyAppState extends State<MyApp> {
         _data.itemLists[targetListUuid]!.add(item.id);
       }
       final targetConfig = _data.listConfigs.firstWhere((c) => c.uuid == targetListUuid);
-      // Removed: item.status = targetConfig.name.toLowerCase();
       _sortItems();
       ScaffoldMessenger.of(scaffoldContext).showSnackBar(
         SnackBar(content: Text('${item.title} moved to ${targetConfig.name}')),
@@ -82,8 +82,21 @@ class _MyAppState extends State<MyApp> {
   void _switchList(String listUuid) {
     setState(() {
       _currentListUuid = listUuid;
+      _expandedItemId = null; // Reset expanded item when switching lists
       _sortItems();
     });
+  }
+
+  void _navigateToItem(BuildContext scaffoldContext, String targetListUuid, String itemId) {
+    setState(() {
+      _currentListUuid = targetListUuid;
+      _expandedItemId = itemId; // Set the item to be expanded
+      _sortItems();
+    });
+    final targetConfig = _data.listConfigs.firstWhere((c) => c.uuid == targetListUuid);
+    ScaffoldMessenger.of(scaffoldContext).showSnackBar(
+      SnackBar(content: Text('Navigated to ${targetConfig.name}')),
+    );
   }
 
   void _reorderItems(int oldIndex, int newIndex) {
@@ -108,6 +121,10 @@ class _MyAppState extends State<MyApp> {
     _data.itemLists.removeWhere((listUuid, _) => !listUuids.contains(listUuid));
     for (var itemList in _data.itemLists.values) {
       itemList.removeWhere((itemUuid) => !_data.itemMap.containsKey(itemUuid));
+    }
+    // Sanitize relatedItemIds
+    for (var item in _data.items) {
+      item.relatedItemIds.removeWhere((id) => !_data.itemMap.containsKey(id));
     }
   }
 
@@ -137,6 +154,7 @@ class _MyAppState extends State<MyApp> {
             'html': item.html,
             'dueDate': item.dueDate.toIso8601String(),
             'status': item.status,
+            'relatedItemIds': item.relatedItemIds,
           }).toList(),
       'listConfigs': _data.listConfigs.map((config) => config.toJson()).toList(),
       'itemLists': _data.itemLists,
@@ -154,6 +172,7 @@ class _MyAppState extends State<MyApp> {
                   html: json['html'],
                   dueDate: DateTime.parse(json['dueDate']),
                   status: json['status'],
+                  relatedItemIds: List<String>.from(json['relatedItemIds'] ?? []),
                 ))
             .toList(),
         itemMap: {
@@ -165,6 +184,7 @@ class _MyAppState extends State<MyApp> {
                     html: json['html'],
                     dueDate: DateTime.parse(json['dueDate']),
                     status: json['status'],
+                    relatedItemIds: List<String>.from(json['relatedItemIds'] ?? []),
                   )))
             item.id: item
         },
@@ -266,6 +286,10 @@ class _MyAppState extends State<MyApp> {
               onStatusChanged: (item, targetListUuid) => _updateStatus(scaffoldContext, item, targetListUuid),
               onReorder: _reorderItems,
               allConfigs: _data.listConfigs,
+              itemMap: _data.itemMap,
+              itemLists: _data.itemLists,
+              onNavigateToItem: (targetListUuid, itemId) => _navigateToItem(scaffoldContext, targetListUuid, itemId), // Updated
+              expandedItemId: _expandedItemId,
             ),
           );
         },

@@ -5,6 +5,7 @@ class Item {
   final String html;
   String status;
   DateTime dueDate;
+  final List<String> relatedItemIds; // Added for related items
 
   Item({
     required this.id,
@@ -13,5 +14,6 @@ class Item {
     required this.html,
     required this.dueDate,
     this.status = 'pending',
+    this.relatedItemIds = const [], // Default to empty list
   });
 }

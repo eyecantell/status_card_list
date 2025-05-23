@@ -32,6 +32,7 @@ class Data {
         ''',
         dueDate: DateTime(2025, 5, 21),
         status: 'Open',
+        relatedItemIds: ['2', '4'], // Related to Task 2 and Client Meeting Notes
       ),
       Item(
         id: '2',
@@ -57,6 +58,7 @@ class Data {
         ''',
         dueDate: DateTime(2025, 5, 22),
         status: 'Open',
+        relatedItemIds: ['1'], // Related to Task 1 (allows navigation loop)
       ),
       Item(
         id: '3',
@@ -73,6 +75,7 @@ class Data {
         ''',
         dueDate: DateTime(2025, 5, 24),
         status: 'Open',
+        relatedItemIds: ['4'], // Related to Client Meeting Notes
       ),
       Item(
         id: '4',
@@ -88,6 +91,7 @@ class Data {
         ''',
         dueDate: DateTime(2025, 5, 28),
         status: 'Awarded',
+        relatedItemIds: ['1', '3'], // Related to Task 1 and Prepare Presentation
       ),
       Item(
         id: '5',
@@ -103,6 +107,7 @@ class Data {
         ''',
         dueDate: DateTime(2025, 5, 14),
         status: 'Expired',
+        relatedItemIds: [], // No related items
       ),
     ];
 

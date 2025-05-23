@@ -9,6 +9,10 @@ class StatusCardListExample extends StatelessWidget {
   final Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
   final List<ListConfig> allConfigs;
+  final Map<String, Item> itemMap; // Added
+  final Map<String, List<String>> itemLists; // Added
+  final Function(String, String) onNavigateToItem; // Added
+  final String? expandedItemId; // Added
 
   const StatusCardListExample({
     super.key,
@@ -17,16 +21,19 @@ class StatusCardListExample extends StatelessWidget {
     required this.onStatusChanged,
     required this.onReorder,
     required this.allConfigs,
+    required this.itemMap, // Added
+    required this.itemLists, // Added
+    required this.onNavigateToItem, // Added
+    required this.expandedItemId, // Added
   });
 
   @override
   Widget build(BuildContext context) {
-    // Map buttons to use target list icons and names for statusIcons
     final Map<String, IconData> statusIcons = {};
     for (var entry in listConfig.buttons.entries) {
       final targetUuid = entry.value;
       final targetConfig = allConfigs.firstWhere((config) => config.uuid == targetUuid, orElse: () => listConfig);
-      statusIcons[targetConfig.name] = targetConfig.icon; // Use target list's icon
+      statusIcons[targetConfig.name] = targetConfig.icon;
     }
 
     return StatusCardList(
@@ -39,6 +46,10 @@ class StatusCardListExample extends StatelessWidget {
       listColor: listConfig.color,
       allConfigs: allConfigs,
       cardIcons: listConfig.cardIcons,
+      itemMap: itemMap, // Added
+      itemLists: itemLists, // Added
+      onNavigateToItem: onNavigateToItem, // Added
+      expandedItemId: expandedItemId, // Added
     );
   }
 }
