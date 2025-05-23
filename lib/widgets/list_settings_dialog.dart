@@ -88,7 +88,9 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             DropdownButton<String>(
               value: _swipeLeftTargetUuid,
               isExpanded: true,
-              items: widget.allConfigs.map((config) {
+              items: widget.allConfigs
+                  .where((config) => config.uuid != widget.listConfig.uuid)
+                  .map((config) {
                 return DropdownMenuItem<String>(
                   value: config.uuid,
                   child: Text(config.name),
@@ -107,7 +109,9 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             DropdownButton<String>(
               value: _swipeRightTargetUuid,
               isExpanded: true,
-              items: widget.allConfigs.map((config) {
+              items: widget.allConfigs
+                  .where((config) => config.uuid != widget.listConfig.uuid)
+                  .map((config) {
                 return DropdownMenuItem<String>(
                   value: config.uuid,
                   child: Text(config.name),
