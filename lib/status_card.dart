@@ -527,6 +527,18 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                                             orElse: () => MapEntry('', <String>[]),
                                                           )
                                                           .key;
+                                                      final targetConfig = widget.allConfigs.firstWhere(
+                                                        (config) => config.uuid == targetListUuid,
+                                                        orElse: () => ListConfig(
+                                                          name: 'Unknown List',
+                                                          swipeActions: {},
+                                                          buttons: {},
+                                                          dueDateLabel: 'Due Date',
+                                                          sortMode: SortMode.dateAscending,
+                                                          icon: Icons.list,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      );
                                                       return TextButton(
                                                         onPressed: targetListUuid.isNotEmpty
                                                             ? () {
@@ -534,7 +546,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                                               }
                                                             : null,
                                                         child: Text(
-                                                          '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'}',
+                                                          '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'} (${targetConfig.name})',
                                                           style: TextStyle(
                                                             color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
                                                             decoration: TextDecoration.underline,
