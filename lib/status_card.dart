@@ -15,10 +15,11 @@ class StatusCard extends StatefulWidget {
   final Color listColor;
   final List<ListConfig> allConfigs;
   final List<MapEntry<String, String>> cardIcons;
-  final Map<String, Item> itemMap; // Added to access related items
-  final Map<String, List<String>> itemLists; // Added to find item lists
-  final Function(String, String) onNavigateToItem; // Added for navigation
-  final bool isExpanded; // Added to control initial expansion
+  final Map<String, Item> itemMap;
+  final Map<String, List<String>> itemLists;
+  final Function(String, String) onNavigateToItem;
+  final bool isExpanded;
+  final bool isNavigated; // Added for highlight effect
 
   const StatusCard({
     super.key,
@@ -35,7 +36,8 @@ class StatusCard extends StatefulWidget {
     required this.itemMap,
     required this.itemLists,
     required this.onNavigateToItem,
-    this.isExpanded = false, // Default to collapsed
+    this.isExpanded = false,
+    this.isNavigated = false, // Default to false
   });
 
   @override
@@ -47,11 +49,13 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   String? _swipeState;
   late AnimationController _controller;
   late Animation<double> _animation;
+  late AnimationController _highlightController; // Added for highlight
+  late Animation<double> _highlightAnimation; // Added for highlight
   static const double _maxDrag = 150.0;
   static const double _buttonWidth = 100.0;
   static const double _threshold = 90.0;
   static const double _defaultCardHeight = 165.0;
-  late bool _isExpanded; // Changed to late to initialize with widget.isExpanded
+  late bool _isExpanded;
   bool _isActionTriggered = false;
   final GlobalKey _cardKey = GlobalKey();
   double? _cardHeight;
@@ -64,7 +68,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _isExpanded = widget.isExpanded; // Initialize with prop
+    _isExpanded = widget.isExpanded;
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -75,6 +79,25 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           _dragOffset = _animation.value;
         });
       });
+
+    // Initialize highlight animation
+    _highlightController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _highlightAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _highlightController,
+        curve: Curves.easeOut,
+      ),
+    )..addListener(() {
+        setState(() {}); // Trigger rebuild for highlight fade
+      });
+
+    // Start highlight animation if navigated and expanded
+    if (widget.isNavigated && widget.isExpanded) {
+      _highlightController.forward();
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateCardHeight();
@@ -90,11 +113,17 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _isExpanded = widget.isExpanded;
       });
     }
+    // Restart highlight animation if newly navigated
+    if (widget.isNavigated && !oldWidget.isNavigated && widget.isExpanded) {
+      _highlightController.reset();
+      _highlightController.forward();
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _highlightController.dispose(); // Dispose highlight controller
     super.dispose();
   }
 
@@ -302,8 +331,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       daysText = '${-difference} days ago';
     }
 
-    final formattedDate =
-        '${dueDate.month}/${dueDate.day}/${dueDate.year}';
+    final formattedDate = '${dueDate.month}/${dueDate.day}/${dueDate.year}';
     return '${widget.dueDateLabel}: $formattedDate ($daysText)';
   }
 
@@ -389,6 +417,12 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(8),
+              border: widget.isNavigated && _highlightAnimation.value > 0
+                  ? Border.all(
+                      color: Colors.blue.withOpacity(_highlightAnimation.value),
+                      width: 2.0,
+                    )
+                  : null,
               boxShadow: [
                 BoxShadow(
                   color: _isReordering
@@ -480,29 +514,35 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                                         ),
                                                   ),
                                                   const SizedBox(height: 4),
-                                                  ...widget.item.relatedItemIds.map((relatedId) {
-                                                    final relatedItem = widget.itemMap[relatedId];
-                                                    final targetListUuid = widget.itemLists.entries
-                                                        .firstWhere(
-                                                          (entry) => entry.value.contains(relatedId),
-                                                          orElse: () => MapEntry('', <String>[]),
-                                                        )
-                                                        .key;
-                                                    return TextButton(
-                                                      onPressed: targetListUuid.isNotEmpty
-                                                          ? () {
-                                                              widget.onNavigateToItem(targetListUuid, relatedId);
-                                                            }
-                                                          : null,
-                                                      child: Text(
-                                                        relatedItem?.title ?? 'Unknown Item',
-                                                        style: TextStyle(
-                                                          color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
-                                                          decoration: TextDecoration.underline,
+                                                  ListView.builder(
+                                                    shrinkWrap: true,
+                                                    physics: const NeverScrollableScrollPhysics(),
+                                                    itemCount: widget.item.relatedItemIds.length,
+                                                    itemBuilder: (context, index) {
+                                                      final relatedId = widget.item.relatedItemIds[index];
+                                                      final relatedItem = widget.itemMap[relatedId];
+                                                      final targetListUuid = widget.itemLists.entries
+                                                          .firstWhere(
+                                                            (entry) => entry.value.contains(relatedId),
+                                                            orElse: () => MapEntry('', <String>[]),
+                                                          )
+                                                          .key;
+                                                      return TextButton(
+                                                        onPressed: targetListUuid.isNotEmpty
+                                                            ? () {
+                                                                widget.onNavigateToItem(targetListUuid, relatedId);
+                                                              }
+                                                            : null,
+                                                        child: Text(
+                                                          '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'}',
+                                                          style: TextStyle(
+                                                            color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                                                            decoration: TextDecoration.underline,
+                                                          ),
                                                         ),
-                                                      ),
-                                                    );
-                                                  }).toList(),
+                                                      );
+                                                    },
+                                                  ),
                                                 ],
                                               ),
                                             ),

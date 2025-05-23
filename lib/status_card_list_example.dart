@@ -9,10 +9,11 @@ class StatusCardListExample extends StatelessWidget {
   final Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
   final List<ListConfig> allConfigs;
-  final Map<String, Item> itemMap; // Added
-  final Map<String, List<String>> itemLists; // Added
-  final Function(String, String) onNavigateToItem; // Added
-  final String? expandedItemId; // Added
+  final Map<String, Item> itemMap;
+  final Map<String, List<String>> itemLists;
+  final Function(String, String) onNavigateToItem;
+  final String? expandedItemId;
+  final String? navigatedItemId; // Added
 
   const StatusCardListExample({
     super.key,
@@ -21,10 +22,11 @@ class StatusCardListExample extends StatelessWidget {
     required this.onStatusChanged,
     required this.onReorder,
     required this.allConfigs,
-    required this.itemMap, // Added
-    required this.itemLists, // Added
-    required this.onNavigateToItem, // Added
-    required this.expandedItemId, // Added
+    required this.itemMap,
+    required this.itemLists,
+    required this.onNavigateToItem,
+    required this.expandedItemId,
+    required this.navigatedItemId, // Added
   });
 
   @override
@@ -46,10 +48,11 @@ class StatusCardListExample extends StatelessWidget {
       listColor: listConfig.color,
       allConfigs: allConfigs,
       cardIcons: listConfig.cardIcons,
-      itemMap: itemMap, // Added
-      itemLists: itemLists, // Added
-      onNavigateToItem: onNavigateToItem, // Added
-      expandedItemId: expandedItemId, // Added
+      itemMap: itemMap,
+      itemLists: itemLists,
+      onNavigateToItem: onNavigateToItem,
+      expandedItemId: expandedItemId,
+      navigatedItemId: navigatedItemId, // Added
     );
   }
 }

@@ -21,6 +21,7 @@ class _MyAppState extends State<MyApp> {
   late Data _data;
   String _currentListUuid = '550e8400-e29b-41d4-a716-446655440000'; // Review
   String? _expandedItemId; // Tracks expanded item
+  String? _navigatedItemId; // Tracks navigated item for highlight
 
   @override
   void initState() {
@@ -83,6 +84,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _currentListUuid = listUuid;
       _expandedItemId = null; // Reset expanded item when switching lists
+      _navigatedItemId = null; // Reset navigated item
       _sortItems();
     });
   }
@@ -91,6 +93,7 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _currentListUuid = targetListUuid;
       _expandedItemId = itemId; // Set the item to be expanded
+      _navigatedItemId = itemId; // Set the item to be highlighted
       _sortItems();
     });
     final targetConfig = _data.listConfigs.firstWhere((c) => c.uuid == targetListUuid);
@@ -188,7 +191,7 @@ class _MyAppState extends State<MyApp> {
                   )))
             item.id: item
         },
-        listConfigs: (responseJson['listConfigs'] as List<dynamic>)
+        listConfigs: (responseJson['items'] as List<dynamic>)
             .map((json) => ListConfig.fromJson(json))
             .toList(),
         itemLists: Map<String, List<String>>.from(
@@ -288,8 +291,9 @@ class _MyAppState extends State<MyApp> {
               allConfigs: _data.listConfigs,
               itemMap: _data.itemMap,
               itemLists: _data.itemLists,
-              onNavigateToItem: (targetListUuid, itemId) => _navigateToItem(scaffoldContext, targetListUuid, itemId), // Updated
+              onNavigateToItem: (targetListUuid, itemId) => _navigateToItem(scaffoldContext, targetListUuid, itemId),
               expandedItemId: _expandedItemId,
+              navigatedItemId: _navigatedItemId, // Added
             ),
           );
         },
