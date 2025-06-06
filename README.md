@@ -17,6 +17,8 @@ A reusable Flutter package for displaying and organizing items as cards within l
 - Consistent icon usage across the sidebar menu, list title, and card action buttons, reflecting each list's assigned icon (e.g., `Icons.rate_review` for "Review").
 - Supports manual reordering, sorting by date or title, and list settings customization.
 - Runs locally for development and testing across multiple platforms (web, desktop, mobile).
+- Can move cards with mouse or gestures
+- Cannot create new lists yet, or add comments/descriptions to lists
 
 ## Getting Started
 
