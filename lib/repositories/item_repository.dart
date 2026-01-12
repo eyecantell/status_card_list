@@ -1,22 +1,62 @@
-import 'item.dart';
-import 'list_config.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../models/item.dart';
 
-class Data {
-  final List<Item> items;
-  final Map<String, Item> itemMap; // For O(1) lookups
-  final List<ListConfig> listConfigs;
-  final Map<String, List<String>> itemLists; // List UUID -> Ordered item UUIDs
+class ItemRepository {
+  final SharedPreferences _prefs;
+  static const _itemsKey = 'items';
 
-  Data({
-    required this.items,
-    required this.itemMap,
-    required this.listConfigs,
-    required this.itemLists,
-  });
+  ItemRepository(this._prefs);
 
-  factory Data.initialize() {
-    // Initialize items
-    final List<Item> items = [
+  Future<List<Item>> getAllItems() async {
+    final jsonString = _prefs.getString(_itemsKey);
+    if (jsonString == null) return _getDefaultItems();
+
+    final jsonList = jsonDecode(jsonString) as List<dynamic>;
+    return jsonList
+        .map((json) => Item.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> saveItems(List<Item> items) async {
+    final jsonList = items.map((item) => item.toJson()).toList();
+    await _prefs.setString(_itemsKey, jsonEncode(jsonList));
+  }
+
+  Future<void> saveItem(Item item) async {
+    final items = await getAllItems();
+    final index = items.indexWhere((i) => i.id == item.id);
+    if (index >= 0) {
+      items[index] = item;
+    } else {
+      items.add(item);
+    }
+    await saveItems(items);
+  }
+
+  Future<void> deleteItem(String id) async {
+    final items = await getAllItems();
+    items.removeWhere((item) => item.id == id);
+    await saveItems(items);
+  }
+
+  Future<Item?> getItem(String id) async {
+    final items = await getAllItems();
+    try {
+      return items.firstWhere((item) => item.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Clears all persisted items (useful for testing)
+  Future<void> clear() async {
+    await _prefs.remove(_itemsKey);
+  }
+
+  List<Item> _getDefaultItems() {
+    final now = DateTime.now();
+    return [
       Item(
         id: '1',
         title: 'Task 1',
@@ -30,9 +70,9 @@ class Data {
             <li>Conclusion</li>
           </ul>
         ''',
-        dueDate: DateTime(2025, 5, 21),
+        dueDate: now.subtract(const Duration(days: 1)),
         status: 'Open',
-        relatedItemIds: ['2', '4'], // Related to Task 2 and Client Meeting Notes
+        relatedItemIds: ['2', '4'],
       ),
       Item(
         id: '2',
@@ -56,9 +96,9 @@ class Data {
             </tr>
           </table>
         ''',
-        dueDate: DateTime(2025, 5, 22),
+        dueDate: now,
         status: 'Open',
-        relatedItemIds: ['1'], // Related to Task 1 (allows navigation loop)
+        relatedItemIds: ['1'],
       ),
       Item(
         id: '3',
@@ -73,9 +113,9 @@ class Data {
             <li>Next Steps</li>
           </ul>
         ''',
-        dueDate: DateTime(2025, 5, 24),
+        dueDate: now.add(const Duration(days: 2)),
         status: 'Open',
-        relatedItemIds: ['4'], // Related to Client Meeting Notes
+        relatedItemIds: ['4'],
       ),
       Item(
         id: '4',
@@ -89,9 +129,9 @@ class Data {
             <li>Schedule next meeting</li>
           </ul>
         ''',
-        dueDate: DateTime(2025, 5, 28),
+        dueDate: now.add(const Duration(days: 6)),
         status: 'Awarded',
-        relatedItemIds: ['1', '3'], // Related to Task 1 and Prepare Presentation
+        relatedItemIds: ['1', '3'],
       ),
       Item(
         id: '5',
@@ -105,30 +145,10 @@ class Data {
             <li>Old data</li>
           </ul>
         ''',
-        dueDate: DateTime(2025, 5, 14),
+        dueDate: now.subtract(const Duration(days: 8)),
         status: 'Expired',
-        relatedItemIds: [], // No related items
+        relatedItemIds: [],
       ),
     ];
-
-    // Create item map for O(1) lookup
-    final Map<String, Item> itemMap = {for (var item in items) item.id: item};
-
-    // Parse list configs
-    final List<ListConfig> listConfigs = parseListConfigs(listConfigJson);
-
-    // Initialize item lists
-    final Map<String, List<String>> itemLists = {
-      '550e8400-e29b-41d4-a716-446655440000': ['1', '2', '3'], // Review
-      'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11': ['4'], // Saved
-      'c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e': ['5'], // Trash
-    };
-
-    return Data(
-      items: items,
-      itemMap: itemMap,
-      listConfigs: listConfigs,
-      itemLists: itemLists,
-    );
   }
 }

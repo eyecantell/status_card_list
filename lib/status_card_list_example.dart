@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'item.dart';
+import 'models/item.dart';
+import 'models/list_config.dart';
 import 'status_card_list.dart';
-import 'list_config.dart';
 
 class StatusCardListExample extends StatelessWidget {
   final List<Item> items;

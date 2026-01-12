@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../list_config.dart';
+import '../models/list_config.dart';
+import '../utils/constants.dart';
 
 class ListSettingsDialog extends StatefulWidget {
   final ListConfig listConfig;
@@ -18,19 +19,19 @@ class ListSettingsDialog extends StatefulWidget {
 }
 
 class _ListSettingsDialogState extends State<ListSettingsDialog> {
-  late IconData _selectedIcon;
+  late String _selectedIconName;
   late String _swipeLeftTargetUuid;
   late String _swipeRightTargetUuid;
-  late Color _selectedColor;
-  late List<MapEntry<String, String>> _selectedCardIcons;
+  late int _selectedColorValue;
+  late List<CardIconEntry> _selectedCardIcons;
 
   @override
   void initState() {
     super.initState();
-    _selectedIcon = widget.listConfig.icon;
+    _selectedIconName = widget.listConfig.iconName;
     _swipeLeftTargetUuid = widget.listConfig.swipeActions['left'] ?? '';
     _swipeRightTargetUuid = widget.listConfig.swipeActions['right'] ?? '';
-    _selectedColor = widget.listConfig.color;
+    _selectedColorValue = widget.listConfig.colorValue;
     _selectedCardIcons = List.from(widget.listConfig.cardIcons);
   }
 
@@ -49,11 +50,11 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
               children: iconMapForLists.entries.map((entry) {
                 return ChoiceChip(
                   label: Icon(entry.value),
-                  selected: _selectedIcon == entry.value,
+                  selected: _selectedIconName == entry.key,
                   onSelected: (selected) {
                     if (selected) {
                       setState(() {
-                        _selectedIcon = entry.value;
+                        _selectedIconName = entry.key;
                       });
                     }
                   },
@@ -72,11 +73,11 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
                     height: 24,
                     color: color,
                   ),
-                  selected: _selectedColor == color,
+                  selected: _selectedColorValue == color.value,
                   onSelected: (selected) {
                     if (selected) {
                       setState(() {
-                        _selectedColor = color;
+                        _selectedColorValue = color.value;
                       });
                     }
                   },
@@ -131,8 +132,13 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             ...widget.listConfig.buttons.entries.map((entry) {
               final iconName = entry.key;
               final targetUuid = entry.value;
-              final targetConfig = widget.allConfigs.firstWhere((config) => config.uuid == targetUuid);
-              final isSelected = _selectedCardIcons.any((e) => e.key == iconName && e.value == targetUuid);
+              final targetConfig = widget.allConfigs.firstWhere(
+                (config) => config.uuid == targetUuid,
+                orElse: () => widget.allConfigs.first,
+              );
+              final isSelected = _selectedCardIcons.any(
+                (e) => e.iconName == iconName && e.targetListId == targetUuid,
+              );
 
               return CheckboxListTile(
                 title: Row(
@@ -147,15 +153,20 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
                   setState(() {
                     if (value == true) {
                       if (_selectedCardIcons.length < 5) {
-                        _selectedCardIcons.add(MapEntry(iconName, targetUuid));
+                        _selectedCardIcons.add(CardIconEntry(
+                          iconName: iconName,
+                          targetListId: targetUuid,
+                        ));
                       }
                     } else {
-                      _selectedCardIcons.removeWhere((e) => e.key == iconName && e.value == targetUuid);
+                      _selectedCardIcons.removeWhere(
+                        (e) => e.iconName == iconName && e.targetListId == targetUuid,
+                      );
                     }
                   });
                 },
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -166,12 +177,16 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
         ),
         TextButton(
           onPressed: () {
-            widget.listConfig.icon = _selectedIcon;
-            widget.listConfig.color = _selectedColor;
-            widget.listConfig.swipeActions['left'] = _swipeLeftTargetUuid;
-            widget.listConfig.swipeActions['right'] = _swipeRightTargetUuid;
-            widget.listConfig.cardIcons = _selectedCardIcons;
-            widget.onSave(widget.listConfig);
+            final updatedConfig = widget.listConfig.copyWith(
+              iconName: _selectedIconName,
+              colorValue: _selectedColorValue,
+              swipeActions: {
+                'left': _swipeLeftTargetUuid,
+                'right': _swipeRightTargetUuid,
+              },
+              cardIcons: _selectedCardIcons,
+            );
+            widget.onSave(updatedConfig);
             Navigator.pop(context);
           },
           child: const Text('Save'),

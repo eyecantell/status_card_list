@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:status_card_list/list_config.dart';
-import 'item.dart';
+import 'models/item.dart';
+import 'models/list_config.dart';
 import 'status_card.dart';
 
 class StatusCardList extends StatefulWidget {
@@ -12,7 +12,7 @@ class StatusCardList extends StatefulWidget {
   final String dueDateLabel;
   final Color listColor;
   final List<ListConfig> allConfigs;
-  final List<MapEntry<String, String>> cardIcons;
+  final List<CardIconEntry> cardIcons;
   final Map<String, Item> itemMap;
   final Map<String, List<String>> itemLists;
   final Function(String, String) onNavigateToItem;

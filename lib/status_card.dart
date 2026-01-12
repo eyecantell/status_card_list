@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
-import 'item.dart';
-import 'list_config.dart';
-import '../data.dart'; // Import Data to access itemMap
+import 'models/item.dart';
+import 'models/list_config.dart';
 
 class StatusCard extends StatefulWidget {
   final Item item;
@@ -14,7 +13,7 @@ class StatusCard extends StatefulWidget {
   final String dueDateLabel;
   final Color listColor;
   final List<ListConfig> allConfigs;
-  final List<MapEntry<String, String>> cardIcons;
+  final List<CardIconEntry> cardIcons;
   final Map<String, Item> itemMap;
   final Map<String, List<String>> itemLists;
   final Function(String, String) onNavigateToItem;
@@ -266,8 +265,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   String _formatDueDateAndDays(DateTime dueDate) {
-    final today = DateTime(2025, 5, 22);
-    final difference = dueDate.difference(today).inDays;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final difference = dueDay.difference(today).inDays;
     String daysText;
 
     if (difference == 0) {
@@ -463,14 +464,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                               .key;
                                           final targetConfig = widget.allConfigs.firstWhere(
                                             (config) => config.uuid == targetListUuid,
-                                            orElse: () => ListConfig(
+                                            orElse: () => const ListConfig(
+                                              uuid: '',
                                               name: 'Unknown List',
                                               swipeActions: {},
                                               buttons: {},
-                                              dueDateLabel: 'Due Date',
-                                              sortMode: SortMode.dateAscending,
-                                              icon: Icons.list,
-                                              color: Colors.grey,
                                             ),
                                           );
                                           return TextButton(
@@ -534,7 +532,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: widget.cardIcons.map((entry) {
-                                  final targetListUuid = entry.value;
+                                  final targetListUuid = entry.targetListId;
                                   final targetConfig = widget.allConfigs.firstWhere(
                                     (config) => config.uuid == targetListUuid,
                                     orElse: () => widget.allConfigs[0],

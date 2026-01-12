@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import '../item.dart';
-import '../list_config.dart';
+import '../models/list_config.dart';
 
 class DrawerMenu extends StatelessWidget {
   final List<ListConfig> listConfigs;
