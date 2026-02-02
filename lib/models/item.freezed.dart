@@ -24,10 +24,11 @@ mixin _$Item {
   String get id => throw _privateConstructorUsedError;
   String get title => throw _privateConstructorUsedError;
   String get subtitle => throw _privateConstructorUsedError;
-  String get html => throw _privateConstructorUsedError;
-  DateTime get dueDate => throw _privateConstructorUsedError;
+  String? get html => throw _privateConstructorUsedError;
+  DateTime? get dueDate => throw _privateConstructorUsedError;
   String get status => throw _privateConstructorUsedError;
   List<String> get relatedItemIds => throw _privateConstructorUsedError;
+  Map<String, dynamic> get extra => throw _privateConstructorUsedError;
 
   /// Serializes this Item to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -47,10 +48,11 @@ abstract class $ItemCopyWith<$Res> {
     String id,
     String title,
     String subtitle,
-    String html,
-    DateTime dueDate,
+    String? html,
+    DateTime? dueDate,
     String status,
     List<String> relatedItemIds,
+    Map<String, dynamic> extra,
   });
 }
 
@@ -72,10 +74,11 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
     Object? id = null,
     Object? title = null,
     Object? subtitle = null,
-    Object? html = null,
-    Object? dueDate = null,
+    Object? html = freezed,
+    Object? dueDate = freezed,
     Object? status = null,
     Object? relatedItemIds = null,
+    Object? extra = null,
   }) {
     return _then(
       _value.copyWith(
@@ -95,15 +98,15 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
                     : subtitle // ignore: cast_nullable_to_non_nullable
                         as String,
             html:
-                null == html
+                freezed == html
                     ? _value.html
                     : html // ignore: cast_nullable_to_non_nullable
-                        as String,
+                        as String?,
             dueDate:
-                null == dueDate
+                freezed == dueDate
                     ? _value.dueDate
                     : dueDate // ignore: cast_nullable_to_non_nullable
-                        as DateTime,
+                        as DateTime?,
             status:
                 null == status
                     ? _value.status
@@ -114,6 +117,11 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
                     ? _value.relatedItemIds
                     : relatedItemIds // ignore: cast_nullable_to_non_nullable
                         as List<String>,
+            extra:
+                null == extra
+                    ? _value.extra
+                    : extra // ignore: cast_nullable_to_non_nullable
+                        as Map<String, dynamic>,
           )
           as $Val,
     );
@@ -132,10 +140,11 @@ abstract class _$$ItemImplCopyWith<$Res> implements $ItemCopyWith<$Res> {
     String id,
     String title,
     String subtitle,
-    String html,
-    DateTime dueDate,
+    String? html,
+    DateTime? dueDate,
     String status,
     List<String> relatedItemIds,
+    Map<String, dynamic> extra,
   });
 }
 
@@ -154,10 +163,11 @@ class __$$ItemImplCopyWithImpl<$Res>
     Object? id = null,
     Object? title = null,
     Object? subtitle = null,
-    Object? html = null,
-    Object? dueDate = null,
+    Object? html = freezed,
+    Object? dueDate = freezed,
     Object? status = null,
     Object? relatedItemIds = null,
+    Object? extra = null,
   }) {
     return _then(
       _$ItemImpl(
@@ -177,15 +187,15 @@ class __$$ItemImplCopyWithImpl<$Res>
                 : subtitle // ignore: cast_nullable_to_non_nullable
                     as String,
         html:
-            null == html
+            freezed == html
                 ? _value.html
                 : html // ignore: cast_nullable_to_non_nullable
-                    as String,
+                    as String?,
         dueDate:
-            null == dueDate
+            freezed == dueDate
                 ? _value.dueDate
                 : dueDate // ignore: cast_nullable_to_non_nullable
-                    as DateTime,
+                    as DateTime?,
         status:
             null == status
                 ? _value.status
@@ -196,6 +206,11 @@ class __$$ItemImplCopyWithImpl<$Res>
                 ? _value._relatedItemIds
                 : relatedItemIds // ignore: cast_nullable_to_non_nullable
                     as List<String>,
+        extra:
+            null == extra
+                ? _value._extra
+                : extra // ignore: cast_nullable_to_non_nullable
+                    as Map<String, dynamic>,
       ),
     );
   }
@@ -208,11 +223,13 @@ class _$ItemImpl extends _Item {
     required this.id,
     required this.title,
     required this.subtitle,
-    required this.html,
-    required this.dueDate,
+    this.html,
+    this.dueDate,
     required this.status,
     final List<String> relatedItemIds = const [],
+    final Map<String, dynamic> extra = const {},
   }) : _relatedItemIds = relatedItemIds,
+       _extra = extra,
        super._();
 
   factory _$ItemImpl.fromJson(Map<String, dynamic> json) =>
@@ -225,9 +242,9 @@ class _$ItemImpl extends _Item {
   @override
   final String subtitle;
   @override
-  final String html;
+  final String? html;
   @override
-  final DateTime dueDate;
+  final DateTime? dueDate;
   @override
   final String status;
   final List<String> _relatedItemIds;
@@ -239,9 +256,18 @@ class _$ItemImpl extends _Item {
     return EqualUnmodifiableListView(_relatedItemIds);
   }
 
+  final Map<String, dynamic> _extra;
+  @override
+  @JsonKey()
+  Map<String, dynamic> get extra {
+    if (_extra is EqualUnmodifiableMapView) return _extra;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_extra);
+  }
+
   @override
   String toString() {
-    return 'Item(id: $id, title: $title, subtitle: $subtitle, html: $html, dueDate: $dueDate, status: $status, relatedItemIds: $relatedItemIds)';
+    return 'Item(id: $id, title: $title, subtitle: $subtitle, html: $html, dueDate: $dueDate, status: $status, relatedItemIds: $relatedItemIds, extra: $extra)';
   }
 
   @override
@@ -259,7 +285,8 @@ class _$ItemImpl extends _Item {
             const DeepCollectionEquality().equals(
               other._relatedItemIds,
               _relatedItemIds,
-            ));
+            ) &&
+            const DeepCollectionEquality().equals(other._extra, _extra));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -273,6 +300,7 @@ class _$ItemImpl extends _Item {
     dueDate,
     status,
     const DeepCollectionEquality().hash(_relatedItemIds),
+    const DeepCollectionEquality().hash(_extra),
   );
 
   /// Create a copy of Item
@@ -294,10 +322,11 @@ abstract class _Item extends Item {
     required final String id,
     required final String title,
     required final String subtitle,
-    required final String html,
-    required final DateTime dueDate,
+    final String? html,
+    final DateTime? dueDate,
     required final String status,
     final List<String> relatedItemIds,
+    final Map<String, dynamic> extra,
   }) = _$ItemImpl;
   const _Item._() : super._();
 
@@ -310,13 +339,15 @@ abstract class _Item extends Item {
   @override
   String get subtitle;
   @override
-  String get html;
+  String? get html;
   @override
-  DateTime get dueDate;
+  DateTime? get dueDate;
   @override
   String get status;
   @override
   List<String> get relatedItemIds;
+  @override
+  Map<String, dynamic> get extra;
 
   /// Create a copy of Item
   /// with the given fields replaced by the non-null parameter values.

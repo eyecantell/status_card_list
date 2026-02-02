@@ -9,10 +9,11 @@ class Item with _$Item {
     required String id,
     required String title,
     required String subtitle,
-    required String html,
-    required DateTime dueDate,
+    String? html,
+    DateTime? dueDate,
     required String status,
     @Default([]) List<String> relatedItemIds,
+    @Default({}) Map<String, dynamic> extra,
   }) = _Item;
 
   const Item._();
@@ -21,9 +22,10 @@ class Item with _$Item {
 
   /// Format due date relative to reference (defaults to now)
   String formatDueDateRelative([DateTime? referenceDate]) {
+    if (dueDate == null) return 'No deadline';
     final reference = referenceDate ?? DateTime.now();
     final today = DateTime(reference.year, reference.month, reference.day);
-    final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
+    final dueDay = DateTime(dueDate!.year, dueDate!.month, dueDate!.day);
     final difference = dueDay.difference(today).inDays;
 
     final daysText = switch (difference) {
@@ -34,9 +36,9 @@ class Item with _$Item {
       _ => '${-difference} days ago',
     };
 
-    final formatted = '${dueDate.month}/${dueDate.day}/${dueDate.year}';
+    final formatted = '${dueDate!.month}/${dueDate!.day}/${dueDate!.year}';
     return '$formatted ($daysText)';
   }
 
-  bool get isOverdue => dueDate.isBefore(DateTime.now());
+  bool get isOverdue => dueDate != null && dueDate!.isBefore(DateTime.now());
 }

@@ -236,6 +236,13 @@ void main() {
       expect(SortMode.values, contains(SortMode.dateDescending));
       expect(SortMode.values, contains(SortMode.title));
       expect(SortMode.values, contains(SortMode.manual));
+      expect(SortMode.values, contains(SortMode.similarityDescending));
+      expect(SortMode.values, contains(SortMode.deadlineSoonest));
+      expect(SortMode.values, contains(SortMode.newest));
+    });
+
+    test('has 7 values total', () {
+      expect(SortMode.values.length, 7);
     });
   });
 }

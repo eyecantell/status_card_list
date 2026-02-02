@@ -61,9 +61,14 @@ void main() {
       });
 
       test('uses current date when no reference provided', () {
-        // This test verifies the method works without arguments
         final result = testItem.formatDueDateRelative();
         expect(result, isNotEmpty);
+      });
+
+      test('returns "No deadline" when dueDate is null', () {
+        final item = testItem.copyWith(dueDate: null);
+        final result = item.formatDueDateRelative(referenceDate);
+        expect(result, 'No deadline');
       });
     });
 
@@ -90,6 +95,90 @@ void main() {
           status: 'Open',
         );
         expect(item.isOverdue, isFalse);
+      });
+
+      test('returns false when dueDate is null', () {
+        final item = Item(
+          id: '1',
+          title: 'No Date Task',
+          subtitle: 'No deadline',
+          status: 'Open',
+        );
+        expect(item.isOverdue, isFalse);
+      });
+    });
+
+    group('nullable fields', () {
+      test('html can be null', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        expect(item.html, isNull);
+      });
+
+      test('dueDate can be null', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        expect(item.dueDate, isNull);
+      });
+
+      test('html and dueDate can be provided', () {
+        final now = DateTime.now();
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          html: '<p>Content</p>',
+          dueDate: now,
+          status: 'Open',
+        );
+        expect(item.html, '<p>Content</p>');
+        expect(item.dueDate, now);
+      });
+    });
+
+    group('extra field', () {
+      test('defaults to empty map', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        expect(item.extra, isEmpty);
+      });
+
+      test('accepts arbitrary metadata', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+          extra: {'best_similarity': 0.95, 'source': 'api'},
+        );
+        expect(item.extra['best_similarity'], 0.95);
+        expect(item.extra['source'], 'api');
+      });
+
+      test('extra field round-trips through JSON', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+          extra: {'score': 42, 'tags': ['a', 'b']},
+        );
+        final json = item.toJson();
+        final recreated = Item.fromJson(json);
+        expect(recreated.extra['score'], 42);
+        expect(recreated.extra['tags'], ['a', 'b']);
       });
     });
 
@@ -128,6 +217,30 @@ void main() {
         final json = item.toJson();
         final recreated = Item.fromJson(json);
         expect(recreated.relatedItemIds, isEmpty);
+      });
+
+      test('handles null html in JSON round-trip', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        final json = item.toJson();
+        final recreated = Item.fromJson(json);
+        expect(recreated.html, isNull);
+      });
+
+      test('handles null dueDate in JSON round-trip', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        final json = item.toJson();
+        final recreated = Item.fromJson(json);
+        expect(recreated.dueDate, isNull);
       });
     });
 

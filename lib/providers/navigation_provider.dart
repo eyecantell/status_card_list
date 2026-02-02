@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'items_provider.dart';
 import 'lists_provider.dart';
 
 /// Provider for the currently expanded item ID (only one at a time)
@@ -17,6 +18,9 @@ final pendingScrollItemIdProvider = StateProvider<String?>((ref) => null);
 void navigateToItem(WidgetRef ref, String targetListId, String itemId) {
   // 1. Switch to target list
   ref.read(currentListIdProvider.notifier).state = targetListId;
+
+  // 1b. Refresh items for the new list
+  ref.read(itemsProvider.notifier).refresh();
 
   // 2. Expand the item
   ref.read(expandedItemIdProvider.notifier).state = itemId;

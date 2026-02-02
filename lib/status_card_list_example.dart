@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/item.dart';
 import 'models/list_config.dart';
+import 'models/card_list_config.dart';
 import 'status_card_list.dart';
 
 class StatusCardListExample extends StatelessWidget {
@@ -10,11 +11,13 @@ class StatusCardListExample extends StatelessWidget {
   final Function(int, int) onReorder;
   final List<ListConfig> allConfigs;
   final Map<String, Item> itemMap;
-  final Map<String, List<String>> itemLists;
+  final Map<String, String> itemToListIndex;
   final Function(String, String) onNavigateToItem;
   final String? expandedItemId;
   final String? navigatedItemId;
-  final ScrollController? scrollController; // Added
+  final ScrollController? scrollController;
+  final void Function(String itemId)? onExpand;
+  final CardListConfig? cardListConfig;
 
   const StatusCardListExample({
     super.key,
@@ -24,11 +27,13 @@ class StatusCardListExample extends StatelessWidget {
     required this.onReorder,
     required this.allConfigs,
     required this.itemMap,
-    required this.itemLists,
+    required this.itemToListIndex,
     required this.onNavigateToItem,
     required this.expandedItemId,
     required this.navigatedItemId,
-    this.scrollController, // Added
+    this.scrollController,
+    this.onExpand,
+    this.cardListConfig,
   });
 
   @override
@@ -51,11 +56,13 @@ class StatusCardListExample extends StatelessWidget {
       allConfigs: allConfigs,
       cardIcons: listConfig.cardIcons,
       itemMap: itemMap,
-      itemLists: itemLists,
+      itemToListIndex: itemToListIndex,
       onNavigateToItem: onNavigateToItem,
       expandedItemId: expandedItemId,
       navigatedItemId: navigatedItemId,
-      scrollController: scrollController, // Added
+      scrollController: scrollController,
+      onExpand: onExpand,
+      cardListConfig: cardListConfig,
     );
   }
 }

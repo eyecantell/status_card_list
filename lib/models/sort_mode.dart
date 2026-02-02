@@ -8,4 +8,7 @@ enum SortMode {
   dateDescending,
   title,
   manual,
+  similarityDescending,
+  deadlineSoonest,
+  newest,
 }

@@ -44,6 +44,9 @@ const _$SortModeEnumMap = {
   SortMode.dateDescending: 'dateDescending',
   SortMode.title: 'title',
   SortMode.manual: 'manual',
+  SortMode.similarityDescending: 'similarityDescending',
+  SortMode.deadlineSoonest: 'deadlineSoonest',
+  SortMode.newest: 'newest',
 };
 
 _$CardIconEntryImpl _$$CardIconEntryImplFromJson(Map<String, dynamic> json) =>

@@ -1,94 +1,100 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/item.dart';
 import '../models/sort_mode.dart';
-import '../repositories/item_repository.dart';
+import '../data_source/card_list_data_source.dart';
+import 'data_source_provider.dart';
+import 'lists_provider.dart';
 
-/// Provider for the ItemRepository instance
-/// Must be overridden in main.dart with the actual repository
-final itemRepositoryProvider = Provider<ItemRepository>((ref) {
-  throw UnimplementedError(
-    'itemRepositoryProvider must be overridden in ProviderScope',
-  );
-});
-
-/// Provider for all items, managed by ItemsNotifier
+/// Provider for all items in the current list, managed by ItemsNotifier
 final itemsProvider =
     StateNotifierProvider<ItemsNotifier, AsyncValue<List<Item>>>((ref) {
-  final repository = ref.watch(itemRepositoryProvider);
-  return ItemsNotifier(repository);
+  final dataSource = ref.watch(dataSourceProvider);
+  return ItemsNotifier(dataSource, ref);
 });
 
-/// Provider for item map (O(1) lookup by ID)
+/// Accumulated cache of all items seen across lists.
+/// Used for cross-list lookups (related items, detail).
+final itemCacheProvider = StateProvider<Map<String, Item>>((ref) => {});
+
+/// Item-to-list index. Maps item ID → list ID.
+/// Used synchronously by StatusCard for related item list lookup.
+final itemToListIndexProvider = StateProvider<Map<String, String>>((ref) => {});
+
+/// Provider for item map (O(1) lookup by ID) - derived from item cache
 final itemMapProvider = Provider<Map<String, Item>>((ref) {
-  final itemsAsync = ref.watch(itemsProvider);
-  return itemsAsync.when(
-    data: (items) => {for (var item in items) item.id: item},
-    loading: () => {},
-    error: (_, __) => {},
-  );
+  return ref.watch(itemCacheProvider);
 });
 
 /// StateNotifier for managing items state
 class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
-  final ItemRepository _repository;
+  final CardListDataSource _dataSource;
+  final Ref _ref;
 
-  ItemsNotifier(this._repository) : super(const AsyncValue.loading()) {
+  ItemsNotifier(this._dataSource, this._ref) : super(const AsyncValue.loading()) {
     _loadItems();
   }
 
   Future<void> _loadItems() async {
     state = const AsyncValue.loading();
     try {
-      final items = await _repository.getAllItems();
-      state = AsyncValue.data(items);
+      final currentListId = _ref.read(currentListIdProvider);
+      final currentConfig = _ref.read(currentListConfigProvider);
+      final sortMode = currentConfig?.sortMode ?? SortMode.dateAscending;
+
+      final page = await _dataSource.loadItems(
+        listId: currentListId,
+        sortMode: sortMode,
+      );
+
+      state = AsyncValue.data(page.items);
+
+      // Update the item cache and list index
+      final cacheUpdate = <String, Item>{};
+      final indexUpdate = <String, String>{};
+      for (final item in page.items) {
+        cacheUpdate[item.id] = item;
+        indexUpdate[item.id] = currentListId;
+      }
+      _ref.read(itemCacheProvider.notifier).update((state) =>
+        {...state, ...cacheUpdate});
+      _ref.read(itemToListIndexProvider.notifier).update((state) =>
+        {...state, ...indexUpdate});
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
     }
   }
 
-  /// Reload items from repository
+  /// Reload items from data source
   Future<void> refresh() => _loadItems();
 
-  /// Add a new item
-  Future<void> addItem(Item item) async {
-    try {
-      await _repository.saveItem(item);
-      await _loadItems();
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Update an existing item
-  Future<void> updateItem(Item item) async {
-    try {
-      await _repository.saveItem(item);
-      await _loadItems();
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Delete an item by ID
-  Future<void> deleteItem(String id) async {
-    try {
-      await _repository.deleteItem(id);
-      await _loadItems();
-    } catch (e, stack) {
-      state = AsyncValue.error(e, stack);
-    }
-  }
-
-  /// Sort items according to the specified mode
+  /// Sort items according to the specified mode (utility for consumers)
   List<Item> sortItems(List<Item> items, SortMode mode) {
     if (mode == SortMode.manual) return items;
 
     final sorted = [...items];
     switch (mode) {
       case SortMode.dateAscending:
-        sorted.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      case SortMode.deadlineSoonest:
+        sorted.sort((a, b) {
+          if (a.dueDate == null && b.dueDate == null) return 0;
+          if (a.dueDate == null) return 1;
+          if (b.dueDate == null) return -1;
+          return a.dueDate!.compareTo(b.dueDate!);
+        });
       case SortMode.dateDescending:
-        sorted.sort((a, b) => b.dueDate.compareTo(a.dueDate));
+      case SortMode.newest:
+        sorted.sort((a, b) {
+          if (a.dueDate == null && b.dueDate == null) return 0;
+          if (a.dueDate == null) return 1;
+          if (b.dueDate == null) return -1;
+          return b.dueDate!.compareTo(a.dueDate!);
+        });
+      case SortMode.similarityDescending:
+        sorted.sort((a, b) {
+          final aScore = (a.extra['best_similarity'] as num?) ?? 0;
+          final bScore = (b.extra['best_similarity'] as num?) ?? 0;
+          return bScore.compareTo(aScore);
+        });
       case SortMode.title:
         sorted.sort((a, b) => a.title.compareTo(b.title));
       case SortMode.manual:
@@ -102,21 +108,16 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
     final items = state.value;
     if (items == null) return;
 
-    var needsUpdate = false;
     final updated = items.map((item) {
       final cleanedRelated = item.relatedItemIds
           .where((id) => validItemIds.contains(id))
           .toList();
       if (cleanedRelated.length != item.relatedItemIds.length) {
-        needsUpdate = true;
         return item.copyWith(relatedItemIds: cleanedRelated);
       }
       return item;
     }).toList();
 
-    if (needsUpdate) {
-      await _repository.saveItems(updated);
-      state = AsyncValue.data(updated);
-    }
+    state = AsyncValue.data(updated);
   }
 }

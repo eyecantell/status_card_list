@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/item.dart';
 import 'models/list_config.dart';
+import 'models/card_list_config.dart';
 import 'status_card.dart';
 
 class StatusCardList extends StatefulWidget {
@@ -14,11 +15,13 @@ class StatusCardList extends StatefulWidget {
   final List<ListConfig> allConfigs;
   final List<CardIconEntry> cardIcons;
   final Map<String, Item> itemMap;
-  final Map<String, List<String>> itemLists;
+  final Map<String, String> itemToListIndex;
   final Function(String, String) onNavigateToItem;
   final String? expandedItemId;
   final String? navigatedItemId;
   final ScrollController? scrollController;
+  final void Function(String itemId)? onExpand;
+  final CardListConfig? cardListConfig;
 
   const StatusCardList({
     super.key,
@@ -32,11 +35,13 @@ class StatusCardList extends StatefulWidget {
     required this.allConfigs,
     required this.cardIcons,
     required this.itemMap,
-    required this.itemLists,
+    required this.itemToListIndex,
     required this.onNavigateToItem,
     required this.expandedItemId,
     required this.navigatedItemId,
     this.scrollController,
+    this.onExpand,
+    this.cardListConfig,
   });
 
   @override
@@ -54,9 +59,8 @@ class _StatusCardListState extends State<StatusCardList> {
         child: ReorderableListView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false, // Disable default drag handle
+          buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) {
-            print('Reordering from $oldIndex to $newIndex'); // Debug log
             widget.onReorder(oldIndex, newIndex);
           },
           proxyDecorator: (child, index, animation) {
@@ -94,10 +98,12 @@ class _StatusCardListState extends State<StatusCardList> {
                   allConfigs: widget.allConfigs,
                   cardIcons: widget.cardIcons,
                   itemMap: widget.itemMap,
-                  itemLists: widget.itemLists,
+                  itemToListIndex: widget.itemToListIndex,
                   onNavigateToItem: widget.onNavigateToItem,
                   isExpanded: widget.expandedItemId == widget.items[index].id,
                   isNavigated: widget.navigatedItemId == widget.items[index].id,
+                  onExpand: widget.onExpand,
+                  cardListConfig: widget.cardListConfig,
                 ),
               ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/list_config.dart';
 import '../models/sort_mode.dart';
+import '../providers/actions_provider.dart';
 import '../providers/items_provider.dart';
 import '../providers/lists_provider.dart';
 import '../providers/navigation_provider.dart';
@@ -30,7 +31,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentListId = ref.read(currentListIdProvider);
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
 
-    final success = await ref.read(itemListsProvider.notifier).moveItem(
+    final success = await ref.read(actionsProvider).moveItem(
       item.id,
       currentListId,
       targetListUuid,
@@ -50,8 +51,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _handleReorder(int oldIndex, int newIndex) async {
     final currentListId = ref.read(currentListIdProvider);
 
-    // Reorder items
-    await ref.read(itemListsProvider.notifier).reorderItems(
+    await ref.read(actionsProvider).reorderItems(
       currentListId,
       oldIndex,
       newIndex,
@@ -102,6 +102,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.read(currentListIdProvider.notifier).state = listUuid;
     ref.read(expandedItemIdProvider.notifier).state = null;
     ref.read(navigatedItemIdProvider.notifier).state = null;
+    // Refresh items for the new list
+    ref.read(itemsProvider.notifier).refresh();
   }
 
   void _showSettingsDialog(BuildContext context, ListConfig config) {
@@ -119,9 +121,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _setSortMode(SortMode mode) {
+  void _handleExpand(String itemId) async {
+    // Toggle expand state
+    final currentExpanded = ref.read(expandedItemIdProvider);
+    ref.read(expandedItemIdProvider.notifier).state =
+        currentExpanded == itemId ? null : itemId;
+
+    // Load detail if html is null
+    final cache = ref.read(itemCacheProvider);
+    final item = cache[itemId];
+    if (item != null && item.html == null) {
+      await ref.read(actionsProvider).loadItemDetail(itemId);
+      ref.read(itemsProvider.notifier).refresh();
+    }
+  }
+
+  void _setSortMode(SortMode mode) async {
     final currentListId = ref.read(currentListIdProvider);
-    ref.read(listConfigsProvider.notifier).setSortMode(currentListId, mode);
+    await ref.read(listConfigsProvider.notifier).setSortMode(currentListId, mode);
+    // Refresh items with new sort mode
+    ref.read(itemsProvider.notifier).refresh();
   }
 
   @override
@@ -129,8 +148,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentConfig = ref.watch(currentListConfigProvider);
     final currentItems = ref.watch(itemsForCurrentListProvider);
     final allConfigs = ref.watch(listConfigsProvider).value ?? [];
-    final itemMap = ref.watch(itemMapProvider);
-    final itemLists = ref.watch(itemListsProvider).value ?? {};
+    final itemCache = ref.watch(itemCacheProvider);
+    final itemToListIndex = ref.watch(itemToListIndexProvider);
     final currentListId = ref.watch(currentListIdProvider);
     final expandedItemId = ref.watch(expandedItemIdProvider);
     final navigatedItemId = ref.watch(navigatedItemIdProvider);
@@ -189,6 +208,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   label = 'Title';
                 case SortMode.manual:
                   label = 'Manual';
+                case SortMode.similarityDescending:
+                  label = 'Best Match';
+                case SortMode.deadlineSoonest:
+                  label = 'Deadline Soonest';
+                case SortMode.newest:
+                  label = 'Newest';
               }
               return DropdownMenuItem<SortMode>(
                 value: mode,
@@ -207,7 +232,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       drawer: DrawerMenu(
         listConfigs: allConfigs,
         currentListUuid: currentListId,
-        itemLists: itemLists,
+        itemToListIndex: itemToListIndex,
         onListSelected: _handleSwitchList,
       ),
       body: Builder(
@@ -219,13 +244,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _handleStatusChange(scaffoldContext, item, targetListUuid),
             onReorder: _handleReorder,
             allConfigs: allConfigs,
-            itemMap: itemMap,
-            itemLists: itemLists,
+            itemMap: itemCache,
+            itemToListIndex: itemToListIndex,
             onNavigateToItem: (targetListUuid, itemId) =>
                 _handleNavigateToItem(scaffoldContext, targetListUuid, itemId),
             expandedItemId: expandedItemId,
             navigatedItemId: navigatedItemId,
             scrollController: _scrollController,
+            onExpand: _handleExpand,
           );
         },
       ),

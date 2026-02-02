@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'models/item.dart';
 import 'models/list_config.dart';
+import 'models/card_list_config.dart';
 
 class StatusCard extends StatefulWidget {
   final Item item;
@@ -15,10 +16,12 @@ class StatusCard extends StatefulWidget {
   final List<ListConfig> allConfigs;
   final List<CardIconEntry> cardIcons;
   final Map<String, Item> itemMap;
-  final Map<String, List<String>> itemLists;
+  final Map<String, String> itemToListIndex;
   final Function(String, String) onNavigateToItem;
   final bool isExpanded;
   final bool isNavigated;
+  final void Function(String itemId)? onExpand;
+  final CardListConfig? cardListConfig;
 
   const StatusCard({
     super.key,
@@ -33,10 +36,12 @@ class StatusCard extends StatefulWidget {
     required this.allConfigs,
     required this.cardIcons,
     required this.itemMap,
-    required this.itemLists,
+    required this.itemToListIndex,
     required this.onNavigateToItem,
     this.isExpanded = false,
     this.isNavigated = false,
+    this.onExpand,
+    this.cardListConfig,
   });
 
   @override
@@ -220,12 +225,16 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
 
   void _toggleExpanded() {
     print('Card tapped: ${widget.item.title}');
+    final willExpand = !_isExpanded;
     setState(() {
-      _isExpanded = !_isExpanded;
+      _isExpanded = willExpand;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _updateCardHeight();
       });
     });
+    if (willExpand) {
+      widget.onExpand?.call(widget.item.id);
+    }
   }
 
   Color _getTargetColor(String action) {
@@ -264,7 +273,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     return 'ACTION';
   }
 
-  String _formatDueDateAndDays(DateTime dueDate) {
+  String _formatDueDateAndDays(DateTime? dueDate) {
+    if (dueDate == null) return 'No deadline';
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final dueDay = DateTime(dueDate.year, dueDate.month, dueDate.day);
@@ -285,6 +295,110 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
 
     final formattedDate = '${dueDate.month}/${dueDate.day}/${dueDate.year}';
     return '${widget.dueDateLabel}: $formattedDate ($daysText)';
+  }
+
+  Widget _buildDefaultExpanded(BuildContext context, bool isDarkMode) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (widget.item.relatedItemIds.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Related Items:',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: widget.item.relatedItemIds.length,
+                  itemBuilder: (context, index) {
+                    final relatedId = widget.item.relatedItemIds[index];
+                    final relatedItem = widget.itemMap[relatedId];
+                    final targetListUuid = widget.itemToListIndex[relatedId] ?? '';
+                    final targetConfig = widget.allConfigs.firstWhere(
+                      (config) => config.uuid == targetListUuid,
+                      orElse: () => const ListConfig(
+                        uuid: '',
+                        name: 'Unknown List',
+                        swipeActions: {},
+                        buttons: {},
+                      ),
+                    );
+                    return TextButton(
+                      onPressed: targetListUuid.isNotEmpty
+                          ? () {
+                              widget.onNavigateToItem(targetListUuid, relatedId);
+                            }
+                          : null,
+                      child: Text(
+                        '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'} (${targetConfig.name})',
+                        style: TextStyle(
+                          color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        if (widget.item.html != null)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 8.0,
+            ),
+            child: Html(
+              data: widget.item.html!,
+              style: {
+                'h2': Style(
+                  fontSize: FontSize(18.0),
+                  fontWeight: FontWeight.bold,
+                  margin: Margins.all(8.0),
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+                'p': Style(
+                  fontSize: FontSize(14.0),
+                  margin: Margins.all(8.0),
+                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                ),
+                'table': Style(
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey[600]! : Colors.grey,
+                  ),
+                ),
+                'th': Style(
+                  backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  padding: HtmlPaddings.all(8.0),
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+                'td': Style(
+                  padding: HtmlPaddings.all(8.0),
+                  color: isDarkMode ? Colors.white70 : Colors.black87,
+                ),
+              },
+            ),
+          )
+        else
+          const Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+      ],
+    );
   }
 
   @override
@@ -432,101 +546,12 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                               dense: true,
                             ),
                             if (_isExpanded) ...[
-                              if (widget.item.relatedItemIds.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                    vertical: 8.0,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Related Items:',
-                                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: isDarkMode ? Colors.white : Colors.black,
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      ListView.builder(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(),
-                                        itemCount: widget.item.relatedItemIds.length,
-                                        itemBuilder: (context, index) {
-                                          final relatedId = widget.item.relatedItemIds[index];
-                                          final relatedItem = widget.itemMap[relatedId];
-                                          final targetListUuid = widget.itemLists.entries
-                                              .firstWhere(
-                                                (entry) => entry.value.contains(relatedId),
-                                                orElse: () => MapEntry('', <String>[]),
-                                              )
-                                              .key;
-                                          final targetConfig = widget.allConfigs.firstWhere(
-                                            (config) => config.uuid == targetListUuid,
-                                            orElse: () => const ListConfig(
-                                              uuid: '',
-                                              name: 'Unknown List',
-                                              swipeActions: {},
-                                              buttons: {},
-                                            ),
-                                          );
-                                          return TextButton(
-                                            onPressed: targetListUuid.isNotEmpty
-                                                ? () {
-                                                    widget.onNavigateToItem(targetListUuid, relatedId);
-                                                  }
-                                                : null,
-                                            child: Text(
-                                              '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'} (${targetConfig.name})',
-                                              style: TextStyle(
-                                                color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
-                                                decoration: TextDecoration.underline,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16.0,
-                                  vertical: 8.0,
-                                ),
-                                child: Html(
-                                  data: widget.item.html,
-                                  style: {
-                                    'h2': Style(
-                                      fontSize: FontSize(18.0),
-                                      fontWeight: FontWeight.bold,
-                                      margin: Margins.all(8.0),
-                                      color: isDarkMode ? Colors.white : Colors.black,
-                                    ),
-                                    'p': Style(
-                                      fontSize: FontSize(14.0),
-                                      margin: Margins.all(8.0),
-                                      color: isDarkMode ? Colors.white70 : Colors.black87,
-                                    ),
-                                    'table': Style(
-                                      border: Border.all(
-                                        color: isDarkMode ? Colors.grey[600]! : Colors.grey,
-                                      ),
-                                    ),
-                                    'th': Style(
-                                      backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-                                      padding: HtmlPaddings.all(8.0),
-                                      fontWeight: FontWeight.bold,
-                                      color: isDarkMode ? Colors.white : Colors.black,
-                                    ),
-                                    'td': Style(
-                                      padding: HtmlPaddings.all(8.0),
-                                      color: isDarkMode ? Colors.white70 : Colors.black87,
-                                    ),
-                                  },
-                                ),
-                              ),
+                              if (widget.cardListConfig?.expandedBuilder != null)
+                                widget.cardListConfig!.expandedBuilder!(
+                                  context, widget.item, widget.item.html == null)
+                              else ...[
+                                _buildDefaultExpanded(context, isDarkMode),
+                              ],
                             ],
                             if (widget.cardIcons.isNotEmpty)
                               Row(
