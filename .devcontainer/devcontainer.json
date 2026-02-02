@@ -1,0 +1,37 @@
+{
+    "name": "status_card_list dev env",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "mounts": [
+        {
+            "type": "bind",
+            "source": "${localEnv:HOME}${localEnv:USERPROFILE}/dev",
+            "target": "/mounted/dev"
+        },
+        {
+            "source": "${localEnv:HOME}${localEnv:USERPROFILE}/stuff_for_containers_home",
+            "target": "/mounted/stuff_for_containers_home",
+            "type": "bind"
+        }
+    ],
+    "postCreateCommand": "mkdir -p ~/.claude && ln -sf /mounted/dev/claude_settings/settings.json ~/.claude/settings.json && cd /mounted/dev/status_card_list && flutter pub get",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "Dart-Code.dart-code",
+                "Dart-Code.flutter",
+                "ms-azuretools.vscode-docker",
+                "github.vscode-github-actions"
+            ],
+            "settings": {
+                "dart.flutterSdkPath": "/opt/flutter"
+            }
+        }
+    },
+    "remoteEnv": {
+        "ENABLE_LSP_TOOL": "1",
+        "CHROME_EXECUTABLE": "/usr/bin/google-chrome"
+    }
+}

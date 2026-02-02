@@ -1,0 +1,35 @@
+[
+    {
+        "name": "Review",
+        "swipeActions": {
+            "right": "Saved",
+            "left": "Trash"
+        },
+        "buttons": {
+            "check_circle": "Saved",
+            "delete": "Trash"
+        }
+    },
+    {
+        "name": "Saved",
+        "swipeActions": {
+            "right": "Review",
+            "left": "Trash"
+        },
+        "buttons": {
+            "refresh": "Review",
+            "delete": "Trash"
+        }
+    },
+    {
+        "name": "Trash",
+        "swipeActions": {
+            "right": "Review",
+            "left": "Trash"
+        },
+        "buttons": {
+            "refresh": "Review",
+            "delete_forever": "Trash"
+        }
+    }
+]
