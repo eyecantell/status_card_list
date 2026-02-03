@@ -134,6 +134,34 @@ void main() {
         expect(detail.title, 'Task 1');
         expect(detail.html, isNotNull);
       });
+
+      test('caches item under correct key (item ID, not literal string)', () async {
+        await waitForData(container, itemsProvider);
+
+        final actions = container.read(actionsProvider);
+        await actions.loadItemDetail('2');
+
+        // Verify item is cached under the actual item ID '2', not a literal 'itemId'
+        final cache = container.read(itemCacheProvider);
+        expect(cache.containsKey('2'), isTrue);
+        expect(cache['2']?.html, isNotNull);
+        // Ensure no literal 'itemId' key was created (the bug we fixed)
+        expect(cache.containsKey('itemId'), isFalse);
+      });
+
+      test('cached detail is retrievable by item ID', () async {
+        await waitForData(container, itemsProvider);
+
+        final actions = container.read(actionsProvider);
+        final detail = await actions.loadItemDetail('3');
+
+        final cache = container.read(itemCacheProvider);
+        final cachedItem = cache['3'];
+
+        expect(cachedItem, isNotNull);
+        expect(cachedItem?.id, detail.id);
+        expect(cachedItem?.html, detail.html);
+      });
     });
   });
 }

@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:status_card_list/models/item.dart';
 import 'package:status_card_list/models/sort_mode.dart';
 import 'package:status_card_list/data_source/in_memory_data_source.dart';
+import 'package:status_card_list/providers/actions_provider.dart';
 import 'package:status_card_list/providers/data_source_provider.dart';
 import 'package:status_card_list/providers/items_provider.dart';
 import 'package:status_card_list/providers/lists_provider.dart';
@@ -104,6 +106,58 @@ void main() {
       expect(items, isNotEmpty);
       // Review list should have items 1, 2, 3
       expect(items.map((i) => i.id), containsAll(['1', '2', '3']));
+    });
+
+    test('merges cached HTML into items without HTML', () async {
+      await waitForData(container, itemsProvider);
+
+      // Items from list don't have HTML initially (simulating API list response)
+      final itemsBefore = container.read(itemsForCurrentListProvider);
+      final item1Before = itemsBefore.firstWhere((i) => i.id == '1');
+
+      // Load detail which adds HTML to cache
+      final actions = container.read(actionsProvider);
+      await actions.loadItemDetail('1');
+
+      // Now itemsForCurrentListProvider should merge the cached HTML
+      final itemsAfter = container.read(itemsForCurrentListProvider);
+      final item1After = itemsAfter.firstWhere((i) => i.id == '1');
+
+      expect(item1After.html, isNotNull);
+      expect(item1After.id, item1Before.id);
+      expect(item1After.title, item1Before.title);
+    });
+
+    test('keeps item HTML when it already has HTML (does not overwrite with cache)', () async {
+      await waitForData(container, itemsProvider);
+
+      // The items from InMemoryDataSource already have HTML
+      final itemsBefore = container.read(itemsForCurrentListProvider);
+      final item1Before = itemsBefore.firstWhere((i) => i.id == '1');
+      expect(item1Before.html, isNotNull);
+
+      // Put different HTML in cache
+      const differentHtml = '<p>Different cached HTML</p>';
+      final cachedItem = Item(
+        id: '1',
+        title: 'Task 1',
+        subtitle: 'Test',
+        status: 'active',
+        html: differentHtml,
+      );
+      container.read(itemCacheProvider.notifier).update((state) {
+        final updated = Map<String, Item>.from(state);
+        updated['1'] = cachedItem;
+        return updated;
+      });
+
+      final itemsAfter = container.read(itemsForCurrentListProvider);
+      final item1After = itemsAfter.firstWhere((i) => i.id == '1');
+
+      // Item should keep its own HTML (from itemsProvider), not use cached HTML
+      // because we only merge cache when item.html == null
+      expect(item1After.html, item1Before.html);
+      expect(item1After.html, isNot(differentHtml));
     });
   });
 
