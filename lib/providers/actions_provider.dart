@@ -43,8 +43,11 @@ class CardListActions {
   Future<Item> loadItemDetail(String itemId) async {
     final ds = _ref.read(dataSourceProvider);
     final detail = await ds.loadItemDetail(itemId);
-    _ref.read(itemCacheProvider.notifier).update((state) =>
-      {...state, itemId: detail});
+    _ref.read(itemCacheProvider.notifier).update((state) {
+      final updated = Map<String, Item>.from(state);
+      updated[itemId] = detail;
+      return updated;
+    });
     return detail;
   }
 }

@@ -37,10 +37,18 @@ final currentListConfigProvider = Provider<ListConfig?>((ref) {
   );
 });
 
-/// Provider for items in the current list (forwards from itemsProvider)
+/// Provider for items in the current list (merges with cache for HTML)
 final itemsForCurrentListProvider = Provider<List<Item>>((ref) {
+  final cache = ref.watch(itemCacheProvider);
   return ref.watch(itemsProvider).when(
-    data: (items) => items,
+    data: (items) => items.map((item) {
+      final cached = cache[item.id];
+      // Preserve HTML from cache if the current item doesn't have it
+      if (cached?.html != null && item.html == null) {
+        return item.copyWith(html: cached!.html);
+      }
+      return item;
+    }).toList(),
     loading: () => [],
     error: (_, __) => [],
   );

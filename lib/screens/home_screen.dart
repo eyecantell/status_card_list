@@ -132,7 +132,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final item = cache[itemId];
     if (item != null && item.html == null) {
       await ref.read(actionsProvider).loadItemDetail(itemId);
-      ref.read(itemsProvider.notifier).refresh();
+      // No refresh needed - itemsForCurrentListProvider watches itemCacheProvider
     }
   }
 
