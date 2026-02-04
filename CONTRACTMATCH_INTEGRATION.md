@@ -78,7 +78,7 @@ class ContractMatchApp extends ConsumerWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeMode,
-      home: const HomeScreen(),
+      home: const HomeScreen(), // optionally pass cardListConfig: CardListConfig(...)
     );
   }
 }
@@ -336,7 +336,7 @@ class ContractMatchMapper implements HttpResponseMapper {
 
 The engine renders cards with default builders (title, status, due date, html). Contractmatch overrides these to show match scores and capability details.
 
-Pass a `CardListConfig` to `HomeScreen` — or, since `HomeScreen` is the engine's screen, you can customize by wrapping it or by modifying the engine's `home_screen.dart` to accept an optional `CardListConfig`. The engine already supports this parameter through the widget chain.
+`HomeScreen` accepts an optional `CardListConfig?` parameter. Pass it to customize card rendering:
 
 ### Collapsed card content
 
