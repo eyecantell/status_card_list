@@ -22,6 +22,7 @@ class StatusCard extends StatefulWidget {
   final bool isNavigated;
   final void Function(String itemId)? onExpand;
   final CardListConfig? cardListConfig;
+  final ListConfig listConfig;
 
   const StatusCard({
     super.key,
@@ -38,6 +39,7 @@ class StatusCard extends StatefulWidget {
     required this.itemMap,
     required this.itemToListIndex,
     required this.onNavigateToItem,
+    required this.listConfig,
     this.isExpanded = false,
     this.isNavigated = false,
     this.onExpand,
@@ -518,33 +520,44 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            ListTile(
-                              title: Text(
-                                widget.item.title,
-                                style: Theme.of(context).textTheme.titleLarge,
+                            if (widget.cardListConfig?.collapsedBuilder != null)
+                              widget.cardListConfig!.collapsedBuilder!(
+                                  context, widget.item, widget.listConfig)
+                            else
+                              ListTile(
+                                title: Text(
+                                  widget.item.title,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                subtitle: widget.cardListConfig?.subtitleBuilder != null
+                                    ? widget.cardListConfig!.subtitleBuilder!(
+                                        context, widget.item)
+                                    : Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4.0),
+                                            child: Text(
+                                              'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
+                                              style: Theme.of(context).textTheme.bodyMedium,
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 4.0),
+                                            child: Text(
+                                              _formatDueDateAndDays(widget.item.dueDate),
+                                              style: Theme.of(context).textTheme.bodyMedium,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                trailing: widget.cardListConfig?.trailingBuilder != null
+                                    ? widget.cardListConfig!.trailingBuilder!(
+                                        context, widget.item)
+                                    : null,
+                                contentPadding: EdgeInsets.zero,
+                                dense: true,
                               ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: Text(
-                                      'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
-                                      style: Theme.of(context).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4.0),
-                                    child: Text(
-                                      _formatDueDateAndDays(widget.item.dueDate),
-                                      style: Theme.of(context).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              contentPadding: EdgeInsets.zero,
-                              dense: true,
-                            ),
                             if (_isExpanded) ...[
                               if (widget.cardListConfig?.expandedBuilder != null)
                                 widget.cardListConfig!.expandedBuilder!(

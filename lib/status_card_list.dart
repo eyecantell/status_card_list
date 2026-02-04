@@ -22,6 +22,7 @@ class StatusCardList extends StatefulWidget {
   final ScrollController? scrollController;
   final void Function(String itemId)? onExpand;
   final CardListConfig? cardListConfig;
+  final ListConfig listConfig;
 
   const StatusCardList({
     super.key,
@@ -39,6 +40,7 @@ class StatusCardList extends StatefulWidget {
     required this.onNavigateToItem,
     required this.expandedItemId,
     required this.navigatedItemId,
+    required this.listConfig,
     this.scrollController,
     this.onExpand,
     this.cardListConfig,
@@ -100,6 +102,7 @@ class _StatusCardListState extends State<StatusCardList> {
                   itemMap: widget.itemMap,
                   itemToListIndex: widget.itemToListIndex,
                   onNavigateToItem: widget.onNavigateToItem,
+                  listConfig: widget.listConfig,
                   isExpanded: widget.expandedItemId == widget.items[index].id,
                   isNavigated: widget.navigatedItemId == widget.items[index].id,
                   onExpand: widget.onExpand,

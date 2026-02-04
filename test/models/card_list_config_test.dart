@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:status_card_list/models/card_list_config.dart';
 import 'package:status_card_list/models/item.dart';
 import 'package:status_card_list/models/list_config.dart';
+import 'package:status_card_list/status_card.dart';
 
 void main() {
   group('CardListConfig', () {
@@ -147,6 +148,102 @@ void main() {
         ),
       );
       expect(find.text('No content'), findsOneWidget);
+    });
+  });
+
+  group('CardListConfig builders wired into StatusCard', () {
+    final testItem = Item(
+      id: '1',
+      title: 'Test Item',
+      subtitle: 'Test Subtitle',
+      status: 'Open',
+    );
+
+    final testListConfig = ListConfig(
+      uuid: 'list-1',
+      name: 'Test List',
+      swipeActions: {},
+      buttons: {},
+    );
+
+    Widget buildStatusCard({CardListConfig? cardListConfig, bool isExpanded = false}) {
+      return MaterialApp(
+        home: Scaffold(
+          body: StatusCard(
+            item: testItem,
+            index: 0,
+            statusIcons: const {},
+            swipeActions: const {},
+            onStatusChanged: (_, __) {},
+            onReorder: (_, __) {},
+            dueDateLabel: 'Deadline',
+            listColor: Colors.blue,
+            allConfigs: [testListConfig],
+            cardIcons: const [],
+            itemMap: const {},
+            itemToListIndex: const {},
+            onNavigateToItem: (_, __) {},
+            listConfig: testListConfig,
+            isExpanded: isExpanded,
+            cardListConfig: cardListConfig,
+          ),
+        ),
+      );
+    }
+
+    testWidgets('collapsedBuilder replaces default ListTile when provided', (tester) async {
+      final config = CardListConfig(
+        collapsedBuilder: (context, item, listConfig) {
+          return Text('CUSTOM COLLAPSED: ${item.title} in ${listConfig.name}');
+        },
+      );
+
+      await tester.pumpWidget(buildStatusCard(cardListConfig: config));
+      await tester.pumpAndSettle();
+
+      expect(find.text('CUSTOM COLLAPSED: Test Item in Test List'), findsOneWidget);
+      // Default ListTile title should not appear
+      expect(find.text('Test Item'), findsNothing);
+    });
+
+    testWidgets('subtitleBuilder replaces default subtitle when provided', (tester) async {
+      final config = CardListConfig(
+        subtitleBuilder: (context, item) {
+          return Text('CUSTOM SUBTITLE: ${item.status}');
+        },
+      );
+
+      await tester.pumpWidget(buildStatusCard(cardListConfig: config));
+      await tester.pumpAndSettle();
+
+      expect(find.text('CUSTOM SUBTITLE: Open'), findsOneWidget);
+      // Default status line should not appear
+      expect(find.textContaining('Status: Open'), findsNothing);
+    });
+
+    testWidgets('trailingBuilder adds trailing widget when provided', (tester) async {
+      final config = CardListConfig(
+        trailingBuilder: (context, item) {
+          return const Text('TRAILING');
+        },
+      );
+
+      await tester.pumpWidget(buildStatusCard(cardListConfig: config));
+      await tester.pumpAndSettle();
+
+      expect(find.text('TRAILING'), findsOneWidget);
+      // Default title should still be present
+      expect(find.text('Test Item'), findsOneWidget);
+    });
+
+    testWidgets('default rendering when no builders provided', (tester) async {
+      await tester.pumpWidget(buildStatusCard());
+      await tester.pumpAndSettle();
+
+      // Default title and status should appear
+      expect(find.text('Test Item'), findsOneWidget);
+      expect(find.textContaining('Status: Open'), findsOneWidget);
+      expect(find.text('No deadline'), findsOneWidget);
     });
   });
 }

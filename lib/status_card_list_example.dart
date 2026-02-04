@@ -60,6 +60,7 @@ class StatusCardListExample extends StatelessWidget {
       onNavigateToItem: onNavigateToItem,
       expandedItemId: expandedItemId,
       navigatedItemId: navigatedItemId,
+      listConfig: listConfig,
       scrollController: scrollController,
       onExpand: onExpand,
       cardListConfig: cardListConfig,
