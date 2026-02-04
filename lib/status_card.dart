@@ -599,6 +599,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                     icon: Icon(icon),
                                     color: color,
                                     iconSize: 48.0,
+                                    tooltip: 'Move to ${targetConfig.name}',
                                     onPressed: () => _triggerAction(targetListUuid: targetListUuid),
                                   );
                                 }).toList(),
