@@ -6,12 +6,14 @@ import '../providers/context_provider.dart';
 import '../providers/data_source_provider.dart';
 import '../providers/items_provider.dart';
 import '../providers/lists_provider.dart';
+import '../providers/theme_provider.dart';
 
 class DrawerMenu extends ConsumerWidget {
   final List<ListConfig> listConfigs;
   final String currentListUuid;
   final Map<String, String> itemToListIndex;
   final Function(String) onListSelected;
+  final Function(String)? onConfigureList;
 
   const DrawerMenu({
     super.key,
@@ -19,6 +21,7 @@ class DrawerMenu extends ConsumerWidget {
     required this.currentListUuid,
     required this.itemToListIndex,
     required this.onListSelected,
+    this.onConfigureList,
   });
 
   int _countItemsForList(String listUuid) {
@@ -29,6 +32,7 @@ class DrawerMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final contexts = ref.watch(dataContextsProvider).value ?? [];
     final currentContext = ref.watch(currentContextProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Drawer(
       child: ListView(
@@ -105,6 +109,16 @@ class DrawerMenu extends ConsumerWidget {
                   ],
                 ),
               ),
+              trailing: onConfigureList != null
+                  ? IconButton(
+                      icon: const Icon(Icons.settings),
+                      tooltip: 'List settings',
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onConfigureList!(config.uuid);
+                      },
+                    )
+                  : null,
               tileColor: isSelected
                   ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
                   : null,
@@ -114,6 +128,14 @@ class DrawerMenu extends ConsumerWidget {
               },
             );
           }),
+          const Divider(),
+          ListTile(
+            leading: Icon(
+              themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,
+            ),
+            title: Text(themeMode == ThemeMode.dark ? 'Dark mode' : 'Light mode'),
+            onTap: () => toggleTheme(ref),
+          ),
         ],
       ),
     );

@@ -6,7 +6,6 @@ import '../providers/actions_provider.dart';
 import '../providers/items_provider.dart';
 import '../providers/lists_provider.dart';
 import '../providers/navigation_provider.dart';
-import '../providers/theme_provider.dart';
 import '../widgets/drawer_menu.dart';
 import '../widgets/list_settings_dialog.dart';
 import '../models/card_list_config.dart';
@@ -156,8 +155,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentListId = ref.watch(currentListIdProvider);
     final expandedItemId = ref.watch(expandedItemIdProvider);
     final navigatedItemId = ref.watch(navigatedItemIdProvider);
-    final themeMode = ref.watch(themeModeProvider);
-
     // Show loading indicator while data is loading
     if (currentConfig == null) {
       return const Scaffold(
@@ -167,76 +164,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Flexible(
-              child: PopupMenuButton<String>(
-                onSelected: _handleSwitchList,
-                tooltip: 'Select list',
-                color: Theme.of(context).cardTheme.color,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: currentConfig.color, width: 2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(currentConfig.icon, color: currentConfig.color),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          currentConfig.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
-                    ],
+        title: PopupMenuButton<String>(
+          onSelected: _handleSwitchList,
+          tooltip: 'Select list',
+          color: Theme.of(context).cardTheme.color,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              border: Border.all(color: currentConfig.color, width: 2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(currentConfig.icon, color: currentConfig.color),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    currentConfig.name,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                itemBuilder: (context) => allConfigs.map((config) {
-                  final isSelected = config.uuid == currentListId;
-                  final count = itemToListIndex.values.where((id) => id == config.uuid).length;
-                  return PopupMenuItem<String>(
-                    value: config.uuid,
-                    child: Row(
-                      children: [
-                        if (isSelected)
-                          Icon(Icons.check, color: config.color, size: 18)
-                        else
-                          const SizedBox(width: 18),
-                        const SizedBox(width: 8),
-                        Icon(config.icon, color: config.color),
-                        const SizedBox(width: 8),
-                        Text(
-                          config.name,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '($count)',
-                          style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
+                const SizedBox(width: 4),
+                Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
+              ],
+            ),
+          ),
+          itemBuilder: (context) => allConfigs.map((config) {
+            final isSelected = config.uuid == currentListId;
+            final count = itemToListIndex.values.where((id) => id == config.uuid).length;
+            return PopupMenuItem<String>(
+              value: config.uuid,
+              child: Row(
+                children: [
+                  if (isSelected)
+                    Icon(Icons.check, color: config.color, size: 18)
+                  else
+                    const SizedBox(width: 18),
+                  const SizedBox(width: 8),
+                  Icon(config.icon, color: config.color),
+                  const SizedBox(width: 8),
+                  Text(
+                    config.name,
+                    style: TextStyle(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
-                  );
-                }).toList(),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '($count)',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () => _showSettingsDialog(context, currentConfig),
-              tooltip: 'List Settings',
-            ),
-          ],
+            );
+          }).toList(),
         ),
         actions: [
           PopupMenuButton<SortMode>(
@@ -283,12 +268,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             }).toList(),
           ),
-          IconButton(
-            icon: Icon(
-              themeMode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-            ),
-            onPressed: () => toggleTheme(ref),
-          ),
         ],
       ),
       drawer: DrawerMenu(
@@ -296,6 +275,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         currentListUuid: currentListId,
         itemToListIndex: itemToListIndex,
         onListSelected: _handleSwitchList,
+        onConfigureList: (uuid) {
+          final config = allConfigs.firstWhere(
+            (c) => c.uuid == uuid,
+            orElse: () => allConfigs.first,
+          );
+          _showSettingsDialog(context, config);
+        },
       ),
       body: Builder(
         builder: (BuildContext scaffoldContext) {
