@@ -7,7 +7,7 @@ First consumer: **contractmatch** (contract notice triage). See `CONTRACTMATCH_I
 ## Commands
 
 ```bash
-# Run tests (127 tests)
+# Run tests (131 tests)
 flutter test
 
 # Run a single test file
