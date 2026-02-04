@@ -9,10 +9,13 @@ import '../providers/navigation_provider.dart';
 import '../providers/theme_provider.dart';
 import '../widgets/drawer_menu.dart';
 import '../widgets/list_settings_dialog.dart';
+import '../models/card_list_config.dart';
 import '../status_card_list_example.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final CardListConfig? cardListConfig;
+
+  const HomeScreen({super.key, this.cardListConfig});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
@@ -166,49 +169,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            PopupMenuButton<String>(
-              onSelected: _handleSwitchList,
-              tooltip: 'Select list',
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: currentConfig.color, width: 2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(currentConfig.icon, color: currentConfig.color),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        '${currentConfig.name} List',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
-                  ],
-                ),
-              ),
-              itemBuilder: (context) => allConfigs.map((config) {
-                final isSelected = config.uuid == currentListId;
-                return PopupMenuItem<String>(
-                  value: config.uuid,
+            Flexible(
+              child: PopupMenuButton<String>(
+                onSelected: _handleSwitchList,
+                tooltip: 'Select list',
+                color: Theme.of(context).cardTheme.color,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: currentConfig.color, width: 2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                   child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(config.icon, color: config.color),
+                      Icon(currentConfig.icon, color: currentConfig.color),
                       const SizedBox(width: 8),
-                      Text(
-                        config.name,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      Flexible(
+                        child: Text(
+                          '${currentConfig.name} List',
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
                     ],
                   ),
-                );
-              }).toList(),
+                ),
+                itemBuilder: (context) => allConfigs.map((config) {
+                  final isSelected = config.uuid == currentListId;
+                  final count = itemToListIndex.values.where((id) => id == config.uuid).length;
+                  return PopupMenuItem<String>(
+                    value: config.uuid,
+                    child: Row(
+                      children: [
+                        if (isSelected)
+                          Icon(Icons.check, color: config.color, size: 18)
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 8),
+                        Icon(config.icon, color: config.color),
+                        const SizedBox(width: 8),
+                        Text(
+                          config.name,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '($count)',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
             const SizedBox(width: 8),
             IconButton(
@@ -282,6 +302,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             navigatedItemId: navigatedItemId,
             scrollController: _scrollController,
             onExpand: _handleExpand,
+            cardListConfig: widget.cardListConfig,
           );
         },
       ),
