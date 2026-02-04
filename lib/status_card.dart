@@ -57,6 +57,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   late Animation<double> _animation;
   late AnimationController _highlightController;
   late Animation<double> _highlightAnimation;
+  late AnimationController _collapseController;
   static const double _maxDrag = 150.0;
   static const double _buttonWidth = 100.0;
   static const double _threshold = 90.0;
@@ -80,6 +81,12 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           _dragOffset = _animation.value;
         });
       });
+
+    _collapseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+      value: 1.0,
+    );
 
     _highlightController = AnimationController(
       vsync: this,
@@ -121,6 +128,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   void dispose() {
     _controller.dispose();
     _highlightController.dispose();
+    _collapseController.dispose();
     super.dispose();
   }
 
@@ -201,10 +209,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         });
       });
     await _controller.forward(from: 0);
-    setState(() {
-      _dragOffset = 0;
-      _isActionTriggered = false;
-    });
   }
 
   void _triggerAction({String? action, String? targetListUuid}) {
@@ -227,7 +231,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             : screenWidth;
       }
       _animateOffScreen(animationDirection).then((_) {
-        widget.onStatusChanged(widget.item, targetListUuid!);
+        _collapseController
+            .animateTo(0.0, curve: Curves.easeOut)
+            .then((_) {
+          widget.onStatusChanged(widget.item, targetListUuid!);
+        });
       });
     }
   }
@@ -416,7 +424,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     final rightListName = _getTargetName('right');
     final leftListName = _getTargetName('left');
 
-    return Stack(
+    return SizeTransition(
+      sizeFactor: _collapseController,
+      child: Stack(
       alignment: Alignment.center,
       children: [
         Positioned(
@@ -604,6 +614,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
           ),
         ),
       ],
+    ),
     );
   }
 }
