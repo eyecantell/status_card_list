@@ -7,7 +7,7 @@ First consumer: **contractmatch** (contract notice triage). See `CONTRACTMATCH_I
 ## Commands
 
 ```bash
-# Run tests (123 tests)
+# Run tests (127 tests)
 flutter test
 
 # Run a single test file
@@ -73,9 +73,9 @@ lib/
 │   ├── actions_provider.dart        # CardListActions: moveItem, reorderItems, loadItemDetail
 │   ├── navigation_provider.dart     # navigateToItem (switch list + scroll + highlight)
 │   ├── context_provider.dart        # dataContextsProvider, currentContextProvider (multi-tenant)
-│   └── theme_provider.dart          # Light/dark theme toggle
+│   └── theme_provider.dart          # Light/dark theme toggle, scaffold/card contrast tuning
 ├── screens/
-│   └── home_screen.dart             # Main screen: app bar, sort dropdown, card list, drawer
+│   └── home_screen.dart             # Main screen: app bar with list dropdown selector, sort dropdown, card list, drawer
 ├── widgets/
 │   ├── drawer_menu.dart             # Navigation drawer: list selection, context switcher, counts
 │   └── list_settings_dialog.dart    # List config editor (name, icon, color)

@@ -15,7 +15,7 @@ void toggleTheme(WidgetRef ref) {
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primarySwatch: Colors.blue,
-  scaffoldBackgroundColor: Colors.grey[100],
+  scaffoldBackgroundColor: Colors.grey[200],
   appBarTheme: const AppBarTheme(
     backgroundColor: Colors.blue,
     foregroundColor: Colors.white,
@@ -57,14 +57,14 @@ final ThemeData lightTheme = ThemeData(
 final ThemeData darkTheme = ThemeData(
   brightness: Brightness.dark,
   primarySwatch: Colors.blue,
-  scaffoldBackgroundColor: const Color(0xFF121212),
+  scaffoldBackgroundColor: const Color(0xFF0A0A0A),
   appBarTheme: const AppBarTheme(
     backgroundColor: Color(0xFF1E1E1E),
     foregroundColor: Colors.white,
     elevation: 4,
   ),
   cardTheme: const CardThemeData(
-    color: Color(0xFF1E1E1E),
+    color: Color(0xFF252525),
     elevation: 4,
     margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
   ),

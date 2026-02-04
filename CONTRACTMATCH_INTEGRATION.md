@@ -636,8 +636,9 @@ The engine handles all of this:
 - Card expand/collapse with animation
 - On-demand HTML loading (shows spinner, calls `loadItemDetail`, re-renders)
 - Sort mode dropdown in app bar
+- List selector dropdown in app bar (PopupMenuButton, switches lists without opening drawer)
 - Drawer menu with list selection and item counts
-- Theme switching (light/dark)
+- Theme switching (light/dark) with tuned scaffold/card contrast
 - Item cache for cross-list lookups
 - Scroll-to and highlight animation for navigation
 

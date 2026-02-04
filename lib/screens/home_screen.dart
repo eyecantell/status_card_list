@@ -166,19 +166,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                border: Border.all(color: currentConfig.color, width: 2),
-                borderRadius: BorderRadius.circular(4),
+            PopupMenuButton<String>(
+              onSelected: _handleSwitchList,
+              tooltip: 'Select list',
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: currentConfig.color, width: 2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(currentConfig.icon, color: currentConfig.color),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '${currentConfig.name} List',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  Icon(currentConfig.icon, color: currentConfig.color),
-                  const SizedBox(width: 8),
-                  Text('${currentConfig.name} List'),
-                ],
-              ),
+              itemBuilder: (context) => allConfigs.map((config) {
+                final isSelected = config.uuid == currentListId;
+                return PopupMenuItem<String>(
+                  value: config.uuid,
+                  child: Row(
+                    children: [
+                      Icon(config.icon, color: config.color),
+                      const SizedBox(width: 8),
+                      Text(
+                        config.name,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
             const SizedBox(width: 8),
             IconButton(
