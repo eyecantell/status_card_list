@@ -214,11 +214,18 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _swipeState = null;
         _isActionTriggered = true;
       });
-      final animationDirection = action == 'right'
-          ? MediaQuery.of(context).size.width
-          : action == 'left'
-              ? -MediaQuery.of(context).size.width
-              : MediaQuery.of(context).size.width;
+      final screenWidth = MediaQuery.of(context).size.width;
+      final double animationDirection;
+      if (action == 'right') {
+        animationDirection = screenWidth;
+      } else if (action == 'left') {
+        animationDirection = -screenWidth;
+      } else {
+        // Card icon tap: match swipe direction by checking swipeActions
+        animationDirection = widget.swipeActions['left'] == targetListUuid
+            ? -screenWidth
+            : screenWidth;
+      }
       _animateOffScreen(animationDirection).then((_) {
         widget.onStatusChanged(widget.item, targetListUuid!);
       });
