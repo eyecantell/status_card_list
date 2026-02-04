@@ -33,7 +33,7 @@ void main() {
     expect(find.text('Task 1'), findsOneWidget);
     expect(find.text('Task 2'), findsOneWidget);
     expect(find.text('Prepare Presentation'), findsOneWidget);
-    expect(find.text('Review List'), findsOneWidget);
+    expect(find.text('Review'), findsOneWidget);
 
     // Open drawer and switch to Saved list
     await tester.tap(find.byIcon(Icons.menu));
@@ -44,7 +44,7 @@ void main() {
     // Verify Saved list with 1 item
     expect(find.text('Client Meeting Notes'), findsOneWidget);
     expect(find.text('Task 1'), findsNothing);
-    expect(find.text('Saved List'), findsOneWidget);
+    expect(find.text('Saved'), findsOneWidget);
 
     // Switch to Trash list
     await tester.tap(find.byIcon(Icons.menu));
@@ -55,6 +55,6 @@ void main() {
     // Verify Trash list with 1 item
     expect(find.text('Old Draft'), findsOneWidget);
     expect(find.text('Client Meeting Notes'), findsNothing);
-    expect(find.text('Trash List'), findsOneWidget);
+    expect(find.text('Trash'), findsOneWidget);
   });
 }

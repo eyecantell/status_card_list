@@ -187,7 +187,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
-                          '${currentConfig.name} List',
+                          currentConfig.name,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -239,15 +239,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
-          DropdownButton<SortMode>(
-            value: currentConfig.sortMode,
+          PopupMenuButton<SortMode>(
             icon: const Icon(Icons.sort),
-            onChanged: (SortMode? newValue) {
-              if (newValue != null) {
-                _setSortMode(newValue);
-              }
-            },
-            items: SortMode.values.map((SortMode mode) {
+            tooltip: 'Sort order',
+            color: Theme.of(context).cardTheme.color,
+            onSelected: _setSortMode,
+            itemBuilder: (context) => SortMode.values.map((SortMode mode) {
+              final isSelected = mode == currentConfig.sortMode;
               String label;
               switch (mode) {
                 case SortMode.dateAscending:
@@ -265,9 +263,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 case SortMode.newest:
                   label = 'Newest';
               }
-              return DropdownMenuItem<SortMode>(
+              return PopupMenuItem<SortMode>(
                 value: mode,
-                child: Text(label),
+                child: Row(
+                  children: [
+                    if (isSelected)
+                      Icon(Icons.check, color: currentConfig.color, size: 18)
+                    else
+                      const SizedBox(width: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
               );
             }).toList(),
           ),
