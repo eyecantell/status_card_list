@@ -38,7 +38,7 @@ void main() {
     // Open drawer and switch to Saved list
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Saved (0)'));
+    await tester.tap(find.text('Saved (1)'));
     await tester.pumpAndSettle();
 
     // Verify Saved list with 1 item
@@ -49,7 +49,7 @@ void main() {
     // Switch to Trash list
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Trash (0)'));
+    await tester.tap(find.text('Trash (1)'));
     await tester.pumpAndSettle();
 
     // Verify Trash list with 1 item

@@ -152,6 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final allConfigs = ref.watch(listConfigsProvider).value ?? [];
     final itemCache = ref.watch(itemCacheProvider);
     final itemToListIndex = ref.watch(itemToListIndexProvider);
+    final counts = ref.watch(listCountsProvider).value ?? {};
     final currentListId = ref.watch(currentListIdProvider);
     final expandedItemId = ref.watch(expandedItemIdProvider);
     final navigatedItemId = ref.watch(navigatedItemIdProvider);
@@ -192,7 +193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           itemBuilder: (context) => allConfigs.map((config) {
             final isSelected = config.uuid == currentListId;
-            final count = itemToListIndex.values.where((id) => id == config.uuid).length;
+            final count = counts[config.uuid] ?? 0;
             return PopupMenuItem<String>(
               value: config.uuid,
               child: Row(
@@ -273,7 +274,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       drawer: DrawerMenu(
         listConfigs: allConfigs,
         currentListUuid: currentListId,
-        itemToListIndex: itemToListIndex,
         onListSelected: _handleSwitchList,
         onConfigureList: (uuid) {
           final config = allConfigs.firstWhere(

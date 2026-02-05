@@ -22,6 +22,7 @@ class CardListActions {
       _ref.read(itemToListIndexProvider.notifier).update((state) =>
         {...state, itemId: targetListId});
       await _ref.read(itemsProvider.notifier).refresh();
+      _ref.invalidate(listCountsProvider);
     }
     return success;
   }

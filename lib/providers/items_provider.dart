@@ -25,6 +25,15 @@ final itemMapProvider = Provider<Map<String, Item>>((ref) {
   return ref.watch(itemCacheProvider);
 });
 
+/// Provider for item counts per list, fetched via getStatus().
+/// Lightweight alternative to loading all items just for counts.
+final listCountsProvider = FutureProvider<Map<String, int>>((ref) async {
+  final dataSource = ref.watch(dataSourceProvider);
+  final status = await dataSource.getStatus();
+  final counts = status['counts'] as Map<String, dynamic>? ?? {};
+  return counts.map((key, value) => MapEntry(key, value as int));
+});
+
 /// StateNotifier for managing items state
 class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   final CardListDataSource _dataSource;

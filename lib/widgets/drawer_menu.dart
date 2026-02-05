@@ -11,7 +11,6 @@ import '../providers/theme_provider.dart';
 class DrawerMenu extends ConsumerWidget {
   final List<ListConfig> listConfigs;
   final String currentListUuid;
-  final Map<String, String> itemToListIndex;
   final Function(String) onListSelected;
   final Function(String)? onConfigureList;
 
@@ -19,20 +18,16 @@ class DrawerMenu extends ConsumerWidget {
     super.key,
     required this.listConfigs,
     required this.currentListUuid,
-    required this.itemToListIndex,
     required this.onListSelected,
     this.onConfigureList,
   });
-
-  int _countItemsForList(String listUuid) {
-    return itemToListIndex.values.where((id) => id == listUuid).length;
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contexts = ref.watch(dataContextsProvider).value ?? [];
     final currentContext = ref.watch(currentContextProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final counts = ref.watch(listCountsProvider).value ?? {};
 
     return Drawer(
       child: ListView(
@@ -79,7 +74,7 @@ class DrawerMenu extends ConsumerWidget {
           ],
           ...listConfigs.map((config) {
             final isSelected = currentListUuid == config.uuid;
-            final count = _countItemsForList(config.uuid);
+            final count = counts[config.uuid] ?? 0;
             return ListTile(
               leading: Container(
                 padding: const EdgeInsets.all(4),
