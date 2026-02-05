@@ -41,6 +41,7 @@ dataSourceProvider (must be overridden in ProviderScope)
     ├── listConfigsProvider (all list configs, StateNotifier)
     ├── itemCacheProvider (cross-list item cache, StateProvider)
     ├── itemToListIndexProvider (item→list mapping, StateProvider)
+    ├── listCountsProvider (per-list item counts via getStatus(), FutureProvider)
     └── actionsProvider (moveItem, reorderItems, loadItemDetail)
 ```
 
@@ -68,7 +69,7 @@ lib/
 │   └── sort_mode.dart               # Enum: dateAscending, dateDescending, title, manual, similarityDescending, deadlineSoonest, newest
 ├── providers/
 │   ├── data_source_provider.dart    # Must be overridden in ProviderScope
-│   ├── items_provider.dart          # itemsProvider, itemCacheProvider, itemToListIndexProvider, itemMapProvider
+│   ├── items_provider.dart          # itemsProvider, itemCacheProvider, itemToListIndexProvider, itemMapProvider, listCountsProvider
 │   ├── lists_provider.dart          # listConfigsProvider, currentListIdProvider, currentListConfigProvider
 │   ├── actions_provider.dart        # CardListActions: moveItem, reorderItems, loadItemDetail
 │   ├── navigation_provider.dart     # navigateToItem (switch list + scroll + highlight)
