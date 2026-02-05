@@ -76,6 +76,12 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   /// Reload items from data source
   Future<void> refresh() => _loadItems();
 
+  /// Optimistically remove an item from the current list without re-fetching.
+  void removeItem(String itemId) {
+    final current = state.valueOrNull ?? [];
+    state = AsyncValue.data(current.where((item) => item.id != itemId).toList());
+  }
+
   /// Sort items according to the specified mode (utility for consumers)
   List<Item> sortItems(List<Item> items, SortMode mode) {
     if (mode == SortMode.manual) return items;
