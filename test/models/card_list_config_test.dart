@@ -13,6 +13,29 @@ void main() {
       expect(config.expandedBuilder, isNull);
       expect(config.trailingBuilder, isNull);
       expect(config.subtitleBuilder, isNull);
+      expect(config.drawerItems, isNull);
+    });
+
+    test('drawerItems defaults to null', () {
+      const config = CardListConfig();
+      expect(config.drawerItems, isNull);
+    });
+
+    test('drawerItems accepts a list of widgets', () {
+      final config = CardListConfig(
+        drawerItems: [
+          const ListTile(title: Text('Help')),
+          const ListTile(title: Text('About')),
+        ],
+      );
+      expect(config.drawerItems, isNotNull);
+      expect(config.drawerItems!.length, 2);
+    });
+
+    test('drawerItems accepts an empty list', () {
+      const config = CardListConfig(drawerItems: []);
+      expect(config.drawerItems, isNotNull);
+      expect(config.drawerItems!.isEmpty, isTrue);
     });
 
     test('creates with custom collapsedBuilder', () {

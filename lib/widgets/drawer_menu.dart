@@ -13,6 +13,7 @@ class DrawerMenu extends ConsumerWidget {
   final String currentListUuid;
   final Function(String) onListSelected;
   final Function(String)? onConfigureList;
+  final List<Widget>? drawerItems;
 
   const DrawerMenu({
     super.key,
@@ -20,6 +21,7 @@ class DrawerMenu extends ConsumerWidget {
     required this.currentListUuid,
     required this.onListSelected,
     this.onConfigureList,
+    this.drawerItems,
   });
 
   @override
@@ -124,6 +126,10 @@ class DrawerMenu extends ConsumerWidget {
             );
           }),
           const Divider(),
+          if (drawerItems != null && drawerItems!.isNotEmpty) ...[
+            ...drawerItems!,
+            const Divider(),
+          ],
           ListTile(
             leading: Icon(
               themeMode == ThemeMode.dark ? Icons.dark_mode : Icons.light_mode,

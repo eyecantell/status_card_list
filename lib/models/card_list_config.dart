@@ -20,10 +20,14 @@ class CardListConfig {
   /// Build subtitle line(s). If null, default: "Status: X, N related items".
   final Widget Function(BuildContext context, Item item)? subtitleBuilder;
 
+  /// Extra widgets to show in the navigation drawer (after list items, before theme toggle).
+  final List<Widget>? drawerItems;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
     this.trailingBuilder,
     this.subtitleBuilder,
+    this.drawerItems,
   });
 }

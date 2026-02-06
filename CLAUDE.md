@@ -65,7 +65,7 @@ lib/
 ├── models/
 │   ├── item.dart                    # Item: id, title, subtitle, html?, dueDate?, status, extra
 │   ├── list_config.dart             # ListConfig: uuid, name, swipeActions, buttons, cardIcons, sortMode, icon, color
-│   ├── card_list_config.dart        # Builder callbacks for custom card rendering
+│   ├── card_list_config.dart        # Builder callbacks for custom card rendering + drawerItems
 │   └── sort_mode.dart               # Enum: dateAscending, dateDescending, title, manual, similarityDescending, deadlineSoonest, newest
 ├── providers/
 │   ├── data_source_provider.dart    # Must be overridden in ProviderScope
@@ -102,7 +102,7 @@ The engine's `HomeScreen` is the entry point. Consumers don't build their own sc
 
 **ListConfig** (Freezed): `uuid`, `name`, `swipeActions` (direction→targetListId), `buttons` (iconName→targetListId), `cardIcons` (list of CardIconEntry), `dueDateLabel`, `sortMode`, `iconName`, `colorValue`
 
-**CardListConfig**: Optional builder callbacks — `collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`. When null, engine uses default rendering.
+**CardListConfig**: Optional builder callbacks — `collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`. Optional `drawerItems` (`List<Widget>?`) for extra navigation drawer entries. When null, engine uses default rendering.
 
 ## Tests
 

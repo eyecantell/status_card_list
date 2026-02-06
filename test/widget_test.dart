@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:status_card_list/data_source/in_memory_data_source.dart';
+import 'package:status_card_list/models/card_list_config.dart';
 import 'package:status_card_list/providers/data_source_provider.dart';
 import 'package:status_card_list/providers/theme_provider.dart';
 import 'package:status_card_list/screens/home_screen.dart';
@@ -56,5 +57,75 @@ void main() {
     expect(find.text('Old Draft'), findsOneWidget);
     expect(find.text('Client Meeting Notes'), findsNothing);
     expect(find.text('Trash'), findsOneWidget);
+  });
+
+  testWidgets('Custom drawerItems render in the navigation drawer', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final dataSource = InMemoryDataSource(prefs);
+    await dataSource.initialize();
+
+    final config = CardListConfig(
+      drawerItems: [
+        const ListTile(
+          leading: Icon(Icons.help_outline),
+          title: Text('How It Works'),
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dataSourceProvider.overrideWithValue(dataSource),
+        ],
+        child: MaterialApp(
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeMode.dark,
+          home: HomeScreen(cardListConfig: config),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Open drawer
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
+    // Verify custom drawer item is rendered
+    expect(find.text('How It Works'), findsOneWidget);
+    expect(find.byIcon(Icons.help_outline), findsOneWidget);
+  });
+
+  testWidgets('Empty drawerItems list produces no extra dividers', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final dataSource = InMemoryDataSource(prefs);
+    await dataSource.initialize();
+
+    const config = CardListConfig(drawerItems: []);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dataSourceProvider.overrideWithValue(dataSource),
+        ],
+        child: MaterialApp(
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: ThemeMode.dark,
+          home: const HomeScreen(cardListConfig: config),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Open drawer
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
+    // Count Dividers — should be exactly 1 (the one between list items and theme toggle)
+    expect(find.byType(Divider), findsOneWidget);
   });
 }
