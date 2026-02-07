@@ -33,6 +33,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentListId = ref.read(currentListIdProvider);
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
 
+    ref.read(expandedItemIdProvider.notifier).state = null;
+
     final success = await ref.read(actionsProvider).moveItem(
       item.id,
       currentListId,
@@ -45,6 +47,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         orElse: () => allConfigs.first,
       );
       final messenger = ScaffoldMessenger.of(context);
+      final isDark = Theme.of(context).brightness == Brightness.dark;
+      final buttonColor = isDark ? Colors.black87 : Colors.white;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
         SnackBar(
@@ -53,7 +57,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             children: [
               Flexible(child: Text('${item.title} moved to ${targetConfig.name}')),
               const SizedBox(width: 12),
-              TextButton(
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: buttonColor,
+                  side: BorderSide(color: buttonColor.withAlpha(180)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                ),
                 onPressed: () async {
                   messenger.hideCurrentSnackBar();
                   final success = await ref.read(actionsProvider).moveItem(
@@ -65,7 +74,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ref.read(itemsProvider.notifier).refresh();
                   }
                 },
-                child: const Text('Undo'),
+                child: const Text('Undo', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),
