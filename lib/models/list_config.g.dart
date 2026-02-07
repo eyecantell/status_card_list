@@ -13,7 +13,7 @@ _$ListConfigImpl _$$ListConfigImplFromJson(Map<String, dynamic> json) =>
       swipeActions: Map<String, String>.from(json['swipeActions'] as Map),
       buttons: Map<String, String>.from(json['buttons'] as Map),
       dueDateLabel: json['dueDateLabel'] as String? ?? 'Due Date',
-      sortMode: json['sortMode'] as String? ?? 'manual',
+      sortMode: json['sort_mode'] as String? ?? 'manual',
       iconName: json['iconName'] as String? ?? 'list',
       colorValue: (json['colorValue'] as num?)?.toInt() ?? 0xFF2196F3,
       cardIcons:
@@ -31,7 +31,7 @@ Map<String, dynamic> _$$ListConfigImplToJson(_$ListConfigImpl instance) =>
       'swipeActions': instance.swipeActions,
       'buttons': instance.buttons,
       'dueDateLabel': instance.dueDateLabel,
-      'sortMode': instance.sortMode,
+      'sort_mode': instance.sortMode,
       'iconName': instance.iconName,
       'colorValue': instance.colorValue,
       'cardIcons': const CardIconListConverter().toJson(instance.cardIcons),

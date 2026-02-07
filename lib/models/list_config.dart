@@ -13,7 +13,7 @@ class ListConfig with _$ListConfig {
     required Map<String, String> swipeActions,
     required Map<String, String> buttons,
     @Default('Due Date') String dueDateLabel,
-    @Default('manual') String sortMode,
+    @JsonKey(name: 'sort_mode') @Default('manual') String sortMode,
     @Default('list') String iconName,
     @Default(0xFF2196F3) int colorValue,
     @CardIconListConverter() @Default([]) List<CardIconEntry> cardIcons,

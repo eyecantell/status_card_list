@@ -26,6 +26,7 @@ mixin _$ListConfig {
   Map<String, String> get swipeActions => throw _privateConstructorUsedError;
   Map<String, String> get buttons => throw _privateConstructorUsedError;
   String get dueDateLabel => throw _privateConstructorUsedError;
+  @JsonKey(name: 'sort_mode')
   String get sortMode => throw _privateConstructorUsedError;
   String get iconName => throw _privateConstructorUsedError;
   int get colorValue => throw _privateConstructorUsedError;
@@ -55,7 +56,7 @@ abstract class $ListConfigCopyWith<$Res> {
     Map<String, String> swipeActions,
     Map<String, String> buttons,
     String dueDateLabel,
-    String sortMode,
+    @JsonKey(name: 'sort_mode') String sortMode,
     String iconName,
     int colorValue,
     @CardIconListConverter() List<CardIconEntry> cardIcons,
@@ -155,7 +156,7 @@ abstract class _$$ListConfigImplCopyWith<$Res>
     Map<String, String> swipeActions,
     Map<String, String> buttons,
     String dueDateLabel,
-    String sortMode,
+    @JsonKey(name: 'sort_mode') String sortMode,
     String iconName,
     int colorValue,
     @CardIconListConverter() List<CardIconEntry> cardIcons,
@@ -247,7 +248,7 @@ class _$ListConfigImpl extends _ListConfig {
     required final Map<String, String> swipeActions,
     required final Map<String, String> buttons,
     this.dueDateLabel = 'Due Date',
-    this.sortMode = 'manual',
+    @JsonKey(name: 'sort_mode') this.sortMode = 'manual',
     this.iconName = 'list',
     this.colorValue = 0xFF2196F3,
     @CardIconListConverter() final List<CardIconEntry> cardIcons = const [],
@@ -283,7 +284,7 @@ class _$ListConfigImpl extends _ListConfig {
   @JsonKey()
   final String dueDateLabel;
   @override
-  @JsonKey()
+  @JsonKey(name: 'sort_mode')
   final String sortMode;
   @override
   @JsonKey()
@@ -368,7 +369,7 @@ abstract class _ListConfig extends ListConfig {
     required final Map<String, String> swipeActions,
     required final Map<String, String> buttons,
     final String dueDateLabel,
-    final String sortMode,
+    @JsonKey(name: 'sort_mode') final String sortMode,
     final String iconName,
     final int colorValue,
     @CardIconListConverter() final List<CardIconEntry> cardIcons,
@@ -389,6 +390,7 @@ abstract class _ListConfig extends ListConfig {
   @override
   String get dueDateLabel;
   @override
+  @JsonKey(name: 'sort_mode')
   String get sortMode;
   @override
   String get iconName;
