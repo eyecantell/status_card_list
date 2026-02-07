@@ -44,8 +44,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         (c) => c.uuid == targetListUuid,
         orElse: () => allConfigs.first,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${item.title} moved to ${targetConfig.name}')),
+      final messenger = ScaffoldMessenger.of(context);
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: Text('${item.title} moved to ${targetConfig.name}')),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: () async {
+                  messenger.hideCurrentSnackBar();
+                  final success = await ref.read(actionsProvider).moveItem(
+                    item.id,
+                    targetListUuid,
+                    currentListId,
+                  );
+                  if (success && mounted) {
+                    ref.read(itemsProvider.notifier).refresh();
+                  }
+                },
+                child: const Text('Undo'),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -101,6 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _handleSwitchList(String listUuid) {
+    ScaffoldMessenger.of(context).clearSnackBars();
     ref.read(currentListIdProvider.notifier).state = listUuid;
     ref.read(expandedItemIdProvider.notifier).state = null;
     ref.read(navigatedItemIdProvider.notifier).state = null;
