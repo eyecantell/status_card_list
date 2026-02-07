@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/list_config.dart';
 import '../models/item.dart';
-import '../models/sort_mode.dart';
 import '../data_source/card_list_data_source.dart';
 import 'data_source_provider.dart';
 import 'items_provider.dart';
@@ -92,7 +91,7 @@ class ListConfigsNotifier extends StateNotifier<AsyncValue<List<ListConfig>>> {
   }
 
   /// Set sort mode for a specific list
-  Future<void> setSortMode(String listId, SortMode mode) async {
+  Future<void> setSortMode(String listId, String mode) async {
     final configs = state.value ?? [];
     final index = configs.indexWhere((c) => c.uuid == listId);
     if (index >= 0) {

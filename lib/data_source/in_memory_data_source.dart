@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/item.dart';
 import '../models/list_config.dart';
-import '../models/sort_mode.dart';
+import '../models/sort_option.dart';
 import 'card_list_data_source.dart';
 import 'items_page.dart';
 
@@ -15,6 +15,7 @@ class _DefaultIds {
 
 class InMemoryDataSource implements CardListDataSource {
   final SharedPreferences _prefs;
+  final List<SortOption> _sortOptions;
   static const _itemsKey = 'items';
   static const _configsKey = 'list_configs';
   static const _itemListsKey = 'item_lists';
@@ -24,7 +25,8 @@ class InMemoryDataSource implements CardListDataSource {
   List<ListConfig> _configs = [];
   Map<String, List<String>> _itemLists = {};
 
-  InMemoryDataSource(this._prefs);
+  InMemoryDataSource(this._prefs, {List<SortOption>? sortOptions})
+      : _sortOptions = sortOptions ?? SortOption.defaults;
 
   @override
   String get defaultListId => _DefaultIds.review;
@@ -39,7 +41,7 @@ class InMemoryDataSource implements CardListDataSource {
   @override
   Future<ItemsPage> loadItems({
     required String listId,
-    SortMode sortMode = SortMode.dateAscending,
+    String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
   }) async {
@@ -82,6 +84,13 @@ class InMemoryDataSource implements CardListDataSource {
     _itemLists[targetListId] ??= [];
     if (!_itemLists[targetListId]!.contains(itemId)) {
       _itemLists[targetListId]!.add(itemId);
+    }
+
+    // Stamp movedAt on the item
+    final index = _items.indexWhere((i) => i.id == itemId);
+    if (index >= 0) {
+      _items[index] = _items[index].copyWith(movedAt: DateTime.now());
+      await _saveItemsToPrefs();
     }
 
     await _saveItemListsToPrefs();
@@ -146,38 +155,15 @@ class InMemoryDataSource implements CardListDataSource {
 
   // --- Sorting ---
 
-  List<Item> _sortItems(List<Item> items, SortMode mode) {
-    if (mode == SortMode.manual) return items;
+  List<Item> _sortItems(List<Item> items, String sortModeId) {
+    final option = _sortOptions.cast<SortOption?>().firstWhere(
+          (o) => o!.id == sortModeId,
+          orElse: () => null,
+        );
+    if (option == null || option.comparator == null) return items;
 
     final sorted = [...items];
-    switch (mode) {
-      case SortMode.dateAscending:
-      case SortMode.deadlineSoonest:
-        sorted.sort((a, b) {
-          if (a.dueDate == null && b.dueDate == null) return 0;
-          if (a.dueDate == null) return 1;
-          if (b.dueDate == null) return -1;
-          return a.dueDate!.compareTo(b.dueDate!);
-        });
-      case SortMode.dateDescending:
-      case SortMode.newest:
-        sorted.sort((a, b) {
-          if (a.dueDate == null && b.dueDate == null) return 0;
-          if (a.dueDate == null) return 1;
-          if (b.dueDate == null) return -1;
-          return b.dueDate!.compareTo(a.dueDate!);
-        });
-      case SortMode.similarityDescending:
-        sorted.sort((a, b) {
-          final aScore = (a.extra['best_similarity'] as num?) ?? 0;
-          final bScore = (b.extra['best_similarity'] as num?) ?? 0;
-          return bScore.compareTo(aScore);
-        });
-      case SortMode.title:
-        sorted.sort((a, b) => a.title.compareTo(b.title));
-      case SortMode.manual:
-        break;
-    }
+    sorted.sort(option.comparator!);
     return sorted;
   }
 
@@ -210,6 +196,11 @@ class InMemoryDataSource implements CardListDataSource {
     final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
     return jsonMap.map((key, value) =>
         MapEntry(key, (value as List<dynamic>).cast<String>()));
+  }
+
+  Future<void> _saveItemsToPrefs() async {
+    final jsonList = _items.map((i) => i.toJson()).toList();
+    await _prefs.setString(_itemsKey, jsonEncode(jsonList));
   }
 
   Future<void> _saveConfigsToPrefs() async {
@@ -335,7 +326,7 @@ class InMemoryDataSource implements CardListDataSource {
           'delete': _DefaultIds.trash,
         },
         dueDateLabel: 'Due Date',
-        sortMode: SortMode.dateAscending,
+        sortMode: 'dateAscending',
         iconName: 'rate_review',
         colorValue: 0xFF2196F3,
         cardIcons: [
@@ -361,7 +352,7 @@ class InMemoryDataSource implements CardListDataSource {
           'delete': _DefaultIds.trash,
         },
         dueDateLabel: 'Due Date',
-        sortMode: SortMode.dateAscending,
+        sortMode: 'dateAscending',
         iconName: 'bookmark',
         colorValue: 0xFF4CAF50,
         cardIcons: [
@@ -387,7 +378,7 @@ class InMemoryDataSource implements CardListDataSource {
           'delete_forever': _DefaultIds.trash,
         },
         dueDateLabel: 'Due Date',
-        sortMode: SortMode.dateAscending,
+        sortMode: 'dateAscending',
         iconName: 'delete',
         colorValue: 0xFFF44336,
         cardIcons: [

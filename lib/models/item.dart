@@ -14,6 +14,7 @@ class Item with _$Item {
     required String status,
     @Default([]) List<String> relatedItemIds,
     @Default({}) Map<String, dynamic> extra,
+    DateTime? movedAt,
   }) = _Item;
 
   const Item._();

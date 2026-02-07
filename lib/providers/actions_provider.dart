@@ -21,6 +21,12 @@ class CardListActions {
     if (success) {
       _ref.read(itemToListIndexProvider.notifier).update((state) =>
         {...state, itemId: targetListId});
+      // Stamp movedAt optimistically in the cache
+      _ref.read(itemCacheProvider.notifier).update((state) {
+        final existing = state[itemId];
+        if (existing == null) return state;
+        return {...state, itemId: existing.copyWith(movedAt: DateTime.now())};
+      });
       _ref.read(itemsProvider.notifier).removeItem(itemId);
       _ref.invalidate(listCountsProvider);
     }

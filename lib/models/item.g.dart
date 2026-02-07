@@ -22,6 +22,10 @@ _$ItemImpl _$$ItemImplFromJson(Map<String, dynamic> json) => _$ItemImpl(
           .toList() ??
       const [],
   extra: json['extra'] as Map<String, dynamic>? ?? const {},
+  movedAt:
+      json['movedAt'] == null
+          ? null
+          : DateTime.parse(json['movedAt'] as String),
 );
 
 Map<String, dynamic> _$$ItemImplToJson(_$ItemImpl instance) =>
@@ -34,4 +38,5 @@ Map<String, dynamic> _$$ItemImplToJson(_$ItemImpl instance) =>
       'status': instance.status,
       'relatedItemIds': instance.relatedItemIds,
       'extra': instance.extra,
+      'movedAt': instance.movedAt?.toIso8601String(),
     };

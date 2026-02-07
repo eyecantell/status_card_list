@@ -26,7 +26,7 @@ mixin _$ListConfig {
   Map<String, String> get swipeActions => throw _privateConstructorUsedError;
   Map<String, String> get buttons => throw _privateConstructorUsedError;
   String get dueDateLabel => throw _privateConstructorUsedError;
-  SortMode get sortMode => throw _privateConstructorUsedError;
+  String get sortMode => throw _privateConstructorUsedError;
   String get iconName => throw _privateConstructorUsedError;
   int get colorValue => throw _privateConstructorUsedError;
   @CardIconListConverter()
@@ -55,7 +55,7 @@ abstract class $ListConfigCopyWith<$Res> {
     Map<String, String> swipeActions,
     Map<String, String> buttons,
     String dueDateLabel,
-    SortMode sortMode,
+    String sortMode,
     String iconName,
     int colorValue,
     @CardIconListConverter() List<CardIconEntry> cardIcons,
@@ -118,7 +118,7 @@ class _$ListConfigCopyWithImpl<$Res, $Val extends ListConfig>
                 null == sortMode
                     ? _value.sortMode
                     : sortMode // ignore: cast_nullable_to_non_nullable
-                        as SortMode,
+                        as String,
             iconName:
                 null == iconName
                     ? _value.iconName
@@ -155,7 +155,7 @@ abstract class _$$ListConfigImplCopyWith<$Res>
     Map<String, String> swipeActions,
     Map<String, String> buttons,
     String dueDateLabel,
-    SortMode sortMode,
+    String sortMode,
     String iconName,
     int colorValue,
     @CardIconListConverter() List<CardIconEntry> cardIcons,
@@ -217,7 +217,7 @@ class __$$ListConfigImplCopyWithImpl<$Res>
             null == sortMode
                 ? _value.sortMode
                 : sortMode // ignore: cast_nullable_to_non_nullable
-                    as SortMode,
+                    as String,
         iconName:
             null == iconName
                 ? _value.iconName
@@ -247,7 +247,7 @@ class _$ListConfigImpl extends _ListConfig {
     required final Map<String, String> swipeActions,
     required final Map<String, String> buttons,
     this.dueDateLabel = 'Due Date',
-    this.sortMode = SortMode.dateAscending,
+    this.sortMode = 'manual',
     this.iconName = 'list',
     this.colorValue = 0xFF2196F3,
     @CardIconListConverter() final List<CardIconEntry> cardIcons = const [],
@@ -284,7 +284,7 @@ class _$ListConfigImpl extends _ListConfig {
   final String dueDateLabel;
   @override
   @JsonKey()
-  final SortMode sortMode;
+  final String sortMode;
   @override
   @JsonKey()
   final String iconName;
@@ -368,7 +368,7 @@ abstract class _ListConfig extends ListConfig {
     required final Map<String, String> swipeActions,
     required final Map<String, String> buttons,
     final String dueDateLabel,
-    final SortMode sortMode,
+    final String sortMode,
     final String iconName,
     final int colorValue,
     @CardIconListConverter() final List<CardIconEntry> cardIcons,
@@ -389,7 +389,7 @@ abstract class _ListConfig extends ListConfig {
   @override
   String get dueDateLabel;
   @override
-  SortMode get sortMode;
+  String get sortMode;
   @override
   String get iconName;
   @override

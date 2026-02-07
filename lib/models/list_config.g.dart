@@ -13,9 +13,7 @@ _$ListConfigImpl _$$ListConfigImplFromJson(Map<String, dynamic> json) =>
       swipeActions: Map<String, String>.from(json['swipeActions'] as Map),
       buttons: Map<String, String>.from(json['buttons'] as Map),
       dueDateLabel: json['dueDateLabel'] as String? ?? 'Due Date',
-      sortMode:
-          $enumDecodeNullable(_$SortModeEnumMap, json['sortMode']) ??
-          SortMode.dateAscending,
+      sortMode: json['sortMode'] as String? ?? 'manual',
       iconName: json['iconName'] as String? ?? 'list',
       colorValue: (json['colorValue'] as num?)?.toInt() ?? 0xFF2196F3,
       cardIcons:
@@ -33,21 +31,11 @@ Map<String, dynamic> _$$ListConfigImplToJson(_$ListConfigImpl instance) =>
       'swipeActions': instance.swipeActions,
       'buttons': instance.buttons,
       'dueDateLabel': instance.dueDateLabel,
-      'sortMode': _$SortModeEnumMap[instance.sortMode]!,
+      'sortMode': instance.sortMode,
       'iconName': instance.iconName,
       'colorValue': instance.colorValue,
       'cardIcons': const CardIconListConverter().toJson(instance.cardIcons),
     };
-
-const _$SortModeEnumMap = {
-  SortMode.dateAscending: 'dateAscending',
-  SortMode.dateDescending: 'dateDescending',
-  SortMode.title: 'title',
-  SortMode.manual: 'manual',
-  SortMode.similarityDescending: 'similarityDescending',
-  SortMode.deadlineSoonest: 'deadlineSoonest',
-  SortMode.newest: 'newest',
-};
 
 _$CardIconEntryImpl _$$CardIconEntryImplFromJson(Map<String, dynamic> json) =>
     _$CardIconEntryImpl(

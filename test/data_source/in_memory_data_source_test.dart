@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:status_card_list/data_source/in_memory_data_source.dart';
-import 'package:status_card_list/models/sort_mode.dart';
+import 'package:status_card_list/models/sort_option.dart';
 
 void main() {
   late InMemoryDataSource dataSource;
@@ -54,7 +54,7 @@ void main() {
       test('sorts items by dateAscending', () async {
         final page = await dataSource.loadItems(
           listId: dataSource.defaultListId,
-          sortMode: SortMode.dateAscending,
+          sortMode: 'dateAscending',
         );
         // Items should be sorted by dueDate ascending
         for (int i = 0; i < page.items.length - 1; i++) {
@@ -71,7 +71,7 @@ void main() {
       test('sorts items by title', () async {
         final page = await dataSource.loadItems(
           listId: dataSource.defaultListId,
-          sortMode: SortMode.title,
+          sortMode: 'title',
         );
         for (int i = 0; i < page.items.length - 1; i++) {
           expect(
@@ -84,7 +84,7 @@ void main() {
       test('preserves original order for manual sort', () async {
         final page = await dataSource.loadItems(
           listId: dataSource.defaultListId,
-          sortMode: SortMode.manual,
+          sortMode: 'manual',
         );
         expect(page.items[0].id, '1');
         expect(page.items[1].id, '2');
@@ -149,6 +149,21 @@ void main() {
         final count = page.items.where((i) => i.id == '1').length;
         expect(count, 1);
       });
+
+      test('stamps movedAt on the moved item', () async {
+        final before = DateTime.now();
+        await dataSource.moveItem(
+          itemId: '1',
+          fromListId: dataSource.defaultListId,
+          targetListId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        );
+        final after = DateTime.now();
+
+        final item = await dataSource.loadItemDetail('1');
+        expect(item.movedAt, isNotNull);
+        expect(item.movedAt!.isAfter(before.subtract(const Duration(seconds: 1))), isTrue);
+        expect(item.movedAt!.isBefore(after.add(const Duration(seconds: 1))), isTrue);
+      });
     });
 
     group('updateItemPosition', () {
@@ -162,7 +177,7 @@ void main() {
 
         final page = await dataSource.loadItems(
           listId: dataSource.defaultListId,
-          sortMode: SortMode.manual,
+          sortMode: 'manual',
         );
         // After moving '1' to position 2: should be 2, 3, 1
         expect(page.items[0].id, '2');
@@ -217,6 +232,61 @@ void main() {
         expect(counts[dataSource.defaultListId], 3);
         expect(counts['a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'], 1);
         expect(counts['c9e2e8b7-1c4d-4f2a-8b5e-7d9f3c6a2b4e'], 1);
+      });
+    });
+
+    group('custom sort options', () {
+      test('uses custom sort options passed to constructor', () async {
+        SharedPreferences.setMockInitialValues({});
+        final prefs = await SharedPreferences.getInstance();
+        final customDs = InMemoryDataSource(
+          prefs,
+          sortOptions: [
+            SortOption.manual,
+            SortOption.byField(
+              id: 'titleDesc',
+              label: 'Title Descending',
+              field: (i) => i.title,
+              descending: true,
+            ),
+          ],
+        );
+        await customDs.initialize();
+
+        final page = await customDs.loadItems(
+          listId: customDs.defaultListId,
+          sortMode: 'titleDesc',
+        );
+        // Should be sorted by title descending
+        for (int i = 0; i < page.items.length - 1; i++) {
+          expect(
+            page.items[i].title.compareTo(page.items[i + 1].title) >= 0,
+            isTrue,
+          );
+        }
+      });
+    });
+
+    group('movedAt persistence', () {
+      test('movedAt persists across save/load cycle', () async {
+        // Move an item to stamp movedAt
+        await dataSource.moveItem(
+          itemId: '1',
+          fromListId: dataSource.defaultListId,
+          targetListId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        );
+
+        final itemBefore = await dataSource.loadItemDetail('1');
+        expect(itemBefore.movedAt, isNotNull);
+
+        // Create a new data source from the same prefs to simulate reload
+        final prefs = await SharedPreferences.getInstance();
+        final freshDs = InMemoryDataSource(prefs);
+        await freshDs.initialize();
+
+        final itemAfter = await freshDs.loadItemDetail('1');
+        expect(itemAfter.movedAt, isNotNull);
+        expect(itemAfter.movedAt, itemBefore.movedAt);
       });
     });
   });

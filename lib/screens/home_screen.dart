@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/list_config.dart';
-import '../models/sort_mode.dart';
+import '../models/sort_option.dart';
 import '../providers/actions_provider.dart';
 import '../providers/items_provider.dart';
 import '../providers/lists_provider.dart';
@@ -97,7 +97,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Set sort mode to manual
     await ref.read(listConfigsProvider.notifier).setSortMode(
       currentListId,
-      SortMode.manual,
+      'manual',
     );
   }
 
@@ -174,9 +174,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _setSortMode(SortMode mode) async {
+  void _setSortMode(String modeId) async {
     final currentListId = ref.read(currentListIdProvider);
-    await ref.read(listConfigsProvider.notifier).setSortMode(currentListId, mode);
+    await ref.read(listConfigsProvider.notifier).setSortMode(currentListId, modeId);
     // Refresh items with new sort mode
     ref.read(itemsProvider.notifier).refresh();
   }
@@ -261,49 +261,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }).toList(),
         ),
         actions: [
-          PopupMenuButton<SortMode>(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sort order',
             color: Theme.of(context).cardTheme.color,
             onSelected: _setSortMode,
-            itemBuilder: (context) => SortMode.values.map((SortMode mode) {
-              final isSelected = mode == currentConfig.sortMode;
-              String label;
-              switch (mode) {
-                case SortMode.dateAscending:
-                  label = 'Date Ascending';
-                case SortMode.dateDescending:
-                  label = 'Date Descending';
-                case SortMode.title:
-                  label = 'Title';
-                case SortMode.manual:
-                  label = 'Manual';
-                case SortMode.similarityDescending:
-                  label = 'Best Match';
-                case SortMode.deadlineSoonest:
-                  label = 'Deadline Soonest';
-                case SortMode.newest:
-                  label = 'Newest';
-              }
-              return PopupMenuItem<SortMode>(
-                value: mode,
-                child: Row(
-                  children: [
-                    if (isSelected)
-                      Icon(Icons.check, color: currentConfig.color, size: 18)
-                    else
-                      const SizedBox(width: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            itemBuilder: (context) {
+              final sortOptions = widget.cardListConfig?.sortOptions ?? SortOption.defaults;
+              return sortOptions.map((option) {
+                final isSelected = option.id == currentConfig.sortMode;
+                return PopupMenuItem<String>(
+                  value: option.id,
+                  child: Row(
+                    children: [
+                      if (isSelected)
+                        Icon(Icons.check, color: currentConfig.color, size: 18)
+                      else
+                        const SizedBox(width: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        option.label,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
+                    ],
+                  ),
+                );
+              }).toList();
+            },
           ),
         ],
       ),

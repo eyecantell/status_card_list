@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'item.dart';
 import 'list_config.dart';
+import 'sort_option.dart';
 
 /// Configuration for customizing card rendering.
 /// Consumers provide builder callbacks to override default card content.
@@ -23,11 +24,15 @@ class CardListConfig {
   /// Extra widgets to show in the navigation drawer (after list items, before theme toggle).
   final List<Widget>? drawerItems;
 
+  /// Sort options shown in the sort dropdown. If null, uses SortOption.defaults.
+  final List<SortOption>? sortOptions;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
     this.trailingBuilder,
     this.subtitleBuilder,
     this.drawerItems,
+    this.sortOptions,
   });
 }

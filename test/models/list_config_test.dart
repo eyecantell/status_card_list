@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:status_card_list/models/list_config.dart';
-import 'package:status_card_list/models/sort_mode.dart';
 
 void main() {
   group('ListConfig', () {
@@ -72,14 +71,14 @@ void main() {
         expect(config.dueDateLabel, 'Due Date');
       });
 
-      test('sortMode defaults to dateAscending', () {
+      test('sortMode defaults to manual', () {
         final config = ListConfig(
           uuid: 'test',
           name: 'Test',
           swipeActions: {},
           buttons: {},
         );
-        expect(config.sortMode, SortMode.dateAscending);
+        expect(config.sortMode, 'manual');
       });
 
       test('iconName defaults to "list"', () {
@@ -145,8 +144,8 @@ void main() {
       });
 
       test('creates copy with modified sortMode', () {
-        final copy = testConfig.copyWith(sortMode: SortMode.manual);
-        expect(copy.sortMode, SortMode.manual);
+        final copy = testConfig.copyWith(sortMode: 'manual');
+        expect(copy.sortMode, 'manual');
       });
     });
   });
@@ -230,19 +229,4 @@ void main() {
     });
   });
 
-  group('SortMode', () {
-    test('all values exist', () {
-      expect(SortMode.values, contains(SortMode.dateAscending));
-      expect(SortMode.values, contains(SortMode.dateDescending));
-      expect(SortMode.values, contains(SortMode.title));
-      expect(SortMode.values, contains(SortMode.manual));
-      expect(SortMode.values, contains(SortMode.similarityDescending));
-      expect(SortMode.values, contains(SortMode.deadlineSoonest));
-      expect(SortMode.values, contains(SortMode.newest));
-    });
-
-    test('has 7 values total', () {
-      expect(SortMode.values.length, 7);
-    });
-  });
 }

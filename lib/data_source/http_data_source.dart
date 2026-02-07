@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/item.dart';
 import '../models/list_config.dart';
-import '../models/sort_mode.dart';
 import 'card_list_data_source.dart';
 import 'items_page.dart';
 
@@ -45,13 +44,13 @@ class HttpDataSource implements CardListDataSource {
   @override
   Future<ItemsPage> loadItems({
     required String listId,
-    SortMode sortMode = SortMode.dateAscending,
+    String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
   }) async {
     final uri = Uri.parse('$baseUrl/notices').replace(queryParameters: {
       'list_id': listId,
-      'sort': sortMode.name,
+      'sort': sortMode,
       'limit': '$limit',
       'offset': '$offset',
     });

@@ -1,6 +1,5 @@
 import '../models/item.dart';
 import '../models/list_config.dart';
-import '../models/sort_mode.dart';
 import 'items_page.dart';
 
 abstract class CardListDataSource {
@@ -11,7 +10,7 @@ abstract class CardListDataSource {
   /// Sorting is handled by the DataSource (server-side for HTTP, local for in-memory).
   Future<ItemsPage> loadItems({
     required String listId,
-    SortMode sortMode = SortMode.dateAscending,
+    String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
   });

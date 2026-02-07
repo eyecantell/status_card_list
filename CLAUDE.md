@@ -7,7 +7,7 @@ First consumer: **contractmatch** (contract notice triage). See `CONTRACTMATCH_I
 ## Commands
 
 ```bash
-# Run tests (131 tests)
+# Run tests (~148 tests)
 flutter test
 
 # Run a single test file
@@ -49,7 +49,7 @@ dataSourceProvider (must be overridden in ProviderScope)
 
 - **Two-tier item state**: `itemsProvider` holds items for the current list only. `itemCacheProvider` accumulates all items seen across lists (for cross-list lookups like related items). `itemToListIndexProvider` maps item ID → list ID.
 - **On-demand detail loading**: `Item.html` is nullable. List responses can omit HTML for performance. When a card is expanded, `actionsProvider.loadItemDetail()` fetches the full content and updates the cache.
-- **DataSource does sorting**: `loadItems(sortMode:)` is the primary sort path. HttpDataSource passes it to the server; InMemoryDataSource sorts locally. `ItemsNotifier.sortItems()` is kept as a public utility but isn't used in the main data flow.
+- **DataSource does sorting**: `loadItems(sortMode:)` is the primary sort path. HttpDataSource passes the sort mode string to the server; InMemoryDataSource looks up the `SortOption` by ID and sorts locally using its comparator. Sort options are caller-defined via `SortOption` class.
 - **No Stream/push**: Data changes use explicit `refresh()` calls, not streams. Deferred by design.
 
 ## Project Structure
@@ -63,10 +63,10 @@ lib/
 │   ├── http_data_source.dart        # REST client + HttpResponseMapper interface
 │   └── multi_context_data_source.dart  # Extension for multi-tenant (DataContext model)
 ├── models/
-│   ├── item.dart                    # Item: id, title, subtitle, html?, dueDate?, status, extra
-│   ├── list_config.dart             # ListConfig: uuid, name, swipeActions, buttons, cardIcons, sortMode, icon, color
-│   ├── card_list_config.dart        # Builder callbacks for custom card rendering + drawerItems
-│   └── sort_mode.dart               # Enum: dateAscending, dateDescending, title, manual, similarityDescending, deadlineSoonest, newest
+│   ├── item.dart                    # Item: id, title, subtitle, html?, dueDate?, movedAt?, status, extra
+│   ├── list_config.dart             # ListConfig: uuid, name, swipeActions, buttons, cardIcons, sortMode (String), icon, color
+│   ├── card_list_config.dart        # Builder callbacks for custom card rendering + drawerItems + sortOptions
+│   └── sort_option.dart             # SortOption: caller-defined sort with id, label, comparator (byField, byExtra factories)
 ├── providers/
 │   ├── data_source_provider.dart    # Must be overridden in ProviderScope
 │   ├── items_provider.dart          # itemsProvider, itemCacheProvider, itemToListIndexProvider, itemMapProvider, listCountsProvider
@@ -98,11 +98,13 @@ The engine's `HomeScreen` is the entry point. Consumers don't build their own sc
 
 ## Models
 
-**Item** (Freezed): `id`, `title`, `subtitle`, `html?`, `dueDate?`, `status`, `relatedItemIds`, `extra` (Map<String, dynamic> for consumer-specific metadata)
+**Item** (Freezed): `id`, `title`, `subtitle`, `html?`, `dueDate?`, `status`, `relatedItemIds`, `extra` (Map<String, dynamic> for consumer-specific metadata), `movedAt?` (DateTime, stamped when item is moved between lists)
 
-**ListConfig** (Freezed): `uuid`, `name`, `swipeActions` (direction→targetListId), `buttons` (iconName→targetListId), `cardIcons` (list of CardIconEntry), `dueDateLabel`, `sortMode`, `iconName`, `colorValue`
+**ListConfig** (Freezed): `uuid`, `name`, `swipeActions` (direction→targetListId), `buttons` (iconName→targetListId), `cardIcons` (list of CardIconEntry), `dueDateLabel`, `sortMode` (String, default `'manual'`), `iconName`, `colorValue`
 
-**CardListConfig**: Optional builder callbacks — `collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`. Optional `drawerItems` (`List<Widget>?`) for extra navigation drawer entries. When null, engine uses default rendering.
+**SortOption**: Plain Dart class (not Freezed — contains `Comparator`). Fields: `id`, `label`, `comparator?`. Factories: `SortOption.byField()`, `SortOption.byExtra()`. Static: `SortOption.manual`, `SortOption.defaults`. Equality by `id`.
+
+**CardListConfig**: Optional builder callbacks — `collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`. Optional `drawerItems` (`List<Widget>?`) for extra navigation drawer entries. Optional `sortOptions` (`List<SortOption>?`) for sort dropdown (null = `SortOption.defaults`). When null, engine uses default rendering.
 
 ## Tests
 
@@ -116,9 +118,10 @@ test/
 ├── models/
 │   ├── item_test.dart                   # Nullable fields, extra, JSON round-trips, formatDueDateRelative
 │   ├── list_config_test.dart            # Icon/color getters, defaults, JSON, copyWith, CardIconListConverter
-│   └── card_list_config_test.dart       # Builder callbacks, widget tests
+│   ├── card_list_config_test.dart       # Builder callbacks, widget tests, sortOptions
+│   └── sort_option_test.dart           # SortOption: manual, byField, byExtra, defaults, equality
 ├── providers/
-│   ├── items_provider_test.dart         # Loading, sorting (all 7 modes), null dueDate handling, cache
+│   ├── items_provider_test.dart         # Loading, cache, item-to-list index
 │   ├── lists_provider_test.dart         # Config loading, currentListId, setSortMode, updateConfig
 │   ├── actions_provider_test.dart       # moveItem, reorderItems, loadItemDetail
 │   └── context_provider_test.dart       # Non-multi-context returns empty, DataContext model
@@ -127,7 +130,7 @@ test/
 
 ## Common Tasks
 
-**Add a new sort mode**: Add to `SortMode` enum in `sort_mode.dart`, add case in `ItemsNotifier.sortItems()` in `items_provider.dart`, add label in `home_screen.dart` dropdown, regenerate with `build_runner`.
+**Add a new sort option**: Create a `SortOption` (using `byField`, `byExtra`, or custom comparator), add it to the `sortOptions` list in `CardListConfig` and (for InMemoryDataSource) to the `sortOptions` constructor parameter. No engine changes or code generation needed.
 
 **Add a field to Item**: Edit `item.dart`, regenerate with `build_runner`, update `InMemoryDataSource` default data if needed, update mapper in consuming app.
 

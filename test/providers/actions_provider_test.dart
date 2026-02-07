@@ -71,6 +71,21 @@ void main() {
         expect(items.map((i) => i.id), isNot(contains('1')));
       });
 
+      test('stamps movedAt in item cache', () async {
+        await waitForData(container, itemsProvider);
+
+        final actions = container.read(actionsProvider);
+        await actions.moveItem(
+          '1',
+          dataSource.defaultListId,
+          'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+        );
+
+        await Future.delayed(const Duration(milliseconds: 100));
+        final cache = container.read(itemCacheProvider);
+        expect(cache['1']?.movedAt, isNotNull);
+      });
+
       test('returns false when move fails for nonexistent item', () async {
         await waitForData(container, itemsProvider);
 

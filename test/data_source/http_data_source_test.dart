@@ -101,7 +101,7 @@ void main() {
 
         final page = await ds.loadItems(listId: 'list-1');
         expect(capturedUri!.queryParameters['list_id'], 'list-1');
-        expect(capturedUri!.queryParameters['sort'], 'dateAscending');
+        expect(capturedUri!.queryParameters['sort'], 'manual');
         expect(page.items.length, 1);
         expect(page.items[0].title, 'Test Item');
         expect(page.totalCount, 1);

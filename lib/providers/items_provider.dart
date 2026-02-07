@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/item.dart';
-import '../models/sort_mode.dart';
 import '../data_source/card_list_data_source.dart';
 import 'data_source_provider.dart';
 import 'lists_provider.dart';
@@ -48,7 +47,7 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
     try {
       final currentListId = _ref.read(currentListIdProvider);
       final currentConfig = _ref.read(currentListConfigProvider);
-      final sortMode = currentConfig?.sortMode ?? SortMode.dateAscending;
+      final sortMode = currentConfig?.sortMode ?? 'manual';
 
       final page = await _dataSource.loadItems(
         listId: currentListId,
@@ -80,42 +79,6 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   void removeItem(String itemId) {
     final current = state.valueOrNull ?? [];
     state = AsyncValue.data(current.where((item) => item.id != itemId).toList());
-  }
-
-  /// Sort items according to the specified mode (utility for consumers)
-  List<Item> sortItems(List<Item> items, SortMode mode) {
-    if (mode == SortMode.manual) return items;
-
-    final sorted = [...items];
-    switch (mode) {
-      case SortMode.dateAscending:
-      case SortMode.deadlineSoonest:
-        sorted.sort((a, b) {
-          if (a.dueDate == null && b.dueDate == null) return 0;
-          if (a.dueDate == null) return 1;
-          if (b.dueDate == null) return -1;
-          return a.dueDate!.compareTo(b.dueDate!);
-        });
-      case SortMode.dateDescending:
-      case SortMode.newest:
-        sorted.sort((a, b) {
-          if (a.dueDate == null && b.dueDate == null) return 0;
-          if (a.dueDate == null) return 1;
-          if (b.dueDate == null) return -1;
-          return b.dueDate!.compareTo(a.dueDate!);
-        });
-      case SortMode.similarityDescending:
-        sorted.sort((a, b) {
-          final aScore = (a.extra['best_similarity'] as num?) ?? 0;
-          final bScore = (b.extra['best_similarity'] as num?) ?? 0;
-          return bScore.compareTo(aScore);
-        });
-      case SortMode.title:
-        sorted.sort((a, b) => a.title.compareTo(b.title));
-      case SortMode.manual:
-        break;
-    }
-    return sorted;
   }
 
   /// Remove references to deleted items from all items' relatedItemIds

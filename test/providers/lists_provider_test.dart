@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:status_card_list/models/item.dart';
-import 'package:status_card_list/models/sort_mode.dart';
 import 'package:status_card_list/data_source/in_memory_data_source.dart';
 import 'package:status_card_list/providers/actions_provider.dart';
 import 'package:status_card_list/providers/data_source_provider.dart';
@@ -167,7 +166,7 @@ void main() {
         await waitForData(container, listConfigsProvider);
 
         final notifier = container.read(listConfigsProvider.notifier);
-        await notifier.setSortMode(dataSource.defaultListId, SortMode.manual);
+        await notifier.setSortMode(dataSource.defaultListId, 'manual');
 
         await Future.delayed(const Duration(milliseconds: 100));
 
@@ -175,7 +174,7 @@ void main() {
         final reviewConfig = configs?.firstWhere(
           (c) => c.uuid == dataSource.defaultListId,
         );
-        expect(reviewConfig?.sortMode, SortMode.manual);
+        expect(reviewConfig?.sortMode, 'manual');
       });
     });
 

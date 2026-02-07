@@ -29,6 +29,7 @@ mixin _$Item {
   String get status => throw _privateConstructorUsedError;
   List<String> get relatedItemIds => throw _privateConstructorUsedError;
   Map<String, dynamic> get extra => throw _privateConstructorUsedError;
+  DateTime? get movedAt => throw _privateConstructorUsedError;
 
   /// Serializes this Item to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -53,6 +54,7 @@ abstract class $ItemCopyWith<$Res> {
     String status,
     List<String> relatedItemIds,
     Map<String, dynamic> extra,
+    DateTime? movedAt,
   });
 }
 
@@ -79,6 +81,7 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
     Object? status = null,
     Object? relatedItemIds = null,
     Object? extra = null,
+    Object? movedAt = freezed,
   }) {
     return _then(
       _value.copyWith(
@@ -122,6 +125,11 @@ class _$ItemCopyWithImpl<$Res, $Val extends Item>
                     ? _value.extra
                     : extra // ignore: cast_nullable_to_non_nullable
                         as Map<String, dynamic>,
+            movedAt:
+                freezed == movedAt
+                    ? _value.movedAt
+                    : movedAt // ignore: cast_nullable_to_non_nullable
+                        as DateTime?,
           )
           as $Val,
     );
@@ -145,6 +153,7 @@ abstract class _$$ItemImplCopyWith<$Res> implements $ItemCopyWith<$Res> {
     String status,
     List<String> relatedItemIds,
     Map<String, dynamic> extra,
+    DateTime? movedAt,
   });
 }
 
@@ -168,6 +177,7 @@ class __$$ItemImplCopyWithImpl<$Res>
     Object? status = null,
     Object? relatedItemIds = null,
     Object? extra = null,
+    Object? movedAt = freezed,
   }) {
     return _then(
       _$ItemImpl(
@@ -211,6 +221,11 @@ class __$$ItemImplCopyWithImpl<$Res>
                 ? _value._extra
                 : extra // ignore: cast_nullable_to_non_nullable
                     as Map<String, dynamic>,
+        movedAt:
+            freezed == movedAt
+                ? _value.movedAt
+                : movedAt // ignore: cast_nullable_to_non_nullable
+                    as DateTime?,
       ),
     );
   }
@@ -228,6 +243,7 @@ class _$ItemImpl extends _Item {
     required this.status,
     final List<String> relatedItemIds = const [],
     final Map<String, dynamic> extra = const {},
+    this.movedAt,
   }) : _relatedItemIds = relatedItemIds,
        _extra = extra,
        super._();
@@ -266,8 +282,11 @@ class _$ItemImpl extends _Item {
   }
 
   @override
+  final DateTime? movedAt;
+
+  @override
   String toString() {
-    return 'Item(id: $id, title: $title, subtitle: $subtitle, html: $html, dueDate: $dueDate, status: $status, relatedItemIds: $relatedItemIds, extra: $extra)';
+    return 'Item(id: $id, title: $title, subtitle: $subtitle, html: $html, dueDate: $dueDate, status: $status, relatedItemIds: $relatedItemIds, extra: $extra, movedAt: $movedAt)';
   }
 
   @override
@@ -286,7 +305,8 @@ class _$ItemImpl extends _Item {
               other._relatedItemIds,
               _relatedItemIds,
             ) &&
-            const DeepCollectionEquality().equals(other._extra, _extra));
+            const DeepCollectionEquality().equals(other._extra, _extra) &&
+            (identical(other.movedAt, movedAt) || other.movedAt == movedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -301,6 +321,7 @@ class _$ItemImpl extends _Item {
     status,
     const DeepCollectionEquality().hash(_relatedItemIds),
     const DeepCollectionEquality().hash(_extra),
+    movedAt,
   );
 
   /// Create a copy of Item
@@ -327,6 +348,7 @@ abstract class _Item extends Item {
     required final String status,
     final List<String> relatedItemIds,
     final Map<String, dynamic> extra,
+    final DateTime? movedAt,
   }) = _$ItemImpl;
   const _Item._() : super._();
 
@@ -348,6 +370,8 @@ abstract class _Item extends Item {
   List<String> get relatedItemIds;
   @override
   Map<String, dynamic> get extra;
+  @override
+  DateTime? get movedAt;
 
   /// Create a copy of Item
   /// with the given fields replaced by the non-null parameter values.

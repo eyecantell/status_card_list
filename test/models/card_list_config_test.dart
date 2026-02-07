@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:status_card_list/models/card_list_config.dart';
 import 'package:status_card_list/models/item.dart';
 import 'package:status_card_list/models/list_config.dart';
+import 'package:status_card_list/models/sort_option.dart';
 import 'package:status_card_list/status_card.dart';
 
 void main() {
@@ -14,6 +15,7 @@ void main() {
       expect(config.trailingBuilder, isNull);
       expect(config.subtitleBuilder, isNull);
       expect(config.drawerItems, isNull);
+      expect(config.sortOptions, isNull);
     });
 
     test('drawerItems defaults to null', () {
@@ -36,6 +38,28 @@ void main() {
       const config = CardListConfig(drawerItems: []);
       expect(config.drawerItems, isNotNull);
       expect(config.drawerItems!.isEmpty, isTrue);
+    });
+
+    test('sortOptions defaults to null', () {
+      const config = CardListConfig();
+      expect(config.sortOptions, isNull);
+    });
+
+    test('sortOptions accepts a list', () {
+      final config = CardListConfig(
+        sortOptions: [
+          SortOption.manual,
+          SortOption.byField(id: 'title', label: 'Title', field: (i) => i.title),
+        ],
+      );
+      expect(config.sortOptions, isNotNull);
+      expect(config.sortOptions!.length, 2);
+    });
+
+    test('sortOptions accepts an empty list', () {
+      const config = CardListConfig(sortOptions: []);
+      expect(config.sortOptions, isNotNull);
+      expect(config.sortOptions!.isEmpty, isTrue);
     });
 
     test('creates with custom collapsedBuilder', () {

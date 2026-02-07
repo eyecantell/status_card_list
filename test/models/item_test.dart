@@ -259,6 +259,57 @@ void main() {
       });
     });
 
+    group('movedAt', () {
+      test('defaults to null', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        expect(item.movedAt, isNull);
+      });
+
+      test('can be set', () {
+        final now = DateTime.now();
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+          movedAt: now,
+        );
+        expect(item.movedAt, now);
+      });
+
+      test('JSON round-trip', () {
+        final now = DateTime.now();
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+          movedAt: now,
+        );
+        final json = item.toJson();
+        final recreated = Item.fromJson(json);
+        expect(recreated.movedAt, item.movedAt);
+      });
+
+      test('copyWith movedAt', () {
+        final item = Item(
+          id: '1',
+          title: 'Test',
+          subtitle: 'Sub',
+          status: 'Open',
+        );
+        final now = DateTime.now();
+        final copy = item.copyWith(movedAt: now);
+        expect(copy.movedAt, now);
+        expect(item.movedAt, isNull);
+      });
+    });
+
     group('equality', () {
       test('two items with same values are equal', () {
         final item1 = Item(
