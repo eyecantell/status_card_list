@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'actions_provider.dart';
 import 'items_provider.dart';
 import 'lists_provider.dart';
 
@@ -14,7 +15,8 @@ final navigatedItemIdProvider = StateProvider<String?>((ref) => null);
 final pendingScrollItemIdProvider = StateProvider<String?>((ref) => null);
 
 /// Navigate to an item in a specific list
-/// This coordinates: list switching, item expansion, highlighting, and scrolling
+/// This coordinates: list switching, item expansion, highlighting, scrolling,
+/// and detail loading.
 void navigateToItem(WidgetRef ref, String targetListId, String itemId) {
   // 1. Switch to target list
   ref.read(currentListIdProvider.notifier).state = targetListId;
@@ -31,7 +33,10 @@ void navigateToItem(WidgetRef ref, String targetListId, String itemId) {
   // 4. Set pending scroll target
   ref.read(pendingScrollItemIdProvider.notifier).state = itemId;
 
-  // 5. Clear highlight after 2 seconds
+  // 5. Load item detail (so expanded content populates)
+  ref.read(actionsProvider).loadItemDetail(itemId);
+
+  // 6. Clear highlight after 2 seconds
   Future.delayed(const Duration(seconds: 2), () {
     if (ref.read(navigatedItemIdProvider) == itemId) {
       ref.read(navigatedItemIdProvider.notifier).state = null;
