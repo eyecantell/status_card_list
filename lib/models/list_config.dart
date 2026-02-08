@@ -68,28 +68,3 @@ class CardIconListConverter
     return object.map((e) => e.toJson()).toList();
   }
 }
-
-/// Custom converter for color field to handle hex string format
-class ColorConverter implements JsonConverter<int, dynamic> {
-  const ColorConverter();
-
-  @override
-  int fromJson(dynamic json) {
-    if (json is int) return json;
-    if (json is String) {
-      String hexStr = json;
-      if (hexStr.startsWith('#')) {
-        hexStr = '0xFF${hexStr.substring(1)}';
-      } else if (!hexStr.startsWith('0x')) {
-        hexStr = '0xFF$hexStr';
-      }
-      return int.parse(hexStr);
-    }
-    return 0xFF2196F3; // Default blue
-  }
-
-  @override
-  String toJson(int object) {
-    return '0x${object.toRadixString(16).padLeft(8, '0')}';
-  }
-}

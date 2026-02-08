@@ -142,7 +142,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _handleHorizontalDragStart(DragStartDetails details) {
-    print('Horizontal drag started on card: ${widget.item.title}');
     setState(() {
       _dragOffset = 0.0;
       _swipeState = null;
@@ -150,7 +149,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _handleHorizontalDragUpdate(DragUpdateDetails details) {
-    print('Horizontal drag update: dx=${details.delta.dx}, dy=${details.delta.dy}');
     setState(() {
       _dragOffset += details.delta.dx;
       _dragOffset = _dragOffset.clamp(-_maxDrag, _maxDrag);
@@ -165,7 +163,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _handleHorizontalDragEnd(DragEndDetails details) {
-    print('Horizontal drag ended');
     if (_dragOffset.abs() >= _maxDrag) {
       final action = _dragOffset > 0 ? 'right' : 'left';
       _triggerAction(action: action);
@@ -241,7 +238,6 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _toggleExpanded() {
-    print('Card tapped: ${widget.item.title}');
     final willExpand = !_isExpanded;
     setState(() {
       _isExpanded = willExpand;
@@ -502,13 +498,13 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               borderRadius: BorderRadius.circular(8),
               border: widget.isNavigated && _highlightAnimation.value > 0
                   ? Border.all(
-                      color: Colors.blue.withOpacity(_highlightAnimation.value),
+                      color: Colors.blue.withValues(alpha: _highlightAnimation.value),
                       width: 2.0,
                     )
                   : null,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
+                  color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

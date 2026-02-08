@@ -48,6 +48,10 @@ class CardListActions {
   }
 
   Future<Item> loadItemDetail(String itemId) async {
+    // Return cached item if detail (html) is already loaded
+    final cached = _ref.read(itemCacheProvider)[itemId];
+    if (cached != null && cached.html != null) return cached;
+
     final ds = _ref.read(dataSourceProvider);
     final detail = await ds.loadItemDetail(itemId);
     _ref.read(itemCacheProvider.notifier).update((state) {

@@ -63,11 +63,11 @@ void main() {
     });
   });
 
-  group('itemMapProvider', () {
+  group('itemCacheProvider (item map)', () {
     test('provides map of items by ID from cache', () async {
       await waitForData(container, itemsProvider);
 
-      final itemMap = container.read(itemMapProvider);
+      final itemMap = container.read(itemCacheProvider);
       expect(itemMap, isNotEmpty);
       expect(itemMap['1'], isNotNull);
       expect(itemMap['1']?.title, 'Task 1');

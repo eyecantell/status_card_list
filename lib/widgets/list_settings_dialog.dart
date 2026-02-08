@@ -73,11 +73,11 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
                     height: 24,
                     color: color,
                   ),
-                  selected: _selectedColorValue == color.value,
+                  selected: _selectedColorValue == color.toARGB32(),
                   onSelected: (selected) {
                     if (selected) {
                       setState(() {
-                        _selectedColorValue = color.value;
+                        _selectedColorValue = color.toARGB32();
                       });
                     }
                   },

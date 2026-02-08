@@ -19,11 +19,6 @@ final itemCacheProvider = StateProvider<Map<String, Item>>((ref) => {});
 /// Used synchronously by StatusCard for related item list lookup.
 final itemToListIndexProvider = StateProvider<Map<String, String>>((ref) => {});
 
-/// Provider for item map (O(1) lookup by ID) - derived from item cache
-final itemMapProvider = Provider<Map<String, Item>>((ref) {
-  return ref.watch(itemCacheProvider);
-});
-
 /// Provider for item counts per list, fetched via getStatus().
 /// Lightweight alternative to loading all items just for counts.
 final listCountsProvider = FutureProvider<Map<String, int>>((ref) async {

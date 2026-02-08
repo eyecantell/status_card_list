@@ -32,6 +32,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _handleStatusChange(BuildContext context, item, String targetListUuid) async {
     final currentListId = ref.read(currentListIdProvider);
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
+    final messenger = ScaffoldMessenger.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     ref.read(expandedItemIdProvider.notifier).state = null;
 
@@ -46,8 +48,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         (c) => c.uuid == targetListUuid,
         orElse: () => allConfigs.first,
       );
-      final messenger = ScaffoldMessenger.of(context);
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       final buttonColor = isDark ? Colors.black87 : Colors.white;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
