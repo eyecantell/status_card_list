@@ -56,15 +56,30 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
 
       state = AsyncValue.data(page.items);
 
-      // Update the item cache and list index
-      final cacheUpdate = <String, Item>{};
+      // Update the item cache and list index.
+      // Preserve detail-enriched items (html loaded) — list items don't carry
+      // detail content, so blindly overwriting would discard loaded detail.
       final indexUpdate = <String, String>{};
-      for (final item in page.items) {
-        cacheUpdate[item.id] = item;
-        indexUpdate[item.id] = currentListId;
-      }
-      _ref.read(itemCacheProvider.notifier).update((state) =>
-        {...state, ...cacheUpdate});
+      _ref.read(itemCacheProvider.notifier).update((cache) {
+        final updated = Map<String, Item>.from(cache);
+        for (final item in page.items) {
+          final existing = updated[item.id];
+          if (existing != null && existing.html != null) {
+            // Keep the detail-enriched version but update list-level fields
+            updated[item.id] = existing.copyWith(
+              status: item.status,
+              subtitle: item.subtitle,
+              dueDate: item.dueDate,
+              relatedItemIds: item.relatedItemIds,
+              extra: item.extra,
+            );
+          } else {
+            updated[item.id] = item;
+          }
+          indexUpdate[item.id] = currentListId;
+        }
+        return updated;
+      });
       _ref.read(itemToListIndexProvider.notifier).update((state) =>
         {...state, ...indexUpdate});
     } catch (e, stack) {
