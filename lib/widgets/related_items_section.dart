@@ -80,8 +80,8 @@ class RelatedItemsSection extends ConsumerWidget {
 
             if (canNavigate) {
               return TextButton(
-                onPressed: () =>
-                    navigateToItem(ref, targetListId, itemId),
+                onPressed: () async =>
+                    await navigateToItem(ref, targetListId, itemId),
                 child: label,
               );
             } else {

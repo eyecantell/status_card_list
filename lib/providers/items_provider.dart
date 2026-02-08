@@ -32,13 +32,15 @@ final listCountsProvider = FutureProvider<Map<String, int>>((ref) async {
 class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   final CardListDataSource _dataSource;
   final Ref _ref;
+  bool _isRefreshing = false;
 
   ItemsNotifier(this._dataSource, this._ref) : super(const AsyncValue.loading()) {
     _loadItems();
   }
 
   Future<void> _loadItems() async {
-    state = const AsyncValue.loading();
+    if (_isRefreshing) return;
+    _isRefreshing = true;
     try {
       final currentListId = _ref.read(currentListIdProvider);
       final currentConfig = _ref.read(currentListConfigProvider);
@@ -79,6 +81,8 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
         {...state, ...indexUpdate});
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
+    } finally {
+      _isRefreshing = false;
     }
   }
 

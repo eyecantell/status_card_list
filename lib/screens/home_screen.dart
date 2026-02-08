@@ -101,9 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  void _handleNavigateToItem(BuildContext context, String targetListUuid, String itemId) {
-    navigateToItem(ref, targetListUuid, itemId);
-
+  void _handleNavigateToItem(BuildContext context, String targetListUuid, String itemId) async {
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
     final targetConfig = allConfigs.firstWhere(
       (c) => c.uuid == targetListUuid,
@@ -114,7 +112,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       SnackBar(content: Text('Navigated to ${targetConfig.name}')),
     );
 
-    // Handle scroll after the frame is built
+    await navigateToItem(ref, targetListUuid, itemId);
+
+    // Handle scroll after the frame is built (data is now loaded)
+    if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final items = ref.read(itemsForCurrentListProvider);
       final targetIndex = items.indexWhere((i) => i.id == itemId);
@@ -192,8 +193,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentListId = ref.watch(currentListIdProvider);
     final expandedItemId = ref.watch(expandedItemIdProvider);
     final navigatedItemId = ref.watch(navigatedItemIdProvider);
-    // Show loading indicator while data is loading
+    // Show loading or error state while data is loading
     if (currentConfig == null) {
+      final listConfigsState = ref.watch(listConfigsProvider);
+      if (listConfigsState.hasError) {
+        return Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Failed to load lists',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${listConfigsState.error}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () => ref.invalidate(listConfigsProvider),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );

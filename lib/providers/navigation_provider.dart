@@ -17,31 +17,30 @@ final pendingScrollItemIdProvider = StateProvider<String?>((ref) => null);
 /// Navigate to an item in a specific list
 /// This coordinates: list switching, item expansion, highlighting, scrolling,
 /// and detail loading.
-void navigateToItem(WidgetRef ref, String targetListId, String itemId) {
-  // 1. Switch to target list
+Future<void> navigateToItem(WidgetRef ref, String targetListId, String itemId) async {
+  // 1. Set UI intent state first
   ref.read(currentListIdProvider.notifier).state = targetListId;
-
-  // 1b. Refresh items for the new list
-  ref.read(itemsProvider.notifier).refresh();
-
-  // 2. Expand the item
   ref.read(expandedItemIdProvider.notifier).state = itemId;
-
-  // 3. Set navigated item for highlight effect
   ref.read(navigatedItemIdProvider.notifier).state = itemId;
-
-  // 4. Set pending scroll target
   ref.read(pendingScrollItemIdProvider.notifier).state = itemId;
 
-  // 5. Load item detail (so expanded content populates)
-  ref.read(actionsProvider).loadItemDetail(itemId);
+  try {
+    // 2. Await data loads so items and detail are ready before scroll/highlight
+    await ref.read(itemsProvider.notifier).refresh();
+    await ref.read(actionsProvider).loadItemDetail(itemId);
 
-  // 6. Clear highlight after 2 seconds
-  Future.delayed(const Duration(seconds: 2), () {
-    if (ref.read(navigatedItemIdProvider) == itemId) {
-      ref.read(navigatedItemIdProvider.notifier).state = null;
-    }
-  });
+    // 3. Clear highlight after 2 seconds (starts after data is loaded)
+    Future.delayed(const Duration(seconds: 2), () {
+      if (ref.read(navigatedItemIdProvider) == itemId) {
+        ref.read(navigatedItemIdProvider.notifier).state = null;
+      }
+    });
+  } catch (_) {
+    // On failure, clear navigation state so the user isn't stuck
+    ref.read(expandedItemIdProvider.notifier).state = null;
+    ref.read(navigatedItemIdProvider.notifier).state = null;
+    ref.read(pendingScrollItemIdProvider.notifier).state = null;
+  }
 }
 
 /// Clear the pending scroll after scrolling is complete
