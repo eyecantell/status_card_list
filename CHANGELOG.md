@@ -8,40 +8,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- **Riverpod state management** - Replaced StatefulWidget-based state with Riverpod providers
-  - `itemsProvider` - Manages items state with async loading
-  - `listConfigsProvider` - Manages list configurations
-  - `itemListsProvider` - Manages item-to-list mappings
-  - `navigationProvider` - Handles expanded/navigated item state
-  - `themeModeProvider` - Controls light/dark theme toggle
-- **Freezed models** - Immutable data models with code generation
-  - `Item` - Immutable item model with `formatDueDateRelative()` method
-  - `ListConfig` - Immutable list configuration with computed `icon` and `color` getters
-  - `CardIconEntry` - Represents card action button configuration
-  - `SortMode` - Enum with JSON serialization support
-- **Repository pattern** - Data access layer with SharedPreferences persistence
-  - `ItemRepository` - CRUD operations for items
-  - `ListConfigRepository` - CRUD operations for list configs and item mappings
-- **Local persistence** - Data now persists between app sessions via SharedPreferences
-- **Comprehensive test suite** - 94 unit tests covering models, repositories, and providers
-- **Constants file** - Centralized icon maps, colors, and default list IDs in `lib/utils/constants.dart`
-- **Home screen** - New `HomeScreen` widget using `ConsumerStatefulWidget`
+- **Caller-defined sort options** — `SortOption` class replaces the hardcoded `SortMode` enum. Consumers define their own sort options using `byField()`, `byExtra()`, or custom comparators. No engine changes needed to add new sorts.
+- **`Item.movedAt` field** — `DateTime?` stamped when an item is moved between lists. Enables "Recently Moved" sorting for trash/archive lists.
+- **`CardListConfig.sortOptions`** — optional list of `SortOption` for the sort dropdown. Falls back to `SortOption.defaults` (Manual, Title, Date Ascending, Date Descending).
+- **`InMemoryDataSource` accepts `sortOptions`** — optional constructor parameter for local sorting with custom sort options.
+- **`InMemoryDataSource` persists items** — `_saveItemsToPrefs()` method saves items after mutation (e.g., `movedAt` stamp).
+- **Undo on move** — snackbar with Undo button appears after moving an item via swipe or action icon. 5-second timeout.
+- **`CardListConfig.drawerItems`** — optional `List<Widget>` to inject custom entries into the navigation drawer.
+- **Optimistic card removal** — cards collapse and disappear immediately on move without waiting for data source refresh.
+- **List item counts on startup** — `listCountsProvider` fetches counts via `getStatus()` without loading all items.
+- **Tooltips on card action icons**
+- **`docs/` directory** — guides for sorting, card interactions, and custom drawer items.
 
 ### Changed
-- **Due date calculation** - Now uses `DateTime.now()` instead of hardcoded date (was May 22, 2025)
-- **Card icons format** - Changed from `List<MapEntry<String, String>>` to `List<CardIconEntry>` with backward-compatible JSON parsing
-- **List settings dialog** - Now uses `copyWith` for immutable updates instead of mutating config directly
-- **File structure** - Reorganized into `models/`, `providers/`, `repositories/`, `screens/`, `utils/` directories
+- **`ListConfig.sortMode`** — type changed from `SortMode` enum to `String` (default `'manual'`). Backward compatible with persisted enum strings.
+- **`CardListDataSource.loadItems(sortMode:)`** — parameter changed from `SortMode` to `String`.
+- **Default sort mode** — changed from `dateAscending` to `'manual'` in the abstract interface. Individual list configs can still set their own defaults.
+- **Sort dropdown** — now reads labels from `SortOption.label` instead of hardcoded switch statement.
+- **Settings and theme toggle** — moved from AppBar actions to navigation drawer.
+- **Sort button** — replaced text dropdown with icon-only popup to prevent AppBar overflow.
+- **Card icon tap animation** — animates in matching swipe direction.
+- **Undo snackbar styling** — outlined button with proper contrast in light/dark themes.
 
 ### Removed
-- `lib/app.dart` - Replaced by `lib/screens/home_screen.dart`
-- `lib/data.dart` - Replaced by repositories with sample data
-- `lib/item.dart` - Replaced by `lib/models/item.dart`
-- `lib/list_config.dart` - Replaced by `lib/models/list_config.dart`
-- `lib/theme_config.dart` - Replaced by `lib/providers/theme_provider.dart`
+- **`SortMode` enum** — deleted `sort_mode.dart` and `sort_mode.g.dart`. Replaced by `SortOption` class.
+- **`ItemsNotifier.sortItems()` public method** — sorting logic moved to `SortOption` comparators and `InMemoryDataSource`.
 
 ### Fixed
-- Hardcoded date bug in due date formatting (was always showing relative to May 22, 2025)
+- Card flash on move eliminated by optimistic removal
+- Expanded card spinner not resolving after detail fetch
+- Smooth collapse animation when card is moved to another list
+
+## [2.0.0] - 2025-06-15
+
+### Added
+- **Riverpod state management** — replaced StatefulWidget-based state with Riverpod providers
+  - `itemsProvider` — manages items state with async loading
+  - `listConfigsProvider` — manages list configurations
+  - `itemCacheProvider` — cross-list item cache
+  - `itemToListIndexProvider` — item-to-list mapping
+  - `navigationProvider` — handles expanded/navigated item state
+  - `themeModeProvider` — controls light/dark theme toggle
+- **Freezed models** — immutable data models with code generation
+  - `Item` — immutable item model with `formatDueDateRelative()` method
+  - `ListConfig` — immutable list configuration with computed `icon` and `color` getters
+  - `CardIconEntry` — represents card action button configuration
+- **CardListDataSource abstraction** — `InMemoryDataSource` and `HttpDataSource` implementations
+- **`CardListConfig`** — builder callbacks for custom card rendering (`collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`)
+- **On-demand detail loading** — `Item.html` is nullable; fetched on card expand
+- **`Item.extra`** — `Map<String, dynamic>` for consumer-specific metadata
+- **Multi-context support** — `DataContext` model for multi-tenant switching
+- **Local persistence** — data persists between sessions via SharedPreferences
+- **Comprehensive test suite** — ~148 unit tests covering models, data sources, providers, and widgets
+
+### Changed
+- **Due date calculation** — uses `DateTime.now()` instead of hardcoded date
+- **Card icons format** — `List<CardIconEntry>` with backward-compatible JSON parsing
+- **File structure** — reorganized into `models/`, `providers/`, `data_source/`, `screens/`, `utils/`
+
+### Removed
+- `lib/app.dart` — replaced by `lib/screens/home_screen.dart`
+- `lib/data.dart` — replaced by data sources with sample data
+- Direct state mutation — replaced by immutable models and Riverpod
+
+### Fixed
+- Hardcoded date bug in due date formatting
 
 ## [1.0.0] - 2025-06-06
 
