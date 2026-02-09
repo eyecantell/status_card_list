@@ -71,6 +71,7 @@ class DrawerMenu extends ConsumerWidget {
                           ds.defaultListId;
                       ref.invalidate(listConfigsProvider);
                       ref.invalidate(itemsProvider);
+                      ref.invalidate(listCountsProvider);
                       ref.invalidate(dataContextsProvider);
                     }
                   }
