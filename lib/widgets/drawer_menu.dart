@@ -66,6 +66,9 @@ class DrawerMenu extends ConsumerWidget {
                     final ds = ref.read(dataSourceProvider);
                     if (ds is MultiContextDataSource) {
                       await ds.switchContext(value);
+                      // Reset selected list to the new context's default
+                      ref.read(currentListIdProvider.notifier).state =
+                          ds.defaultListId;
                       ref.invalidate(listConfigsProvider);
                       ref.invalidate(itemsProvider);
                       ref.invalidate(dataContextsProvider);
