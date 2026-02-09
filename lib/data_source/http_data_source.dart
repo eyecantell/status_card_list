@@ -20,15 +20,27 @@ class HttpDataSource implements CardListDataSource {
   final HttpResponseMapper mapper;
   final http.Client _client;
   final String _defaultListId;
+  final Map<String, String>? extraQueryParams;
 
   HttpDataSource({
     required this.baseUrl,
     required this.mapper,
     required String defaultListId,
     this.headersBuilder,
+    this.extraQueryParams,
     http.Client? client,
   })  : _client = client ?? http.Client(),
         _defaultListId = defaultListId;
+
+  /// Builds a URI from a path, merging [params] with [extraQueryParams].
+  Uri _buildUri(String path, [Map<String, String>? params]) {
+    final merged = <String, String>{
+      ...?extraQueryParams,
+      ...?params,
+    };
+    final uri = Uri.parse('$baseUrl/$path');
+    return merged.isEmpty ? uri : uri.replace(queryParameters: merged);
+  }
 
   @override
   String get defaultListId => _defaultListId;
@@ -48,7 +60,7 @@ class HttpDataSource implements CardListDataSource {
     int limit = 50,
     int offset = 0,
   }) async {
-    final uri = Uri.parse('$baseUrl/notices').replace(queryParameters: {
+    final uri = _buildUri('notices', {
       'list_id': listId,
       'sort': sortMode,
       'limit': '$limit',
@@ -61,7 +73,7 @@ class HttpDataSource implements CardListDataSource {
 
   @override
   Future<Item> loadItemDetail(String itemId) async {
-    final uri = Uri.parse('$baseUrl/notices/$itemId');
+    final uri = _buildUri('notices/$itemId');
     final resp = await _client.get(uri, headers: _headers);
     _checkResponse(resp);
     return mapper.parseItemDetail(jsonDecode(resp.body) as Map<String, dynamic>);
@@ -73,7 +85,7 @@ class HttpDataSource implements CardListDataSource {
     required String fromListId,
     required String targetListId,
   }) async {
-    final uri = Uri.parse('$baseUrl/notices/$itemId/list');
+    final uri = _buildUri('notices/$itemId/list');
     final resp = await _client.put(
       uri,
       headers: _headers,
@@ -89,7 +101,7 @@ class HttpDataSource implements CardListDataSource {
     required String itemId,
     required int newPosition,
   }) async {
-    final uri = Uri.parse('$baseUrl/notices/$itemId/position');
+    final uri = _buildUri('notices/$itemId/position');
     final resp = await _client.put(
       uri,
       headers: _headers,
@@ -100,7 +112,7 @@ class HttpDataSource implements CardListDataSource {
 
   @override
   Future<List<ListConfig>> loadLists() async {
-    final uri = Uri.parse('$baseUrl/lists');
+    final uri = _buildUri('lists');
     final resp = await _client.get(uri, headers: _headers);
     _checkResponse(resp);
     return mapper.parseListConfigs(jsonDecode(resp.body) as List<dynamic>);
@@ -108,7 +120,7 @@ class HttpDataSource implements CardListDataSource {
 
   @override
   Future<void> updateList(String listId, ListConfig config) async {
-    final uri = Uri.parse('$baseUrl/lists/$listId');
+    final uri = _buildUri('lists/$listId');
     final resp = await _client.put(
       uri,
       headers: _headers,
@@ -119,7 +131,7 @@ class HttpDataSource implements CardListDataSource {
 
   @override
   Future<String?> findListContainingItem(String itemId) async {
-    final uri = Uri.parse('$baseUrl/notices/$itemId');
+    final uri = _buildUri('notices/$itemId');
     final resp = await _client.get(uri, headers: _headers);
     _checkResponse(resp);
     final json = jsonDecode(resp.body) as Map<String, dynamic>;
@@ -128,7 +140,7 @@ class HttpDataSource implements CardListDataSource {
 
   @override
   Future<Map<String, dynamic>> getStatus() async {
-    final uri = Uri.parse('$baseUrl/status');
+    final uri = _buildUri('status');
     final resp = await _client.get(uri, headers: _headers);
     _checkResponse(resp);
     return mapper.parseStatus(jsonDecode(resp.body) as Map<String, dynamic>);
