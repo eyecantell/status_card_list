@@ -14,6 +14,7 @@ class DrawerMenu extends ConsumerWidget {
   final Function(String) onListSelected;
   final Function(String)? onConfigureList;
   final List<Widget>? drawerItems;
+  final Widget? drawerHeader;
 
   const DrawerMenu({
     super.key,
@@ -22,6 +23,7 @@ class DrawerMenu extends ConsumerWidget {
     required this.onListSelected,
     this.onConfigureList,
     this.drawerItems,
+    this.drawerHeader,
   });
 
   @override
@@ -35,7 +37,7 @@ class DrawerMenu extends ConsumerWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          DrawerHeader(
+          drawerHeader ?? DrawerHeader(
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
                   ? Colors.blue[800]

@@ -24,6 +24,9 @@ class CardListConfig {
   /// Extra widgets to show in the navigation drawer (after list items, before theme toggle).
   final List<Widget>? drawerItems;
 
+  /// Custom drawer header widget. If null, uses default "Task Lists" header.
+  final Widget? drawerHeader;
+
   /// Sort options shown in the sort dropdown. If null, uses SortOption.defaults.
   final List<SortOption>? sortOptions;
 
@@ -33,6 +36,7 @@ class CardListConfig {
     this.trailingBuilder,
     this.subtitleBuilder,
     this.drawerItems,
+    this.drawerHeader,
     this.sortOptions,
   });
 }

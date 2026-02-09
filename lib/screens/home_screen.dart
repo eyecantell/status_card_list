@@ -326,6 +326,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         currentListUuid: currentListId,
         onListSelected: _handleSwitchList,
         drawerItems: widget.cardListConfig?.drawerItems,
+        drawerHeader: widget.cardListConfig?.drawerHeader,
         onConfigureList: (uuid) {
           final config = allConfigs.firstWhere(
             (c) => c.uuid == uuid,
