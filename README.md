@@ -31,7 +31,8 @@ lib/
 ├── models/                    # Immutable models with freezed
 │   ├── item.dart              # Item model with due date formatting
 │   ├── list_config.dart       # List configuration with CardIconEntry
-│   └── sort_mode.dart         # Sorting enum
+│   ├── card_list_config.dart  # Builder callbacks, drawer/sort config, onContextChanged
+│   └── sort_option.dart       # Caller-defined sort options
 ├── providers/                 # Riverpod providers with business logic
 │   ├── items_provider.dart    # Items state and CRUD operations
 │   ├── lists_provider.dart    # List configs and item-to-list mappings

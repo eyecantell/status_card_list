@@ -65,7 +65,7 @@ lib/
 ├── models/
 │   ├── item.dart                    # Item: id, title, subtitle, html?, dueDate?, movedAt?, status, extra
 │   ├── list_config.dart             # ListConfig: uuid, name, swipeActions, buttons, cardIcons, sortMode (String), icon, color
-│   ├── card_list_config.dart        # Builder callbacks for custom card rendering + drawerItems + sortOptions
+│   ├── card_list_config.dart        # Builder callbacks for custom card rendering + drawerItems + sortOptions + onContextChanged
 │   └── sort_option.dart             # SortOption: caller-defined sort with id, label, comparator (byField, byExtra factories)
 ├── providers/
 │   ├── data_source_provider.dart    # Must be overridden in ProviderScope
@@ -104,7 +104,7 @@ The engine's `HomeScreen` is the entry point. Consumers don't build their own sc
 
 **SortOption**: Plain Dart class (not Freezed — contains `Comparator`). Fields: `id`, `label`, `comparator?`. Factories: `SortOption.byField()`, `SortOption.byExtra()`. Static: `SortOption.manual`, `SortOption.defaults`. Equality by `id`.
 
-**CardListConfig**: Optional builder callbacks — `collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`. Optional `drawerItems` (`List<Widget>?`) for extra navigation drawer entries. Optional `sortOptions` (`List<SortOption>?`) for sort dropdown (null = `SortOption.defaults`). When null, engine uses default rendering.
+**CardListConfig**: Optional builder callbacks — `collapsedBuilder`, `expandedBuilder`, `trailingBuilder`, `subtitleBuilder`. Optional `drawerItems` (`List<Widget>?`) for extra navigation drawer entries. Optional `drawerHeader` (`Widget?`) for custom drawer header. Optional `sortOptions` (`List<SortOption>?`) for sort dropdown (null = `SortOption.defaults`). Optional `onContextChanged` (`Future<void> Function(String)?`) callback for app-controlled context switching — when provided, the library delegates all provider mutations to the app instead of handling them internally. When null, engine uses default rendering/behavior.
 
 ## Tests
 

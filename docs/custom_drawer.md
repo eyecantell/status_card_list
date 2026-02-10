@@ -85,10 +85,34 @@ home: Builder(
 - Use `ListTile` for visual consistency with the rest of the drawer
 - Always call `Navigator.pop(context)` in `onTap` to close the drawer before performing actions
 
+## Context switching callback
+
+For multi-context apps (e.g., multi-company), the drawer shows a dropdown to switch contexts. By default the library handles provider invalidations internally. To control this from the app (recommended for complex state), provide `onContextChanged`:
+
+```dart
+CardListConfig(
+  onContextChanged: (contextId) async {
+    final ds = ref.read(dataSourceProvider);
+    if (ds is MultiContextDataSource) {
+      await ds.switchContext(contextId);
+      ref.read(currentListIdProvider.notifier).state = ds.defaultListId;
+      ref.read(contextVersion.notifier).state++;
+      // Clear any app-specific stale state here
+      ref.invalidate(listConfigsProvider);
+      ref.invalidate(itemsProvider);
+      ref.invalidate(listCountsProvider);
+      ref.invalidate(dataContextsProvider);
+    }
+  },
+)
+```
+
+When `onContextChanged` is null, the library falls back to its built-in switch logic. When provided, the library delegates entirely to the callback — this lets apps clear additional state (e.g., item caches, expanded card state) that the library doesn't know about.
+
 ## Files involved
 
 | File | Role |
 |---|---|
-| `lib/models/card_list_config.dart` | `drawerItems` field definition |
-| `lib/widgets/drawer_menu.dart` | Renders items in the drawer |
-| `lib/screens/home_screen.dart` | Passes `drawerItems` from config to drawer |
+| `lib/models/card_list_config.dart` | `drawerItems`, `drawerHeader`, `onContextChanged` field definitions |
+| `lib/widgets/drawer_menu.dart` | Renders items in the drawer, delegates context switch to callback |
+| `lib/screens/home_screen.dart` | Passes config fields to drawer, handles empty-state UI |
