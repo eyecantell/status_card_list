@@ -43,6 +43,10 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
     _isRefreshing = true;
     try {
       final currentListId = _ref.read(currentListIdProvider);
+      if (currentListId.isEmpty) {
+        state = const AsyncValue.data([]);
+        return;
+      }
       final currentConfig = _ref.read(currentListConfigProvider);
       final sortMode = currentConfig?.sortMode ?? 'manual';
 
