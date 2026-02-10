@@ -5,7 +5,6 @@ import '../data_source/multi_context_data_source.dart';
 import '../providers/context_provider.dart';
 import '../providers/data_source_provider.dart';
 import '../providers/items_provider.dart';
-import '../providers/lists_provider.dart';
 import '../providers/theme_provider.dart';
 
 class DrawerMenu extends ConsumerWidget {
@@ -72,13 +71,7 @@ class DrawerMenu extends ConsumerWidget {
                       final ds = ref.read(dataSourceProvider);
                       if (ds is MultiContextDataSource) {
                         await ds.switchContext(value);
-                        ref.read(currentListIdProvider.notifier).state =
-                            ds.defaultListId;
-                        ref.read(contextVersion.notifier).state++;
-                        ref.invalidate(listConfigsProvider);
-                        ref.invalidate(itemsProvider);
-                        ref.invalidate(listCountsProvider);
-                        ref.invalidate(dataContextsProvider);
+                        resetContextState(ref, defaultListId: ds.defaultListId);
                       }
                     }
                   }

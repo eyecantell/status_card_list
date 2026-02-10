@@ -87,7 +87,7 @@ home: Builder(
 
 ## Context switching callback
 
-For multi-context apps (e.g., multi-company), the drawer shows a dropdown to switch contexts. By default the library handles provider invalidations internally. To control this from the app (recommended for complex state), provide `onContextChanged`:
+For multi-context apps (e.g., multi-company), the drawer shows a dropdown to switch contexts. By default the library handles provider invalidations internally via `resetContextState()`. To control this from the app (recommended for complex state), provide `onContextChanged`:
 
 ```dart
 CardListConfig(
@@ -95,19 +95,20 @@ CardListConfig(
     final ds = ref.read(dataSourceProvider);
     if (ds is MultiContextDataSource) {
       await ds.switchContext(contextId);
-      ref.read(currentListIdProvider.notifier).state = ds.defaultListId;
-      ref.read(contextVersion.notifier).state++;
-      // Clear any app-specific stale state here
-      ref.invalidate(listConfigsProvider);
-      ref.invalidate(itemsProvider);
-      ref.invalidate(listCountsProvider);
-      ref.invalidate(dataContextsProvider);
+      resetContextState(ref, defaultListId: ds.defaultListId);
     }
   },
 )
 ```
 
-When `onContextChanged` is null, the library falls back to its built-in switch logic. When provided, the library delegates entirely to the callback — this lets apps clear additional state (e.g., item caches, expanded card state) that the library doesn't know about.
+The `resetContextState()` helper (from `context_provider.dart`) is the canonical way to reset all context-dependent state. It clears:
+- Current list ID (set to new default)
+- Context version (forces `currentContextProvider` rebuild)
+- Item cache and item-to-list index
+- Navigation state (expanded, navigated, pending scroll)
+- Async providers (list configs, items, list counts, data contexts)
+
+When `onContextChanged` is null, the library falls back to its built-in switch logic using the same `resetContextState()` function. When provided, the library delegates entirely to the callback — this lets apps perform additional steps (e.g., awaiting `switchContext`) before the reset.
 
 ## Files involved
 

@@ -73,7 +73,7 @@ lib/
 │   ├── lists_provider.dart          # listConfigsProvider, currentListIdProvider, currentListConfigProvider
 │   ├── actions_provider.dart        # CardListActions: moveItem, reorderItems, loadItemDetail
 │   ├── navigation_provider.dart     # navigateToItem (switch list + scroll + highlight)
-│   ├── context_provider.dart        # dataContextsProvider, currentContextProvider (multi-tenant)
+│   ├── context_provider.dart        # dataContextsProvider, currentContextProvider, resetContextState() (multi-tenant)
 │   └── theme_provider.dart          # Light/dark theme toggle, scaffold/card contrast tuning
 ├── screens/
 │   └── home_screen.dart             # Main screen: app bar with list dropdown selector, sort dropdown, card list, drawer

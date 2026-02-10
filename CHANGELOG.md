@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`resetContextState()` helper** — canonical function in `context_provider.dart` that resets all context-dependent providers on context switch. Consuming apps should call this instead of manually resetting individual providers. Clears list ID, item cache, item-to-list index, navigation state, and invalidates async providers.
 - **`CardListConfig.onContextChanged` callback** — optional `Future<void> Function(String contextId)?` that lets consuming apps handle context-switch provider mutations themselves. When provided, `DrawerMenu` delegates to the callback instead of performing internal invalidations. This decouples context-switching logic from library versioning.
 - **Empty-state UI for contexts with no lists** — `HomeScreen` now shows "No lists available for this company." with a working drawer (for switching contexts) instead of an infinite spinner when `listConfigsProvider` loads successfully but returns an empty list.
 - **Caller-defined sort options** — `SortOption` class replaces the hardcoded `SortMode` enum. Consumers define their own sort options using `byField()`, `byExtra()`, or custom comparators. No engine changes needed to add new sorts.
