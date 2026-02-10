@@ -8,6 +8,7 @@ final dataContextsProvider = FutureProvider<List<DataContext>>((ref) async {
 });
 
 final currentContextProvider = Provider<DataContext?>((ref) {
+  ref.watch(dataContextsProvider); // rebuild when contexts are reloaded (e.g. after switchContext)
   final ds = ref.read(dataSourceProvider);
   return ds is MultiContextDataSource ? ds.currentContext : null;
 });
