@@ -69,6 +69,7 @@ class DrawerMenu extends ConsumerWidget {
                       // Reset selected list to the new context's default
                       ref.read(currentListIdProvider.notifier).state =
                           ds.defaultListId;
+                      ref.invalidate(currentContextProvider);
                       ref.invalidate(listConfigsProvider);
                       ref.invalidate(itemsProvider);
                       ref.invalidate(listCountsProvider);
