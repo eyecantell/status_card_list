@@ -15,6 +15,7 @@ class DrawerMenu extends ConsumerWidget {
   final Function(String)? onConfigureList;
   final List<Widget>? drawerItems;
   final Widget? drawerHeader;
+  final Future<void> Function(String contextId)? onContextChanged;
 
   const DrawerMenu({
     super.key,
@@ -24,6 +25,7 @@ class DrawerMenu extends ConsumerWidget {
     this.onConfigureList,
     this.drawerItems,
     this.drawerHeader,
+    this.onContextChanged,
   });
 
   @override
@@ -63,17 +65,21 @@ class DrawerMenu extends ConsumerWidget {
                 }).toList(),
                 onChanged: (value) async {
                   if (value != null) {
-                    final ds = ref.read(dataSourceProvider);
-                    if (ds is MultiContextDataSource) {
-                      await ds.switchContext(value);
-                      // Reset selected list to the new context's default
-                      ref.read(currentListIdProvider.notifier).state =
-                          ds.defaultListId;
-                      ref.read(contextVersion.notifier).state++;
-                      ref.invalidate(listConfigsProvider);
-                      ref.invalidate(itemsProvider);
-                      ref.invalidate(listCountsProvider);
-                      ref.invalidate(dataContextsProvider);
+                    if (onContextChanged != null) {
+                      await onContextChanged!(value);
+                    } else {
+                      // Fallback: library handles internally (standalone use)
+                      final ds = ref.read(dataSourceProvider);
+                      if (ds is MultiContextDataSource) {
+                        await ds.switchContext(value);
+                        ref.read(currentListIdProvider.notifier).state =
+                            ds.defaultListId;
+                        ref.read(contextVersion.notifier).state++;
+                        ref.invalidate(listConfigsProvider);
+                        ref.invalidate(itemsProvider);
+                        ref.invalidate(listCountsProvider);
+                        ref.invalidate(dataContextsProvider);
+                      }
                     }
                   }
                 },

@@ -222,6 +222,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         );
       }
+      // Loaded successfully but no lists exist for this context
+      if (allConfigs.isEmpty && listConfigsState.hasValue) {
+        return Scaffold(
+          drawer: DrawerMenu(
+            listConfigs: const [],
+            currentListUuid: '',
+            onListSelected: (_) {},
+            drawerItems: widget.cardListConfig?.drawerItems,
+            drawerHeader: widget.cardListConfig?.drawerHeader,
+            onContextChanged: widget.cardListConfig?.onContextChanged,
+          ),
+          appBar: AppBar(title: const Text('No Lists')),
+          body: const Center(
+            child: Text('No lists available for this company.'),
+          ),
+        );
+      }
+      // Still loading
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -327,6 +345,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         onListSelected: _handleSwitchList,
         drawerItems: widget.cardListConfig?.drawerItems,
         drawerHeader: widget.cardListConfig?.drawerHeader,
+        onContextChanged: widget.cardListConfig?.onContextChanged,
         onConfigureList: (uuid) {
           final config = allConfigs.firstWhere(
             (c) => c.uuid == uuid,

@@ -30,6 +30,11 @@ class CardListConfig {
   /// Sort options shown in the sort dropdown. If null, uses SortOption.defaults.
   final List<SortOption>? sortOptions;
 
+  /// Called when user selects a different context in the drawer dropdown.
+  /// When provided, the library delegates all provider mutations to the app.
+  /// When null, the library handles context switching internally.
+  final Future<void> Function(String contextId)? onContextChanged;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
@@ -38,5 +43,6 @@ class CardListConfig {
     this.drawerItems,
     this.drawerHeader,
     this.sortOptions,
+    this.onContextChanged,
   });
 }
