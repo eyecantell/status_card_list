@@ -250,67 +250,76 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: PopupMenuButton<String>(
-          onSelected: _handleSwitchList,
-          tooltip: 'Select list',
-          color: Theme.of(context).cardTheme.color,
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              border: Border.all(color: currentConfig.color, width: 2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(currentConfig.icon, color: currentConfig.color),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    currentConfig.name,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            PopupMenuButton<String>(
+              onSelected: _handleSwitchList,
+              tooltip: 'Select list',
+              color: Theme.of(context).cardTheme.color,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: currentConfig.color, width: 2),
+                  borderRadius: BorderRadius.circular(4),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
-              ],
-            ),
-          ),
-          itemBuilder: (context) => allConfigs.map((config) {
-            final isSelected = config.uuid == currentListId;
-            final count = counts[config.uuid] ?? 0;
-            return PopupMenuItem<String>(
-              value: config.uuid,
-              child: Row(
-                children: [
-                  if (isSelected)
-                    Icon(Icons.check, color: config.color, size: 18)
-                  else
-                    const SizedBox(width: 18),
-                  const SizedBox(width: 8),
-                  Icon(config.icon, color: config.color),
-                  const SizedBox(width: 8),
-                  Text(
-                    config.name,
-                    style: TextStyle(
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(currentConfig.icon, color: currentConfig.color),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        currentConfig.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '($count)',
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
+                  ],
+                ),
               ),
-            );
-          }).toList(),
+              itemBuilder: (context) => allConfigs.map((config) {
+                final isSelected = config.uuid == currentListId;
+                final count = counts[config.uuid] ?? 0;
+                return PopupMenuItem<String>(
+                  value: config.uuid,
+                  child: Row(
+                    children: [
+                      if (isSelected)
+                        Icon(Icons.check, color: config.color, size: 18)
+                      else
+                        const SizedBox(width: 18),
+                      const SizedBox(width: 8),
+                      Icon(config.icon, color: config.color),
+                      const SizedBox(width: 8),
+                      Text(
+                        config.name,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '($count)',
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            Expanded(
+              child: Center(
+                child: _CompanySelector(onContextChanged: widget.cardListConfig?.onContextChanged),
+              ),
+            ),
+          ],
         ),
         actions: [
-          _CompanySelector(onContextChanged: widget.cardListConfig?.onContextChanged),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sort order',
