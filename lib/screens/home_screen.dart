@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/list_config.dart';
 import '../models/sort_option.dart';
 import '../providers/actions_provider.dart';
+import '../providers/context_provider.dart';
+import '../providers/data_source_provider.dart';
 import '../providers/items_provider.dart';
 import '../providers/lists_provider.dart';
 import '../providers/navigation_provider.dart';
+import '../data_source/multi_context_data_source.dart';
 import '../widgets/drawer_menu.dart';
 import '../widgets/list_settings_dialog.dart';
 import '../models/card_list_config.dart';
@@ -307,6 +310,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           }).toList(),
         ),
         actions: [
+          _CompanySelector(onContextChanged: widget.cardListConfig?.onContextChanged),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sort order',
@@ -374,6 +378,87 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             cardListConfig: widget.cardListConfig,
           );
         },
+      ),
+    );
+  }
+}
+
+class _CompanySelector extends ConsumerWidget {
+  final Future<void> Function(String contextId)? onContextChanged;
+
+  const _CompanySelector({this.onContextChanged});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contexts = ref.watch(dataContextsProvider).value ?? [];
+    final currentContext = ref.watch(currentContextProvider);
+
+    if (contexts.isEmpty) return const SizedBox.shrink();
+
+    final enabled = contexts.length > 1;
+
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.7,
+      child: PopupMenuButton<String>(
+        enabled: enabled,
+        tooltip: enabled ? 'Switch company' : currentContext?.name ?? '',
+        color: Theme.of(context).cardTheme.color,
+        onSelected: (value) async {
+          if (onContextChanged != null) {
+            await onContextChanged!(value);
+          } else {
+            final ds = ref.read(dataSourceProvider);
+            if (ds is MultiContextDataSource) {
+              await ds.switchContext(value);
+              resetContextState(ref, defaultListId: ds.defaultListId);
+            }
+          }
+        },
+        itemBuilder: (context) => contexts.map((ctx) {
+          final isSelected = ctx.id == currentContext?.id;
+          return PopupMenuItem<String>(
+            value: ctx.id,
+            child: Row(
+              children: [
+                if (isSelected)
+                  Icon(Icons.check, color: Theme.of(context).colorScheme.primary, size: 18)
+                else
+                  const SizedBox(width: 18),
+                const SizedBox(width: 8),
+                Text(
+                  ctx.name,
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 150),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.business, size: 18),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    currentContext?.name ?? '',
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+                if (enabled) ...[
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_drop_down, size: 18),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
