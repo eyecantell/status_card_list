@@ -35,6 +35,10 @@ class CardListConfig {
   /// When null, the library handles context switching internally.
   final Future<void> Function(String contextId)? onContextChanged;
 
+  /// Build extra AppBar action widgets. Receives current list ID.
+  /// Rendered before the sort button in the AppBar actions list.
+  final List<Widget> Function(BuildContext context, String listId)? appBarActionsBuilder;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
@@ -44,5 +48,6 @@ class CardListConfig {
     this.drawerHeader,
     this.sortOptions,
     this.onContextChanged,
+    this.appBarActionsBuilder,
   });
 }

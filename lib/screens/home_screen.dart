@@ -320,6 +320,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: [
+          if (widget.cardListConfig?.appBarActionsBuilder != null)
+            ...widget.cardListConfig!.appBarActionsBuilder!(context, currentListId),
           PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sort order',
