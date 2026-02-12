@@ -13,6 +13,7 @@ abstract class CardListDataSource {
     String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
+    String? searchQuery,
   });
 
   /// Load full detail for a single item (html populated). Used on card expand.

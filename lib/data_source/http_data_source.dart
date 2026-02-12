@@ -59,13 +59,18 @@ class HttpDataSource implements CardListDataSource {
     String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
+    String? searchQuery,
   }) async {
-    final uri = _buildUri('notices', {
+    final params = {
       'list_id': listId,
       'sort': sortMode,
       'limit': '$limit',
       'offset': '$offset',
-    });
+    };
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      params['search'] = searchQuery;
+    }
+    final uri = _buildUri('notices', params);
     final resp = await _client.get(uri, headers: _headers);
     _checkResponse(resp);
     return mapper.parseItemsPage(jsonDecode(resp.body) as Map<String, dynamic>);

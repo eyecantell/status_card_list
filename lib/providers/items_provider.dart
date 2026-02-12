@@ -11,6 +11,9 @@ final itemsProvider =
   return ItemsNotifier(dataSource, ref);
 });
 
+/// Current search query. When non-null/non-empty, filters items server-side.
+final searchQueryProvider = StateProvider<String?>((ref) => null);
+
 /// Accumulated cache of all items seen across lists.
 /// Used for cross-list lookups (related items, detail).
 final itemCacheProvider = StateProvider<Map<String, Item>>((ref) => {});
@@ -50,9 +53,12 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
       final currentConfig = _ref.read(currentListConfigProvider);
       final sortMode = currentConfig?.sortMode ?? 'manual';
 
+      final searchQuery = _ref.read(searchQueryProvider);
+
       final page = await _dataSource.loadItems(
         listId: currentListId,
         sortMode: sortMode,
+        searchQuery: searchQuery,
       );
 
       state = AsyncValue.data(page.items);

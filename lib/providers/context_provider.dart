@@ -33,10 +33,11 @@ void resetContextState(WidgetRef ref, {required String defaultListId}) {
   // 3. Clear stale item state
   ref.read(itemCacheProvider.notifier).state = {};
   ref.read(itemToListIndexProvider.notifier).state = {};
-  // 4. Clear navigation state
+  // 4. Clear navigation and search state
   ref.read(expandedItemIdProvider.notifier).state = null;
   ref.read(navigatedItemIdProvider.notifier).state = null;
   ref.read(pendingScrollItemIdProvider.notifier).state = null;
+  ref.read(searchQueryProvider.notifier).state = null;
   // 5. Invalidate async providers to refetch for new context
   ref.invalidate(listConfigsProvider);
   ref.invalidate(itemsProvider);

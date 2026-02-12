@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/list_config.dart';
@@ -25,11 +26,37 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearching = false;
+  Timer? _searchDebounce;
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _searchController.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  void _startSearch() {
+    setState(() { _isSearching = true; });
+  }
+
+  void _stopSearch() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() { _isSearching = false; });
+    ref.read(searchQueryProvider.notifier).state = null;
+    ref.read(itemsProvider.notifier).refresh();
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      final query = value.trim().isEmpty ? null : value.trim();
+      ref.read(searchQueryProvider.notifier).state = query;
+      ref.read(itemsProvider.notifier).refresh();
+    });
   }
 
   void _handleStatusChange(BuildContext context, item, String targetListUuid) async {
@@ -141,6 +168,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _handleSwitchList(String listUuid) {
     ScaffoldMessenger.of(context).clearSnackBars();
+    // Exit search mode when switching lists
+    if (_isSearching) _stopSearch();
     ref.read(currentListIdProvider.notifier).state = listUuid;
     ref.read(expandedItemIdProvider.notifier).state = null;
     ref.read(navigatedItemIdProvider.notifier).state = null;
@@ -251,7 +280,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        title: Row(
+        leading: _isSearching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _stopSearch,
+              )
+            : null,
+        title: _isSearching
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                onChanged: _onSearchChanged,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+                decoration: InputDecoration(
+                  hintText: 'Search notices...',
+                  border: InputBorder.none,
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            _onSearchChanged('');
+                          },
+                        )
+                      : null,
+                ),
+              )
+            : Row(
           children: [
             PopupMenuButton<String>(
               onSelected: _handleSwitchList,
@@ -319,7 +374,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ],
         ),
-        actions: [
+        actions: _isSearching ? null : [
+          if (widget.cardListConfig?.searchEnabled == true)
+            IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: 'Search',
+              onPressed: _startSearch,
+            ),
           if (widget.cardListConfig?.appBarActionsBuilder != null)
             ...widget.cardListConfig!.appBarActionsBuilder!(context, currentListId),
           PopupMenuButton<String>(
@@ -371,6 +432,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: Builder(
         builder: (BuildContext scaffoldContext) {
+          final searchQuery = ref.watch(searchQueryProvider);
+          if (searchQuery != null && searchQuery.isNotEmpty && currentItems.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.search_off, size: 64, color: Theme.of(context).disabledColor),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No results for "$searchQuery"',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ],
+              ),
+            );
+          }
           return StatusCardListExample(
             items: currentItems,
             listConfig: currentConfig,

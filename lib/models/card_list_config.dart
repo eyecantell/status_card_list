@@ -39,6 +39,9 @@ class CardListConfig {
   /// Rendered before the sort button in the AppBar actions list.
   final List<Widget> Function(BuildContext context, String listId)? appBarActionsBuilder;
 
+  /// Whether to show the search icon in the AppBar. Defaults to false.
+  final bool searchEnabled;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
@@ -49,5 +52,6 @@ class CardListConfig {
     this.sortOptions,
     this.onContextChanged,
     this.appBarActionsBuilder,
+    this.searchEnabled = false,
   });
 }
