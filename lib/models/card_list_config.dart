@@ -42,6 +42,15 @@ class CardListConfig {
   /// Whether to show the search icon in the AppBar. Defaults to false.
   final bool searchEnabled;
 
+  /// Build empty state widget when list has no items (and not in search mode).
+  /// Receives current list config, all list configs, and per-list counts.
+  final Widget Function(
+    BuildContext context,
+    ListConfig currentList,
+    List<ListConfig> allLists,
+    Map<String, int> counts,
+  )? emptyStateBuilder;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
@@ -53,5 +62,6 @@ class CardListConfig {
     this.onContextChanged,
     this.appBarActionsBuilder,
     this.searchEnabled = false,
+    this.emptyStateBuilder,
   });
 }

@@ -448,6 +448,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             );
           }
+          // Empty state (non-search) — only when data is loaded (not during loading)
+          final rawItemsState = ref.watch(itemsProvider);
+          if (currentItems.isEmpty &&
+              rawItemsState is AsyncData &&
+              widget.cardListConfig?.emptyStateBuilder != null) {
+            return widget.cardListConfig!.emptyStateBuilder!(
+              context, currentConfig!, allConfigs, counts,
+            );
+          }
           return StatusCardListExample(
             items: currentItems,
             listConfig: currentConfig,
