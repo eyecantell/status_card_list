@@ -129,21 +129,17 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             const SizedBox(height: 16),
             const Text('Icons to Show on Card (up to 5):'),
             const SizedBox(height: 8),
-            ...widget.listConfig.buttons.entries.map((entry) {
-              final iconName = entry.key;
-              final targetUuid = entry.value;
-              final targetConfig = widget.allConfigs.firstWhere(
-                (config) => config.uuid == targetUuid,
-                orElse: () => widget.allConfigs.first,
-              );
+            ...widget.allConfigs
+                .where((config) => config.uuid != widget.listConfig.uuid)
+                .map((targetConfig) {
               final isSelected = _selectedCardIcons.any(
-                (e) => e.iconName == iconName && e.targetListId == targetUuid,
+                (e) => e.targetListId == targetConfig.uuid,
               );
 
               return CheckboxListTile(
                 title: Row(
                   children: [
-                    Icon(iconMap[iconName]),
+                    Icon(targetConfig.icon),
                     const SizedBox(width: 8),
                     Text('To ${targetConfig.name}'),
                   ],
@@ -154,13 +150,13 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
                     if (value == true) {
                       if (_selectedCardIcons.length < 5) {
                         _selectedCardIcons.add(CardIconEntry(
-                          iconName: iconName,
-                          targetListId: targetUuid,
+                          iconName: targetConfig.iconName,
+                          targetListId: targetConfig.uuid,
                         ));
                       }
                     } else {
                       _selectedCardIcons.removeWhere(
-                        (e) => e.iconName == iconName && e.targetListId == targetUuid,
+                        (e) => e.targetListId == targetConfig.uuid,
                       );
                     }
                   });
