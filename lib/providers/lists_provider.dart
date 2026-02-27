@@ -90,6 +90,25 @@ class ListConfigsNotifier extends StateNotifier<AsyncValue<List<ListConfig>>> {
     }
   }
 
+  /// Create a new list and add it to state
+  Future<ListConfig> createConfig({required String name}) async {
+    final config = await _dataSource.createList(name: name);
+    final configs = state.value ?? [];
+    state = AsyncValue.data([...configs, config]);
+    return config;
+  }
+
+  /// Delete a list and remove it from state
+  Future<void> deleteConfig(String listId) async {
+    await _dataSource.deleteList(listId);
+    final configs = state.value ?? [];
+    final updated = configs.where((c) => c.uuid != listId).toList();
+    state = AsyncValue.data(updated);
+    // Sanitize remaining configs to remove references to deleted list
+    final validIds = updated.map((c) => c.uuid).toSet();
+    await sanitizeConfigs(validIds);
+  }
+
   /// Set sort mode for a specific list
   Future<void> setSortMode(String listId, String mode) async {
     final configs = state.value ?? [];

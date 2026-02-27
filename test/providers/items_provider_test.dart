@@ -142,10 +142,11 @@ class _SpyDataSource implements CardListDataSource {
     String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
+    String? searchQuery,
   }) {
     loadItemsCallCount++;
     return _inner.loadItems(
-        listId: listId, sortMode: sortMode, limit: limit, offset: offset);
+        listId: listId, sortMode: sortMode, limit: limit, offset: offset, searchQuery: searchQuery);
   }
 
   @override
@@ -178,6 +179,11 @@ class _SpyDataSource implements CardListDataSource {
   Future<Map<String, dynamic>> getStatus() => _inner.getStatus();
   @override
   String get defaultListId => _inner.defaultListId;
+  @override
+  Future<ListConfig> createList({required String name, String? iconName, String? color}) =>
+      _inner.createList(name: name, iconName: iconName, color: color);
+  @override
+  Future<void> deleteList(String listId) => _inner.deleteList(listId);
   @override
   Future<void> dispose() => _inner.dispose();
 }

@@ -44,6 +44,7 @@ class InMemoryDataSource implements CardListDataSource {
     String sortMode = 'manual',
     int limit = 50,
     int offset = 0,
+    String? searchQuery,
   }) async {
     final itemIds = _itemLists[listId] ?? [];
     final itemMap = {for (var item in _items) item.id: item};
@@ -146,6 +147,34 @@ class InMemoryDataSource implements CardListDataSource {
       counts[entry.key] = entry.value.length;
     }
     return {'counts': counts};
+  }
+
+  @override
+  Future<ListConfig> createList({required String name, String? iconName, String? color}) async {
+    final config = ListConfig(
+      uuid: 'list-${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      swipeActions: const {},
+      buttons: const {},
+      dueDateLabel: 'Due Date',
+      sortMode: 'dateAscending',
+      iconName: iconName ?? 'label',
+      colorValue: 0xFF9E9E9E,
+      cardIcons: const [],
+    );
+    _configs.add(config);
+    _itemLists[config.uuid] = [];
+    await _saveConfigsToPrefs();
+    await _saveItemListsToPrefs();
+    return config;
+  }
+
+  @override
+  Future<void> deleteList(String listId) async {
+    _configs.removeWhere((c) => c.uuid == listId);
+    _itemLists.remove(listId);
+    await _saveConfigsToPrefs();
+    await _saveItemListsToPrefs();
   }
 
   @override

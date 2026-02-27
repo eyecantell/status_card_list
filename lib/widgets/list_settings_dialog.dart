@@ -6,12 +6,16 @@ class ListSettingsDialog extends StatefulWidget {
   final ListConfig listConfig;
   final List<ListConfig> allConfigs;
   final Function(ListConfig) onSave;
+  final VoidCallback? onDelete;
+  final bool isDeletable;
 
   const ListSettingsDialog({
     super.key,
     required this.listConfig,
     required this.allConfigs,
     required this.onSave,
+    this.onDelete,
+    this.isDeletable = false,
   });
 
   @override
@@ -167,6 +171,16 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
         ),
       ),
       actions: [
+        if (widget.isDeletable && widget.onDelete != null)
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onDelete!();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete List'),
+          ),
+        const Spacer(),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),

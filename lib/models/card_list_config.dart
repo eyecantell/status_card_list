@@ -51,6 +51,15 @@ class CardListConfig {
     Map<String, int> counts,
   )? emptyStateBuilder;
 
+  /// Called when the user taps "New list" in the drawer or popup menu.
+  final VoidCallback? onCreateList;
+
+  /// Called when the user confirms deletion of a list.
+  final Function(String listId)? onDeleteList;
+
+  /// Returns true if the given list can be deleted (e.g. not a default list).
+  final bool Function(ListConfig)? isListDeletable;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.expandedBuilder,
@@ -63,5 +72,8 @@ class CardListConfig {
     this.appBarActionsBuilder,
     this.searchEnabled = false,
     this.emptyStateBuilder,
+    this.onCreateList,
+    this.onDeleteList,
+    this.isListDeletable,
   });
 }

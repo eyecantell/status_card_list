@@ -152,6 +152,29 @@ class HttpDataSource implements CardListDataSource {
   }
 
   @override
+  Future<ListConfig> createList({required String name, String? iconName, String? color}) async {
+    final uri = _buildUri('lists');
+    final body = <String, dynamic>{'name': name};
+    if (iconName != null) body['icon'] = iconName;
+    if (color != null) body['color'] = color;
+    final resp = await _client.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    _checkResponse(resp);
+    final json = jsonDecode(resp.body) as Map<String, dynamic>;
+    return mapper.parseListConfigs([json]).first;
+  }
+
+  @override
+  Future<void> deleteList(String listId) async {
+    final uri = _buildUri('lists/$listId');
+    final resp = await _client.delete(uri, headers: _headers);
+    _checkResponse(resp);
+  }
+
+  @override
   Future<void> dispose() async {
     _client.close();
   }

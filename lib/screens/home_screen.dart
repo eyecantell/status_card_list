@@ -167,6 +167,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _handleSwitchList(String listUuid) {
+    if (listUuid == '__create_new__') {
+      widget.cardListConfig?.onCreateList?.call();
+      return;
+    }
     ScaffoldMessenger.of(context).clearSnackBars();
     // Exit search mode when switching lists
     if (_isSearching) _stopSearch();
@@ -179,12 +183,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showSettingsDialog(BuildContext context, ListConfig config) {
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
+    final isDeletable = widget.cardListConfig?.isListDeletable?.call(config) ?? false;
 
     showDialog(
       context: context,
       builder: (context) => ListSettingsDialog(
         listConfig: config,
         allConfigs: allConfigs,
+        isDeletable: isDeletable,
+        onDelete: isDeletable
+            ? () => widget.cardListConfig?.onDeleteList?.call(config.uuid)
+            : null,
         onSave: (updatedConfig) async {
           await ref.read(listConfigsProvider.notifier).updateConfig(updatedConfig);
         },
@@ -264,6 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             drawerItems: widget.cardListConfig?.drawerItems,
             drawerHeader: widget.cardListConfig?.drawerHeader,
             onContextChanged: widget.cardListConfig?.onContextChanged,
+            onCreateList: widget.cardListConfig?.onCreateList,
           ),
           appBar: AppBar(title: const Text('No Lists')),
           body: const Center(
@@ -334,38 +344,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
               ),
-              itemBuilder: (context) => allConfigs.map((config) {
-                final isSelected = config.uuid == currentListId;
-                final count = counts[config.uuid] ?? 0;
-                return PopupMenuItem<String>(
-                  value: config.uuid,
-                  child: Row(
-                    children: [
-                      if (isSelected)
-                        Icon(Icons.check, color: config.color, size: 18)
-                      else
-                        const SizedBox(width: 18),
-                      const SizedBox(width: 8),
-                      Icon(config.icon, color: config.color),
-                      const SizedBox(width: 8),
-                      Text(
-                        config.name,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              itemBuilder: (context) {
+                final items = allConfigs.map((config) {
+                  final isSelected = config.uuid == currentListId;
+                  final count = counts[config.uuid] ?? 0;
+                  return PopupMenuItem<String>(
+                    value: config.uuid,
+                    child: Row(
+                      children: [
+                        if (isSelected)
+                          Icon(Icons.check, color: config.color, size: 18)
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 8),
+                        Icon(config.icon, color: config.color),
+                        const SizedBox(width: 8),
+                        Text(
+                          config.name,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '($count)',
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
-                          fontSize: 12,
+                        const SizedBox(width: 8),
+                        Text(
+                          '($count)',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodySmall?.color,
+                            fontSize: 12,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
+                      ],
+                    ),
+                  );
+                }).toList();
+                if (widget.cardListConfig?.onCreateList != null) {
+                  items.add(const PopupMenuItem<String>(
+                    enabled: false,
+                    height: 1,
+                    child: Divider(),
+                  ));
+                  items.add(const PopupMenuItem<String>(
+                    value: '__create_new__',
+                    child: Row(
+                      children: [
+                        SizedBox(width: 18),
+                        SizedBox(width: 8),
+                        Icon(Icons.add),
+                        SizedBox(width: 8),
+                        Text('New list'),
+                      ],
+                    ),
+                  ));
+                }
+                return items;
+              },
             ),
             Expanded(
               child: Center(
@@ -422,6 +454,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         drawerItems: widget.cardListConfig?.drawerItems,
         drawerHeader: widget.cardListConfig?.drawerHeader,
         onContextChanged: widget.cardListConfig?.onContextChanged,
+        onCreateList: widget.cardListConfig?.onCreateList,
         onConfigureList: (uuid) {
           final config = allConfigs.firstWhere(
             (c) => c.uuid == uuid,

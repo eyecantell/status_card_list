@@ -49,6 +49,12 @@ abstract class CardListDataSource {
   /// The default list ID to select on startup (e.g. the "inbox" list).
   String get defaultListId;
 
+  /// Create a new list. Returns the created list config.
+  Future<ListConfig> createList({required String name, String? iconName, String? color});
+
+  /// Delete a list by ID.
+  Future<void> deleteList(String listId);
+
   /// Dispose resources.
   Future<void> dispose();
 }

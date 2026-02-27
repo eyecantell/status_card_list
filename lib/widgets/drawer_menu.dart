@@ -15,6 +15,7 @@ class DrawerMenu extends ConsumerWidget {
   final List<Widget>? drawerItems;
   final Widget? drawerHeader;
   final Future<void> Function(String contextId)? onContextChanged;
+  final VoidCallback? onCreateList;
 
   const DrawerMenu({
     super.key,
@@ -25,6 +26,7 @@ class DrawerMenu extends ConsumerWidget {
     this.drawerItems,
     this.drawerHeader,
     this.onContextChanged,
+    this.onCreateList,
   });
 
   @override
@@ -131,6 +133,15 @@ class DrawerMenu extends ConsumerWidget {
               },
             );
           }),
+          if (onCreateList != null)
+            ListTile(
+              leading: const Icon(Icons.add),
+              title: const Text('New list'),
+              onTap: () {
+                Navigator.pop(context);
+                onCreateList!();
+              },
+            ),
           const Divider(),
           if (drawerItems != null && drawerItems!.isNotEmpty) ...[
             ...drawerItems!,
