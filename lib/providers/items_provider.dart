@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/item.dart';
+import '../models/list_config.dart';
 import '../data_source/card_list_data_source.dart';
 import 'data_source_provider.dart';
 import 'lists_provider.dart';
@@ -38,7 +39,22 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   bool _isRefreshing = false;
 
   ItemsNotifier(this._dataSource, this._ref) : super(const AsyncValue.loading()) {
-    _loadItems();
+    // If list configs are already available, load items immediately using the
+    // correct sort mode. Otherwise wait — loading before configs are ready falls
+    // back to 'manual' sort even when the stored sort mode is something else
+    // (e.g. "Best Match"), causing a stale sort on initial load and after
+    // company switches.
+    final configs = _ref.read(listConfigsProvider);
+    if (configs.hasValue) {
+      _loadItems();
+    } else {
+      _ref.listen<AsyncValue<List<ListConfig>>>(listConfigsProvider,
+          (previous, next) {
+        if (next.hasValue && !(previous?.hasValue ?? false)) {
+          _loadItems();
+        }
+      });
+    }
   }
 
   Future<void> _loadItems() async {
