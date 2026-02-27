@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/item.dart';
 import '../models/list_config.dart';
@@ -39,22 +40,7 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   bool _isRefreshing = false;
 
   ItemsNotifier(this._dataSource, this._ref) : super(const AsyncValue.loading()) {
-    // If list configs are already available, load items immediately using the
-    // correct sort mode. Otherwise wait — loading before configs are ready falls
-    // back to 'manual' sort even when the stored sort mode is something else
-    // (e.g. "Best Match"), causing a stale sort on initial load and after
-    // company switches.
-    final configs = _ref.read(listConfigsProvider);
-    if (configs.hasValue) {
-      _loadItems();
-    } else {
-      _ref.listen<AsyncValue<List<ListConfig>>>(listConfigsProvider,
-          (previous, next) {
-        if (next.hasValue && !(previous?.hasValue ?? false)) {
-          _loadItems();
-        }
-      });
-    }
+    _loadItems();
   }
 
   Future<void> _loadItems() async {
@@ -66,6 +52,25 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
         state = const AsyncValue.data([]);
         return;
       }
+
+      // If list configs aren't loaded yet, wait for them before fetching items
+      // so we use the stored sort mode rather than falling back to 'manual'.
+      // This fixes the race where items load before listConfigsProvider resolves
+      // (e.g. on initial render or after a company switch), causing the sort
+      // button to show "Best Match" while items are actually in manual order.
+      if (!_ref.read(listConfigsProvider).hasValue) {
+        final completer = Completer<void>();
+        _ref.listen<AsyncValue<List<ListConfig>>>(listConfigsProvider,
+            (_, __) {
+          if (!completer.isCompleted) completer.complete();
+        });
+        // Ensure we don't hang if this notifier is disposed before configs load.
+        _ref.onDispose(() {
+          if (!completer.isCompleted) completer.complete();
+        });
+        await completer.future;
+      }
+
       final currentConfig = _ref.read(currentListConfigProvider);
       final sortMode = currentConfig?.sortMode ?? 'manual';
 
