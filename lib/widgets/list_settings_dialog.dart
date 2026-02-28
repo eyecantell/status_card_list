@@ -33,8 +33,15 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
   void initState() {
     super.initState();
     _selectedIconName = widget.listConfig.iconName;
-    _swipeLeftTargetUuid = widget.listConfig.swipeActions['left'] ?? '';
-    _swipeRightTargetUuid = widget.listConfig.swipeActions['right'] ?? '';
+    // Ensure swipe values are valid dropdown entries (must be a sibling list UUID or empty)
+    final siblingIds = widget.allConfigs
+        .where((c) => c.uuid != widget.listConfig.uuid)
+        .map((c) => c.uuid)
+        .toSet();
+    final rawLeft = widget.listConfig.swipeActions['left'] ?? '';
+    final rawRight = widget.listConfig.swipeActions['right'] ?? '';
+    _swipeLeftTargetUuid = siblingIds.contains(rawLeft) ? rawLeft : '';
+    _swipeRightTargetUuid = siblingIds.contains(rawRight) ? rawRight : '';
     _selectedColorValue = widget.listConfig.colorValue;
     _selectedCardIcons = List.from(widget.listConfig.cardIcons);
   }
@@ -93,14 +100,17 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             DropdownButton<String>(
               value: _swipeLeftTargetUuid,
               isExpanded: true,
-              items: widget.allConfigs
-                  .where((config) => config.uuid != widget.listConfig.uuid)
-                  .map((config) {
-                return DropdownMenuItem<String>(
-                  value: config.uuid,
-                  child: Text(config.name),
-                );
-              }).toList(),
+              items: [
+                const DropdownMenuItem<String>(value: '', child: Text('None')),
+                ...widget.allConfigs
+                    .where((config) => config.uuid != widget.listConfig.uuid)
+                    .map((config) {
+                  return DropdownMenuItem<String>(
+                    value: config.uuid,
+                    child: Text(config.name),
+                  );
+                }),
+              ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
@@ -114,14 +124,17 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
             DropdownButton<String>(
               value: _swipeRightTargetUuid,
               isExpanded: true,
-              items: widget.allConfigs
-                  .where((config) => config.uuid != widget.listConfig.uuid)
-                  .map((config) {
-                return DropdownMenuItem<String>(
-                  value: config.uuid,
-                  child: Text(config.name),
-                );
-              }).toList(),
+              items: [
+                const DropdownMenuItem<String>(value: '', child: Text('None')),
+                ...widget.allConfigs
+                    .where((config) => config.uuid != widget.listConfig.uuid)
+                    .map((config) {
+                  return DropdownMenuItem<String>(
+                    value: config.uuid,
+                    child: Text(config.name),
+                  );
+                }),
+              ],
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
@@ -172,28 +185,35 @@ class _ListSettingsDialogState extends State<ListSettingsDialog> {
       ),
       actions: [
         if (widget.isDeletable && widget.onDelete != null)
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              widget.onDelete!();
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete List'),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                widget.onDelete!();
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete List'),
+            ),
           ),
-        const Spacer(),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         TextButton(
           onPressed: () {
+            // Filter out empty swipe targets
+            final swipeActions = <String, String>{};
+            if (_swipeLeftTargetUuid.isNotEmpty) {
+              swipeActions['left'] = _swipeLeftTargetUuid;
+            }
+            if (_swipeRightTargetUuid.isNotEmpty) {
+              swipeActions['right'] = _swipeRightTargetUuid;
+            }
             final updatedConfig = widget.listConfig.copyWith(
               iconName: _selectedIconName,
               colorValue: _selectedColorValue,
-              swipeActions: {
-                'left': _swipeLeftTargetUuid,
-                'right': _swipeRightTargetUuid,
-              },
+              swipeActions: swipeActions,
               cardIcons: _selectedCardIcons,
             );
             widget.onSave(updatedConfig);
