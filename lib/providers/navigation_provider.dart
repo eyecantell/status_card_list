@@ -22,14 +22,16 @@ Future<void> navigateToItem(WidgetRef ref, String targetListId, String itemId) a
   ref.read(currentListIdProvider.notifier).state = targetListId;
   ref.read(expandedItemIdProvider.notifier).state = itemId;
   ref.read(navigatedItemIdProvider.notifier).state = itemId;
-  ref.read(pendingScrollItemIdProvider.notifier).state = itemId;
 
   try {
     // 2. Await data loads so items and detail are ready before scroll/highlight
     await ref.read(itemsProvider.notifier).refresh();
     await ref.read(actionsProvider).loadItemDetail(itemId);
 
-    // 3. Clear highlight after 2 seconds (starts after data is loaded)
+    // 3. Signal scroll now that items are loaded (HomeScreen listens and scrolls)
+    ref.read(pendingScrollItemIdProvider.notifier).state = itemId;
+
+    // 4. Clear highlight after 2 seconds (starts after data is loaded)
     Future.delayed(const Duration(seconds: 2), () {
       if (ref.read(navigatedItemIdProvider) == itemId) {
         ref.read(navigatedItemIdProvider.notifier).state = null;
