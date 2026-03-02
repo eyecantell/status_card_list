@@ -18,6 +18,8 @@ class StatusCardListExample extends StatelessWidget {
   final ScrollController? scrollController;
   final void Function(String itemId)? onExpand;
   final CardListConfig? cardListConfig;
+  final String? scrollTargetItemId;
+  final GlobalKey? scrollTargetKey;
 
   const StatusCardListExample({
     super.key,
@@ -34,6 +36,8 @@ class StatusCardListExample extends StatelessWidget {
     this.scrollController,
     this.onExpand,
     this.cardListConfig,
+    this.scrollTargetItemId,
+    this.scrollTargetKey,
   });
 
   @override
@@ -64,6 +68,8 @@ class StatusCardListExample extends StatelessWidget {
       scrollController: scrollController,
       onExpand: onExpand,
       cardListConfig: cardListConfig,
+      scrollTargetItemId: scrollTargetItemId,
+      scrollTargetKey: scrollTargetKey,
     );
   }
 }

@@ -27,6 +27,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey _scrollTargetKey = GlobalKey();
   bool _isSearching = false;
   Timer? _searchDebounce;
 
@@ -214,23 +215,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currentListId = ref.watch(currentListIdProvider);
     final expandedItemId = ref.watch(expandedItemIdProvider);
     final navigatedItemId = ref.watch(navigatedItemIdProvider);
+    final pendingScrollItemId = ref.watch(pendingScrollItemIdProvider);
 
     // Reactively scroll to item when pendingScrollItemIdProvider is set (e.g., deep links)
     ref.listen<String?>(pendingScrollItemIdProvider, (_, itemId) {
       if (itemId == null) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        final items = ref.read(itemsForCurrentListProvider);
-        final targetIndex = items.indexWhere((i) => i.id == itemId);
-        if (targetIndex >= 0 && _scrollController.hasClients) {
-          final offset = CardDimensions.calculateScrollOffset(
-            targetIndex,
-            isExpanded: ref.read(expandedItemIdProvider) == itemId,
-          );
-          _scrollController.animateTo(
-            offset,
+        final ctx = _scrollTargetKey.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
+            alignment: 0.2,
           );
         }
         clearPendingScroll(ref);
@@ -509,6 +507,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             scrollController: _scrollController,
             onExpand: _handleExpand,
             cardListConfig: widget.cardListConfig,
+            scrollTargetItemId: pendingScrollItemId,
+            scrollTargetKey: pendingScrollItemId != null ? _scrollTargetKey : null,
           );
         },
       ),

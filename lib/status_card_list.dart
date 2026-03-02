@@ -23,6 +23,8 @@ class StatusCardList extends StatefulWidget {
   final void Function(String itemId)? onExpand;
   final CardListConfig? cardListConfig;
   final ListConfig listConfig;
+  final String? scrollTargetItemId;
+  final GlobalKey? scrollTargetKey;
 
   const StatusCardList({
     super.key,
@@ -44,6 +46,8 @@ class StatusCardList extends StatefulWidget {
     this.scrollController,
     this.onExpand,
     this.cardListConfig,
+    this.scrollTargetItemId,
+    this.scrollTargetKey,
   });
 
   @override
@@ -51,6 +55,35 @@ class StatusCardList extends StatefulWidget {
 }
 
 class _StatusCardListState extends State<StatusCardList> {
+  Widget _buildCard(int index) {
+    final item = widget.items[index];
+    final card = StatusCard(
+      item: item,
+      index: index,
+      statusIcons: widget.statusIcons,
+      swipeActions: widget.swipeActions,
+      onStatusChanged: widget.onStatusChanged,
+      onReorder: widget.onReorder,
+      dueDateLabel: widget.dueDateLabel,
+      listColor: widget.listColor,
+      allConfigs: widget.allConfigs,
+      cardIcons: widget.cardIcons,
+      itemMap: widget.itemMap,
+      itemToListIndex: widget.itemToListIndex,
+      onNavigateToItem: widget.onNavigateToItem,
+      listConfig: widget.listConfig,
+      isExpanded: widget.expandedItemId == item.id,
+      isNavigated: widget.navigatedItemId == item.id,
+      onExpand: widget.onExpand,
+      cardListConfig: widget.cardListConfig,
+    );
+    final isTarget = widget.scrollTargetKey != null &&
+        widget.scrollTargetItemId == item.id;
+    return isTarget
+        ? KeyedSubtree(key: widget.scrollTargetKey!, child: card)
+        : card;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -88,26 +121,7 @@ class _StatusCardListState extends State<StatusCardList> {
               ReorderableDelayedDragStartListener(
                 key: ValueKey(widget.items[index].id),
                 index: index,
-                child: StatusCard(
-                  item: widget.items[index],
-                  index: index,
-                  statusIcons: widget.statusIcons,
-                  swipeActions: widget.swipeActions,
-                  onStatusChanged: widget.onStatusChanged,
-                  onReorder: widget.onReorder,
-                  dueDateLabel: widget.dueDateLabel,
-                  listColor: widget.listColor,
-                  allConfigs: widget.allConfigs,
-                  cardIcons: widget.cardIcons,
-                  itemMap: widget.itemMap,
-                  itemToListIndex: widget.itemToListIndex,
-                  onNavigateToItem: widget.onNavigateToItem,
-                  listConfig: widget.listConfig,
-                  isExpanded: widget.expandedItemId == widget.items[index].id,
-                  isNavigated: widget.navigatedItemId == widget.items[index].id,
-                  onExpand: widget.onExpand,
-                  cardListConfig: widget.cardListConfig,
-                ),
+                child: _buildCard(index),
               ),
           ],
         ),
