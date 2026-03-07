@@ -17,6 +17,7 @@ class ListConfig with _$ListConfig {
     @Default('list') String iconName,
     @Default(0xFF2196F3) int colorValue,
     @CardIconListConverter() @Default([]) List<CardIconEntry> cardIcons,
+    @JsonKey(name: 'stage_order', includeToJson: false) int? stageOrder,
   }) = _ListConfig;
 
   const ListConfig._();

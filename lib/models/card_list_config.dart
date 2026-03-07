@@ -54,6 +54,10 @@ class CardListConfig {
   /// Called when the user taps "New list" in the drawer or popup menu.
   final VoidCallback? onCreateList;
 
+  /// Build compact card for kanban view. Receives item + current list config.
+  /// If null, default kanban card rendering is used.
+  final Widget Function(BuildContext context, Item item, ListConfig listConfig)? compactCardBuilder;
+
   /// Called when the user confirms deletion of a list.
   final Function(String listId)? onDeleteList;
 
@@ -62,6 +66,7 @@ class CardListConfig {
 
   const CardListConfig({
     this.collapsedBuilder,
+    this.compactCardBuilder,
     this.expandedBuilder,
     this.trailingBuilder,
     this.subtitleBuilder,

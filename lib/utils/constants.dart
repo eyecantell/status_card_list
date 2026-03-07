@@ -18,6 +18,12 @@ const Map<String, IconData> iconMapForLists = {
   'star': Icons.star,
   'inbox': Icons.inbox,
   'archive': Icons.archive,
+  'search': Icons.search,
+  'track_changes': Icons.track_changes,
+  'edit_document': Icons.edit_document,
+  'send': Icons.send,
+  'check_circle': Icons.check_circle,
+  'cancel': Icons.cancel,
 };
 
 /// Available colors for list customization

@@ -22,6 +22,7 @@ _$ListConfigImpl _$$ListConfigImplFromJson(Map<String, dynamic> json) =>
               : const CardIconListConverter().fromJson(
                 json['cardIcons'] as List,
               ),
+      stageOrder: (json['stage_order'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$$ListConfigImplToJson(_$ListConfigImpl instance) =>

@@ -10,7 +10,10 @@ import '../providers/items_provider.dart';
 import '../providers/lists_provider.dart';
 import '../providers/navigation_provider.dart';
 import '../data_source/multi_context_data_source.dart';
+import '../providers/kanban_providers.dart';
+import '../providers/view_mode_provider.dart';
 import '../widgets/drawer_menu.dart';
+import '../widgets/kanban_board.dart';
 import '../widgets/list_settings_dialog.dart';
 import '../models/card_list_config.dart';
 import '../status_card_list_example.dart';
@@ -216,6 +219,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final expandedItemId = ref.watch(expandedItemIdProvider);
     final navigatedItemId = ref.watch(navigatedItemIdProvider);
     final pendingScrollItemId = ref.watch(pendingScrollItemIdProvider);
+    final viewMode = ref.watch(viewModeProvider);
+    final kanbanColumns = ref.watch(kanbanColumnsProvider);
+    final isKanban = viewMode == 'kanban' && kanbanColumns.isNotEmpty;
 
     // Reactively scroll to item when pendingScrollItemIdProvider is set (e.g., deep links)
     ref.listen<String?>(pendingScrollItemIdProvider, (_, itemId) {
@@ -319,87 +325,96 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               )
             : Row(
           children: [
-            PopupMenuButton<String>(
-              onSelected: _handleSwitchList,
-              tooltip: 'Select list',
-              color: Theme.of(context).cardTheme.color,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: currentConfig.color, width: 2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(currentConfig.icon, color: currentConfig.color),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        currentConfig.name,
-                        overflow: TextOverflow.ellipsis,
+            if (!isKanban)
+              PopupMenuButton<String>(
+                onSelected: _handleSwitchList,
+                tooltip: 'Select list',
+                color: Theme.of(context).cardTheme.color,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: currentConfig.color, width: 2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(currentConfig.icon, color: currentConfig.color),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          currentConfig.name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
-                  ],
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
+                    ],
+                  ),
+                ),
+                itemBuilder: (context) {
+                  final items = allConfigs.map((config) {
+                    final isSelected = config.uuid == currentListId;
+                    final count = counts[config.uuid] ?? 0;
+                    return PopupMenuItem<String>(
+                      value: config.uuid,
+                      child: Row(
+                        children: [
+                          if (isSelected)
+                            Icon(Icons.check, color: config.color, size: 18)
+                          else
+                            const SizedBox(width: 18),
+                          const SizedBox(width: 8),
+                          Icon(config.icon, color: config.color),
+                          const SizedBox(width: 8),
+                          Text(
+                            config.name,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '($count)',
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodySmall?.color,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList();
+                  if (widget.cardListConfig?.onCreateList != null) {
+                    items.add(const PopupMenuItem<String>(
+                      enabled: false,
+                      height: 1,
+                      child: Divider(),
+                    ));
+                    items.add(const PopupMenuItem<String>(
+                      value: '__create_new__',
+                      child: Row(
+                        children: [
+                          SizedBox(width: 18),
+                          SizedBox(width: 8),
+                          Icon(Icons.add),
+                          SizedBox(width: 8),
+                          Text('New list'),
+                        ],
+                      ),
+                    ));
+                  }
+                  return items;
+                },
+              ),
+            if (isKanban)
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'Board',
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
               ),
-              itemBuilder: (context) {
-                final items = allConfigs.map((config) {
-                  final isSelected = config.uuid == currentListId;
-                  final count = counts[config.uuid] ?? 0;
-                  return PopupMenuItem<String>(
-                    value: config.uuid,
-                    child: Row(
-                      children: [
-                        if (isSelected)
-                          Icon(Icons.check, color: config.color, size: 18)
-                        else
-                          const SizedBox(width: 18),
-                        const SizedBox(width: 8),
-                        Icon(config.icon, color: config.color),
-                        const SizedBox(width: 8),
-                        Text(
-                          config.name,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '($count)',
-                          style: TextStyle(
-                            color: Theme.of(context).textTheme.bodySmall?.color,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList();
-                if (widget.cardListConfig?.onCreateList != null) {
-                  items.add(const PopupMenuItem<String>(
-                    enabled: false,
-                    height: 1,
-                    child: Divider(),
-                  ));
-                  items.add(const PopupMenuItem<String>(
-                    value: '__create_new__',
-                    child: Row(
-                      children: [
-                        SizedBox(width: 18),
-                        SizedBox(width: 8),
-                        Icon(Icons.add),
-                        SizedBox(width: 8),
-                        Text('New list'),
-                      ],
-                    ),
-                  ));
-                }
-                return items;
-              },
-            ),
             Expanded(
               child: Center(
                 child: _CompanySelector(onContextChanged: widget.cardListConfig?.onContextChanged),
@@ -408,15 +423,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ],
         ),
         actions: _isSearching ? null : [
-          if (widget.cardListConfig?.searchEnabled == true)
+          if (kanbanColumns.isNotEmpty)
+            IconButton(
+              icon: Icon(isKanban ? Icons.view_list : Icons.view_kanban),
+              tooltip: isKanban ? 'List view' : 'Board view',
+              onPressed: () => ref.read(viewModeProvider.notifier).toggle(),
+            ),
+          if (!isKanban && widget.cardListConfig?.searchEnabled == true)
             IconButton(
               icon: const Icon(Icons.search),
               tooltip: 'Search',
               onPressed: _startSearch,
             ),
-          if (widget.cardListConfig?.appBarActionsBuilder != null)
+          if (!isKanban && widget.cardListConfig?.appBarActionsBuilder != null)
             ...widget.cardListConfig!.appBarActionsBuilder!(context, currentListId),
-          PopupMenuButton<String>(
+          if (!isKanban) PopupMenuButton<String>(
             icon: const Icon(Icons.sort),
             tooltip: 'Sort order',
             color: Theme.of(context).cardTheme.color,
@@ -464,7 +485,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _showSettingsDialog(context, config);
         },
       ),
-      body: Builder(
+      body: isKanban
+          ? KanbanBoard(
+              columns: kanbanColumns,
+              allConfigs: allConfigs,
+              cardListConfig: widget.cardListConfig,
+              onItemTapped: (listId, itemId) {
+                ref.read(viewModeProvider.notifier).set('list');
+                navigateToItem(ref, listId, itemId);
+              },
+            )
+          : Builder(
         builder: (BuildContext scaffoldContext) {
           final searchQuery = ref.watch(searchQueryProvider);
           if (searchQuery != null && searchQuery.isNotEmpty && currentItems.isEmpty) {
