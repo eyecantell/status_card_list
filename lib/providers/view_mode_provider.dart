@@ -14,26 +14,34 @@ class ViewModeNotifier extends StateNotifier<String> {
   }
 
   Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString(_prefsKey);
-    if (saved == 'kanban' || saved == 'list') {
-      state = saved!;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      final saved = prefs.getString(_prefsKey);
+      if (saved == 'kanban' || saved == 'list') {
+        state = saved!;
+      }
+    } catch (_) {
+      // SharedPreferences may be unavailable in test environments.
+      // Swallow the error — the default 'list' mode is fine.
     }
   }
 
   void toggle() {
     final next = state == 'kanban' ? 'list' : 'kanban';
     state = next;
-    SharedPreferences.getInstance().then((prefs) {
-      prefs.setString(_prefsKey, next);
-    });
+    _persist(next);
   }
 
   void set(String mode) {
     if (mode != 'kanban' && mode != 'list') return;
     state = mode;
+    _persist(mode);
+  }
+
+  void _persist(String mode) {
     SharedPreferences.getInstance().then((prefs) {
       prefs.setString(_prefsKey, mode);
-    });
+    }).catchError((_) {});
   }
 }
