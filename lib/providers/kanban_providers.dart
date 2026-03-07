@@ -5,12 +5,14 @@ import 'data_source_provider.dart';
 import 'items_provider.dart';
 import 'lists_provider.dart';
 
-/// Lists that have a stageOrder, sorted by stageOrder ascending.
+/// All lists as kanban columns. Lists with stageOrder sort first (ascending),
+/// then remaining lists in their original order.
 final kanbanColumnsProvider = Provider<List<ListConfig>>((ref) {
   final configs = ref.watch(listConfigsProvider).valueOrNull ?? [];
-  final staged = configs.where((c) => c.stageOrder != null).toList();
-  staged.sort((a, b) => a.stageOrder!.compareTo(b.stageOrder!));
-  return staged;
+  final staged = configs.where((c) => c.stageOrder != null).toList()
+    ..sort((a, b) => a.stageOrder!.compareTo(b.stageOrder!));
+  final unstaged = configs.where((c) => c.stageOrder == null).toList();
+  return [...staged, ...unstaged];
 });
 
 /// Per-column items provider, keyed by list ID. AutoDispose ensures cleanup.
