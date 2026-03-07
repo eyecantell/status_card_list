@@ -165,17 +165,26 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   void _handleHorizontalDragEnd(DragEndDetails details) {
     if (_dragOffset.abs() >= _maxDrag) {
       final action = _dragOffset > 0 ? 'right' : 'left';
-      _triggerAction(action: action);
+      if (_hasSwipeTarget(action)) {
+        _triggerAction(action: action);
+      } else {
+        _animateBack();
+      }
     } else if (_dragOffset.abs() > _threshold) {
-      final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
-      _animation = Tween<double>(begin: _dragOffset, end: target)
-          .animate(_controller)
-        ..addListener(() {
-          setState(() {
-            _dragOffset = _animation.value;
+      final action = _dragOffset > 0 ? 'right' : 'left';
+      if (_hasSwipeTarget(action)) {
+        final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
+        _animation = Tween<double>(begin: _dragOffset, end: target)
+            .animate(_controller)
+          ..addListener(() {
+            setState(() {
+              _dragOffset = _animation.value;
+            });
           });
-        });
-      _controller.forward(from: 0);
+        _controller.forward(from: 0);
+      } else {
+        _animateBack();
+      }
     } else {
       _animateBack();
     }
@@ -250,6 +259,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     }
   }
 
+  bool _hasSwipeTarget(String action) {
+    return widget.swipeActions[action] != null;
+  }
+
   Color _getTargetColor(String action) {
     final targetListUuid = widget.swipeActions[action];
     if (targetListUuid != null) {
@@ -259,7 +272,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       );
       return targetConfig.color;
     }
-    return widget.listColor;
+    return Colors.grey;
   }
 
   IconData _getTargetIcon(String action) {
@@ -271,7 +284,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       );
       return targetConfig.icon;
     }
-    return widget.allConfigs[0].icon;
+    return Icons.block;
   }
 
   String _getTargetName(String action) {
@@ -283,7 +296,7 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       );
       return targetConfig.name;
     }
-    return 'ACTION';
+    return 'No action';
   }
 
   String _formatDueDateAndDays(DateTime? dueDate) {
@@ -434,21 +447,23 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               height: _cardHeight ?? _defaultCardHeight,
               color: _getTargetColor('right'),
               child: TextButton(
-                onPressed: () {
-                  final targetUuid = widget.swipeActions['right'];
-                  if (targetUuid != null) _triggerAction(action: 'right');
-                },
+                onPressed: _hasSwipeTarget('right')
+                    ? () => _triggerAction(action: 'right')
+                    : null,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       rightListName.toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color: _hasSwipeTarget('right') ? Colors.white : Colors.white60,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Icon(
                       _getTargetIcon('right'),
-                      color: Colors.white,
+                      color: _hasSwipeTarget('right') ? Colors.white : Colors.white60,
                       size: 36,
                     ),
                   ],
@@ -466,21 +481,23 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               height: _cardHeight ?? _defaultCardHeight,
               color: _getTargetColor('left'),
               child: TextButton(
-                onPressed: () {
-                  final targetUuid = widget.swipeActions['left'];
-                  if (targetUuid != null) _triggerAction(action: 'left');
-                },
+                onPressed: _hasSwipeTarget('left')
+                    ? () => _triggerAction(action: 'left')
+                    : null,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       leftListName.toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                      style: TextStyle(
+                        color: _hasSwipeTarget('left') ? Colors.white : Colors.white60,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Icon(
                       _getTargetIcon('left'),
-                      color: Colors.white,
+                      color: _hasSwipeTarget('left') ? Colors.white : Colors.white60,
                       size: 36,
                     ),
                   ],
