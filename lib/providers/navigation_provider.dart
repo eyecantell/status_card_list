@@ -18,30 +18,41 @@ final pendingScrollItemIdProvider = StateProvider<String?>((ref) => null);
 /// This coordinates: list switching, item expansion, highlighting, scrolling,
 /// and detail loading.
 Future<void> navigateToItem(WidgetRef ref, String targetListId, String itemId) async {
+  // Capture provider references BEFORE setting state. Setting expandedItemId
+  // causes widget rebuilds which may dispose the calling widget (e.g.,
+  // RelatedItemsSection inside the previously expanded card). A disposed
+  // WidgetRef can't reliably read providers, so we grab what we need upfront.
+  final listIdNotifier = ref.read(currentListIdProvider.notifier);
+  final expandedNotifier = ref.read(expandedItemIdProvider.notifier);
+  final navigatedNotifier = ref.read(navigatedItemIdProvider.notifier);
+  final scrollNotifier = ref.read(pendingScrollItemIdProvider.notifier);
+  final items = ref.read(itemsProvider.notifier);
+  final actions = ref.read(actionsProvider);
+
   // 1. Set UI intent state first
-  ref.read(currentListIdProvider.notifier).state = targetListId;
-  ref.read(expandedItemIdProvider.notifier).state = itemId;
-  ref.read(navigatedItemIdProvider.notifier).state = itemId;
+  listIdNotifier.state = targetListId;
+  expandedNotifier.state = itemId;
+  navigatedNotifier.state = itemId;
 
   try {
     // 2. Await data loads so items and detail are ready before scroll/highlight
-    await ref.read(itemsProvider.notifier).refresh();
-    await ref.read(actionsProvider).loadItemDetail(itemId);
+    await items.refresh();
+    await actions.loadItemDetail(itemId);
 
     // 3. Signal scroll now that items are loaded (HomeScreen listens and scrolls)
-    ref.read(pendingScrollItemIdProvider.notifier).state = itemId;
+    scrollNotifier.state = itemId;
 
     // 4. Clear highlight after 2 seconds (starts after data is loaded)
     Future.delayed(const Duration(seconds: 2), () {
-      if (ref.read(navigatedItemIdProvider) == itemId) {
-        ref.read(navigatedItemIdProvider.notifier).state = null;
+      if (navigatedNotifier.state == itemId) {
+        navigatedNotifier.state = null;
       }
     });
   } catch (_) {
     // On failure, clear navigation state so the user isn't stuck
-    ref.read(expandedItemIdProvider.notifier).state = null;
-    ref.read(navigatedItemIdProvider.notifier).state = null;
-    ref.read(pendingScrollItemIdProvider.notifier).state = null;
+    expandedNotifier.state = null;
+    navigatedNotifier.state = null;
+    scrollNotifier.state = null;
   }
 }
 
