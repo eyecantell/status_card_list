@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/item.dart';
 import 'data_source_provider.dart';
 import 'items_provider.dart';
+import 'kanban_providers.dart';
 
 final actionsProvider = Provider<CardListActions>((ref) {
   return CardListActions(ref);
@@ -44,6 +45,8 @@ class CardListActions {
         newPosition: adjustedNew,
       );
       await _ref.read(itemsProvider.notifier).refresh();
+      // Invalidate kanban cache so it picks up new positions
+      _ref.invalidate(kanbanItemsProvider(listId));
     }
   }
 

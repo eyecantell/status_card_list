@@ -94,6 +94,8 @@ class KanbanColumnNotifier
         itemId: item.id,
         newPosition: adjustedNew,
       );
+      // Invalidate list view cache so it picks up new positions
+      ref.invalidate(itemsProvider);
     } catch (_) {
       // Revert on failure
       state = AsyncValue.data(items);
