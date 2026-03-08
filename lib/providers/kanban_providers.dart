@@ -31,16 +31,12 @@ class KanbanColumnNotifier
   Future<List<Item>> _load() async {
     final listId = arg;
     final dataSource = ref.read(dataSourceProvider);
-    final configs = ref.read(listConfigsProvider).valueOrNull ?? [];
-    final config = configs.cast<ListConfig?>().firstWhere(
-          (c) => c!.uuid == listId,
-          orElse: () => null,
-        );
-    final sortMode = config?.sortMode ?? 'manual';
 
+    // Kanban always uses manual sort order, independent of list view's sort mode.
+    // This ensures drag-to-reorder persists even when the list view sort changes.
     final page = await dataSource.loadItems(
       listId: listId,
-      sortMode: sortMode,
+      sortMode: 'manual',
       limit: 200,
     );
 
