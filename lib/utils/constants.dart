@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 
-/// Icon mapping for card action buttons
+/// Icon mapping for card action buttons (superset of list icons)
 const Map<String, IconData> iconMap = {
   'check_circle': Icons.check_circle,
   'delete': Icons.delete,
   'refresh': Icons.refresh,
   'delete_forever': Icons.delete_forever,
+  'arrow_back': Icons.arrow_back,
+  'arrow_forward': Icons.arrow_forward,
+  'list': Icons.list,
+  'rate_review': Icons.rate_review,
+  'bookmark': Icons.bookmark,
+  'folder': Icons.folder,
+  'star': Icons.star,
+  'inbox': Icons.inbox,
+  'archive': Icons.archive,
+  'search': Icons.search,
+  'track_changes': Icons.track_changes,
+  'edit_document': Icons.edit_document,
+  'send': Icons.send,
+  'cancel': Icons.cancel,
 };
 
 /// Icon mapping for list icons (in drawer, app bar)
