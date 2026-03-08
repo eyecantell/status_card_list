@@ -340,14 +340,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(currentConfig.icon, color: currentConfig.color),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          currentConfig.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
                       Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
                     ],
                   ),
@@ -599,28 +591,15 @@ class _CompanySelector extends ConsumerWidget {
             ),
           );
         }).toList(),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 150),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.business, size: 18),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text(
-                    currentContext?.name ?? '',
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                ),
-                if (enabled) ...[
-                  const SizedBox(width: 2),
-                  const Icon(Icons.arrow_drop_down, size: 18),
-                ],
-              ],
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.business, size: 18),
+              if (enabled)
+                const Icon(Icons.arrow_drop_down, size: 18),
+            ],
           ),
         ),
       ),
