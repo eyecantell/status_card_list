@@ -38,6 +38,7 @@ class KanbanBoard extends ConsumerWidget {
                 _KanbanColumnHeader(
                   config: col,
                   count: counts[col.uuid] ?? 0,
+                  cardListConfig: cardListConfig,
                 ),
                 Expanded(
                   child: _KanbanColumn(
@@ -131,12 +132,18 @@ class KanbanBoard extends ConsumerWidget {
 class _KanbanColumnHeader extends StatelessWidget {
   final ListConfig config;
   final int count;
+  final CardListConfig? cardListConfig;
 
-  const _KanbanColumnHeader({required this.config, required this.count});
+  const _KanbanColumnHeader({
+    required this.config,
+    required this.count,
+    this.cardListConfig,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final actions = cardListConfig?.kanbanColumnActionsBuilder?.call(context, config.uuid);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -158,6 +165,7 @@ class _KanbanColumnHeader extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (actions != null) ...actions,
           Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

@@ -64,6 +64,10 @@ class CardListConfig {
   /// Returns true if the given list can be deleted (e.g. not a default list).
   final bool Function(ListConfig)? isListDeletable;
 
+  /// Build extra action widgets for each kanban column header. Receives list ID.
+  /// If null, no extra actions are shown in kanban column headers.
+  final List<Widget> Function(BuildContext context, String listId)? kanbanColumnActionsBuilder;
+
   const CardListConfig({
     this.collapsedBuilder,
     this.compactCardBuilder,
@@ -80,5 +84,6 @@ class CardListConfig {
     this.onCreateList,
     this.onDeleteList,
     this.isListDeletable,
+    this.kanbanColumnActionsBuilder,
   });
 }
