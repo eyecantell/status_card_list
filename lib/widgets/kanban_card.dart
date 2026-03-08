@@ -42,17 +42,29 @@ class KanbanCard extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(10),
-            child: cardListConfig?.compactCardBuilder != null
-                ? cardListConfig!.compactCardBuilder!(
-                    context, item, listConfig)
-                : _buildDefault(context, isDark),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                cardListConfig?.compactCardBuilder != null
+                    ? cardListConfig!.compactCardBuilder!(
+                        context, item, listConfig)
+                    : _buildDefaultContent(context, isDark),
+                if (listConfig.cardIcons.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: _buildActionButtons(context),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildDefault(BuildContext context, bool isDark) {
+  Widget _buildDefaultContent(BuildContext context, bool isDark) {
     final theme = Theme.of(context);
 
     return Column(
@@ -79,15 +91,10 @@ class KanbanCard extends StatelessWidget {
             fontSize: 11,
           ),
         ),
-        const SizedBox(height: 6),
-        // Bottom row: deadline badge + action buttons
-        Row(
-          children: [
-            if (item.dueDate != null) _DeadlineBadge(dueDate: item.dueDate!),
-            const Spacer(),
-            ..._buildActionButtons(context),
-          ],
-        ),
+        if (item.dueDate != null) ...[
+          const SizedBox(height: 6),
+          _DeadlineBadge(dueDate: item.dueDate!),
+        ],
       ],
     );
   }
