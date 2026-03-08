@@ -77,6 +77,33 @@ class KanbanColumnNotifier
         current.where((item) => item.id != itemId).toList());
   }
 
+  Future<void> reorderItem(int oldIndex, int newIndex) async {
+    final items = state.valueOrNull ?? [];
+    if (oldIndex >= items.length) return;
+
+    final adjustedNew = oldIndex < newIndex ? newIndex - 1 : newIndex;
+
+    // Optimistic local reorder
+    final reordered = List<Item>.from(items);
+    final item = reordered.removeAt(oldIndex);
+    reordered.insert(adjustedNew, item);
+    state = AsyncValue.data(reordered);
+
+    // Persist to server
+    final listId = arg;
+    final dataSource = ref.read(dataSourceProvider);
+    try {
+      await dataSource.updateItemPosition(
+        listId: listId,
+        itemId: item.id,
+        newPosition: adjustedNew,
+      );
+    } catch (_) {
+      // Revert on failure
+      state = AsyncValue.data(items);
+    }
+  }
+
   Future<void> refresh() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() => _load());

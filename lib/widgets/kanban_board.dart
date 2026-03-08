@@ -258,18 +258,35 @@ class _KanbanColumn extends ConsumerWidget {
                 ),
               ),
             Expanded(
-              child: ListView.builder(
+              child: ReorderableListView.builder(
                 padding: const EdgeInsets.only(top: 4, bottom: 8),
+                buildDefaultDragHandles: false,
+                onReorder: (oldIndex, newIndex) {
+                  ref
+                      .read(kanbanItemsProvider(listConfig.uuid).notifier)
+                      .reorderItem(oldIndex, newIndex);
+                },
+                proxyDecorator: (child, index, animation) {
+                  return Material(
+                    elevation: 4.0,
+                    borderRadius: BorderRadius.circular(8),
+                    child: child,
+                  );
+                },
                 itemCount: items.length,
                 itemBuilder: (context, index) {
-                  return KanbanCard(
-                    item: items[index],
-                    listConfig: listConfig,
-                    listId: listConfig.uuid,
-                    allConfigs: allConfigs,
-                    cardListConfig: cardListConfig,
-                    onMove: onMove,
-                    onTap: onItemTapped,
+                  return ReorderableDelayedDragStartListener(
+                    key: ValueKey(items[index].id),
+                    index: index,
+                    child: KanbanCard(
+                      item: items[index],
+                      listConfig: listConfig,
+                      listId: listConfig.uuid,
+                      allConfigs: allConfigs,
+                      cardListConfig: cardListConfig,
+                      onMove: onMove,
+                      onTap: onItemTapped,
+                    ),
                   );
                 },
               ),
