@@ -72,14 +72,15 @@ lib/
 │   ├── items_provider.dart          # itemsProvider, itemCacheProvider, itemToListIndexProvider, itemMapProvider, listCountsProvider
 │   ├── lists_provider.dart          # listConfigsProvider, currentListIdProvider, currentListConfigProvider
 │   ├── actions_provider.dart        # CardListActions: moveItem, reorderItems, loadItemDetail
-│   ├── navigation_provider.dart     # navigateToItem (switch list + scroll + highlight)
+│   ├── navigation_provider.dart     # navigateToItem (switch list + scroll + highlight + detail load)
 │   ├── context_provider.dart        # dataContextsProvider, currentContextProvider, resetContextState() (multi-tenant)
 │   └── theme_provider.dart          # Light/dark theme toggle, scaffold/card contrast tuning
 ├── screens/
 │   └── home_screen.dart             # Main screen: app bar with list dropdown selector, sort dropdown, card list, drawer
 ├── widgets/
 │   ├── drawer_menu.dart             # Navigation drawer: list selection, context switcher, counts
-│   └── list_settings_dialog.dart    # List config editor (name, icon, color)
+│   ├── list_settings_dialog.dart    # List config editor (name, icon, color)
+│   └── related_items_section.dart   # Related item links with API fallback for unvisited lists
 ├── status_card.dart                 # Card widget: swipe, expand/collapse, action icons, related items
 ├── status_card_list.dart            # ReorderableListView wrapper for StatusCards
 ├── status_card_list_example.dart    # Bridge: transforms ListConfig.buttons → statusIcons for StatusCardList
@@ -135,3 +136,9 @@ test/
 **Add a field to Item**: Edit `item.dart`, regenerate with `build_runner`, update `InMemoryDataSource` default data if needed, update mapper in consuming app.
 
 **Add a new icon for cards/lists**: Add entry to `iconMap` or `iconMapForLists` in `utils/constants.dart`.
+
+## Key Patterns
+
+**navigateToItem and WidgetRef safety**: `navigateToItem()` captures all provider notifiers/actions BEFORE setting state. Setting `expandedItemIdProvider` causes widget rebuilds that may dispose the calling widget (e.g., `RelatedItemsSection` inside the previously expanded card). A disposed `WidgetRef` silently fails on `ref.read()`, so all references must be captured upfront. This pattern applies whenever async work follows state changes that trigger widget disposal.
+
+**itemToListIndexProvider**: Only contains items from lists that have been loaded (visited in list view, or loaded by kanban). `RelatedItemsSection` falls back to `findListContainingItem()` API call for items not in the index, and updates the shared index on success so other widgets benefit.
