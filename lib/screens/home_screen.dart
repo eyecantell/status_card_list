@@ -537,7 +537,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               rawItemsState is AsyncData &&
               widget.cardListConfig?.emptyStateBuilder != null) {
             return widget.cardListConfig!.emptyStateBuilder!(
-              context, currentConfig!, allConfigs, counts,
+              context, currentConfig, allConfigs, counts,
             );
           }
           return StatusCardListExample(
