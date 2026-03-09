@@ -158,6 +158,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ScaffoldMessenger.of(context).clearSnackBars();
     // Exit search mode when switching lists
     if (_isSearching) _stopSearch();
+    // Switch to list view when a list is explicitly selected
+    ref.read(viewModeProvider.notifier).set('list');
     ref.read(currentListIdProvider.notifier).state = listUuid;
     ref.read(expandedItemIdProvider.notifier).state = null;
     ref.read(navigatedItemIdProvider.notifier).state = null;
@@ -328,7 +330,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             final showLabels = MediaQuery.sizeOf(context).width >= 600;
             return Row(
           children: [
-            if (!isKanban)
               PopupMenuButton<String>(
                 onSelected: _handleSwitchList,
                 tooltip: 'Select list',
