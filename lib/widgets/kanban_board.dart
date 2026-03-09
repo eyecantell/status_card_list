@@ -13,6 +13,7 @@ class KanbanBoard extends ConsumerWidget {
   final List<ListConfig> allConfigs;
   final CardListConfig? cardListConfig;
   final void Function(String listId, String itemId)? onItemTapped;
+  final void Function(String listId)? onColumnTapped;
 
   const KanbanBoard({
     super.key,
@@ -20,6 +21,7 @@ class KanbanBoard extends ConsumerWidget {
     required this.allConfigs,
     this.cardListConfig,
     this.onItemTapped,
+    this.onColumnTapped,
   });
 
   @override
@@ -39,6 +41,9 @@ class KanbanBoard extends ConsumerWidget {
                   config: col,
                   count: counts[col.uuid] ?? 0,
                   cardListConfig: cardListConfig,
+                  onTap: onColumnTapped != null
+                      ? () => onColumnTapped!(col.uuid)
+                      : null,
                 ),
                 Expanded(
                   child: _KanbanColumn(
@@ -133,11 +138,13 @@ class _KanbanColumnHeader extends StatelessWidget {
   final ListConfig config;
   final int count;
   final CardListConfig? cardListConfig;
+  final VoidCallback? onTap;
 
   const _KanbanColumnHeader({
     required this.config,
     required this.count,
     this.cardListConfig,
+    this.onTap,
   });
 
   @override
@@ -154,15 +161,25 @@ class _KanbanColumnHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(config.icon, color: config.color, size: 18),
-          const SizedBox(width: 8),
           Expanded(
-            child: Text(
-              config.name,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(4),
+              child: Row(
+                children: [
+                  Icon(config.icon, color: config.color, size: 18),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      config.name,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           if (actions != null) ...actions,

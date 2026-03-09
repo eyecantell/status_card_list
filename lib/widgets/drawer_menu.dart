@@ -16,6 +16,9 @@ class DrawerMenu extends ConsumerWidget {
   final Widget? drawerHeader;
   final Future<void> Function(String contextId)? onContextChanged;
   final VoidCallback? onCreateList;
+  final bool hasKanbanColumns;
+  final bool isKanban;
+  final VoidCallback? onKanbanSelected;
 
   const DrawerMenu({
     super.key,
@@ -27,6 +30,9 @@ class DrawerMenu extends ConsumerWidget {
     this.drawerHeader,
     this.onContextChanged,
     this.onCreateList,
+    this.hasKanbanColumns = false,
+    this.isKanban = false,
+    this.onKanbanSelected,
   });
 
   @override
@@ -133,6 +139,49 @@ class DrawerMenu extends ConsumerWidget {
               },
             );
           }),
+          if (hasKanbanColumns)
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isKanban
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.outline,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.view_kanban,
+                      color: isKanban
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Board',
+                      style: TextStyle(
+                        color: isKanban
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                        fontWeight: isKanban ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              tileColor: isKanban
+                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
+                  : null,
+              onTap: () {
+                Navigator.pop(context);
+                onKanbanSelected?.call();
+              },
+            ),
           if (onCreateList != null)
             ListTile(
               leading: const Icon(Icons.add),

@@ -330,6 +330,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             final showLabels = MediaQuery.sizeOf(context).width >= 600;
             return Row(
           children: [
+            if (!isKanban)
               PopupMenuButton<String>(
                 onSelected: _handleSwitchList,
                 tooltip: 'Select list',
@@ -488,6 +489,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         drawerHeader: widget.cardListConfig?.drawerHeader,
         onContextChanged: widget.cardListConfig?.onContextChanged,
         onCreateList: widget.cardListConfig?.onCreateList,
+        hasKanbanColumns: kanbanColumns.isNotEmpty,
+        isKanban: isKanban,
+        onKanbanSelected: () {
+          ref.read(viewModeProvider.notifier).set('kanban');
+        },
         onConfigureList: (uuid) {
           final config = allConfigs.firstWhere(
             (c) => c.uuid == uuid,
@@ -505,6 +511,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ref.read(viewModeProvider.notifier).set('list');
                 navigateToItem(ref, listId, itemId);
               },
+              onColumnTapped: _handleSwitchList,
             )
           : Builder(
         builder: (BuildContext scaffoldContext) {
