@@ -37,7 +37,14 @@ Future<void> navigateToItem(WidgetRef ref, String targetListId, String itemId) a
   try {
     // 2. Await data loads so items and detail are ready before scroll/highlight
     await items.refresh();
-    await actions.loadItemDetail(itemId);
+    final detail = await actions.loadItemDetail(itemId);
+
+    // 2b. If the target item isn't on the loaded page (pagination), inject it
+    // so it appears in the list and can be scrolled to / expanded.
+    final loadedItems = items.debugState.valueOrNull ?? [];
+    if (!loadedItems.any((item) => item.id == itemId)) {
+      items.injectItem(detail);
+    }
 
     // 3. Signal scroll now that items are loaded (HomeScreen listens and scrolls)
     scrollNotifier.state = itemId;

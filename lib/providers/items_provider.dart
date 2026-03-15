@@ -120,6 +120,14 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   /// Reload items from data source
   Future<void> refresh() => _loadItems();
 
+  /// Inject an item into the current list (e.g. for deep-link navigation to
+  /// an item beyond the loaded page). Appends to the end if not already present.
+  void injectItem(Item item) {
+    final current = state.valueOrNull ?? [];
+    if (current.any((i) => i.id == item.id)) return;
+    state = AsyncValue.data([...current, item]);
+  }
+
   /// Optimistically remove an item from the current list without re-fetching.
   void removeItem(String itemId) {
     final current = state.valueOrNull ?? [];
