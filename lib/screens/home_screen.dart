@@ -42,6 +42,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.dispose();
   }
 
+  /// Scroll to the pending scroll target. Retries once if the target widget
+  /// hasn't been laid out yet (e.g. after injecting a navigated-to item).
+  void _scrollToTarget(WidgetRef ref, {int retries = 1}) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final ctx = _scrollTargetKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          alignment: 0.2,
+        );
+        clearPendingScroll(ref);
+      } else if (retries > 0) {
+        // Target widget not yet laid out — retry after the next frame.
+        _scrollToTarget(ref, retries: retries - 1);
+      } else {
+        clearPendingScroll(ref);
+      }
+    });
+  }
+
   void _startSearch() {
     setState(() { _isSearching = true; });
   }
@@ -228,19 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Reactively scroll to item when pendingScrollItemIdProvider is set (e.g., deep links)
     ref.listen<String?>(pendingScrollItemIdProvider, (_, itemId) {
       if (itemId == null) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        final ctx = _scrollTargetKey.currentContext;
-        if (ctx != null) {
-          Scrollable.ensureVisible(
-            ctx,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            alignment: 0.2,
-          );
-        }
-        clearPendingScroll(ref);
-      });
+      _scrollToTarget(ref);
     });
 
     // Show loading or error state while data is loading

@@ -41,8 +41,7 @@ Future<void> navigateToItem(WidgetRef ref, String targetListId, String itemId) a
 
     // 2b. If the target item isn't on the loaded page (pagination), inject it
     // so it appears in the list and can be scrolled to / expanded.
-    final loadedItems = items.debugState.valueOrNull ?? [];
-    if (!loadedItems.any((item) => item.id == itemId)) {
+    if (!items.containsItem(itemId)) {
       items.injectItem(detail);
     }
 

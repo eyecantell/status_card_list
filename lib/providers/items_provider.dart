@@ -37,15 +37,14 @@ final listCountsProvider = FutureProvider<Map<String, int>>((ref) async {
 class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
   final CardListDataSource _dataSource;
   final Ref _ref;
-  bool _isRefreshing = false;
+  Future<void>? _inFlightLoad;
 
   ItemsNotifier(this._dataSource, this._ref) : super(const AsyncValue.loading()) {
-    _loadItems();
+    _inFlightLoad = _doLoad();
   }
 
-  Future<void> _loadItems() async {
-    if (_isRefreshing) return;
-    _isRefreshing = true;
+  /// Load items for the current list. The actual loading logic.
+  Future<void> _doLoad() async {
     try {
       final currentListId = _ref.read(currentListIdProvider);
       if (currentListId.isEmpty) {
@@ -112,13 +111,26 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
         {...state, ...indexUpdate});
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
-    } finally {
-      _isRefreshing = false;
     }
   }
 
-  /// Reload items from data source
-  Future<void> refresh() => _loadItems();
+  /// Reload items from data source.
+  /// If a load is already in flight, waits for it to finish then starts
+  /// a fresh load — this ensures callers always get data for the current
+  /// list context (which may have changed during the previous load).
+  Future<void> refresh() async {
+    if (_inFlightLoad != null) {
+      await _inFlightLoad;
+    }
+    final load = _doLoad();
+    _inFlightLoad = load;
+    await load;
+  }
+
+  /// Whether an item with [itemId] is in the currently loaded items.
+  bool containsItem(String itemId) {
+    return state.valueOrNull?.any((item) => item.id == itemId) ?? false;
+  }
 
   /// Inject an item into the current list (e.g. for deep-link navigation to
   /// an item beyond the loaded page). Appends to the end if not already present.

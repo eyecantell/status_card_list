@@ -100,7 +100,7 @@ void main() {
   });
 
   group('concurrent refresh guard', () {
-    test('prevents parallel loadItems calls', () async {
+    test('serialises parallel refresh calls so each gets fresh data', () async {
       SharedPreferences.setMockInitialValues({});
       final prefs = await SharedPreferences.getInstance();
       final inner = InMemoryDataSource(prefs);
@@ -118,13 +118,16 @@ void main() {
       await waitForData(c, itemsProvider);
       final initialCount = spy.loadItemsCallCount;
 
-      // Fire two refreshes without awaiting the first
+      // Fire two refreshes without awaiting the first.
+      // Each refresh waits for the prior load, then does its own fresh load,
+      // so both callers are guaranteed up-to-date data (important for
+      // navigateToItem after a list switch).
       final f1 = c.read(itemsProvider.notifier).refresh();
       final f2 = c.read(itemsProvider.notifier).refresh();
       await Future.wait([f1, f2]);
 
-      // Only one additional loadItems call should have been made
-      expect(spy.loadItemsCallCount, initialCount + 1);
+      // Both refreshes load fresh data (serialised, not coalesced)
+      expect(spy.loadItemsCallCount, initialCount + 2);
     });
   });
 }
