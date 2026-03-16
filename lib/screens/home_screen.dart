@@ -371,7 +371,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ),
                 itemBuilder: (context) {
-                  final items = allConfigs.map((config) {
+                  final items = allConfigs.where((c) => !c.isHidden).map((config) {
                     final isSelected = config.uuid == currentListId;
                     final count = counts[config.uuid] ?? 0;
                     return PopupMenuItem<String>(
