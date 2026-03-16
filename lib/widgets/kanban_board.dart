@@ -102,7 +102,9 @@ class KanbanBoard extends ConsumerWidget {
             children: [
               Flexible(
                   child: Text(
-                      '$itemTitle moved to ${targetConfig?.name ?? ""}')),
+                      targetConfig != null && targetConfig.isHidden && targetConfig.uuid.endsWith('-deleted')
+                          ? '$itemTitle permanently deleted'
+                          : '$itemTitle moved to ${targetConfig?.name ?? ""}')),
               const SizedBox(width: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(

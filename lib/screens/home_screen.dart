@@ -112,7 +112,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Flexible(child: Text('${item.title} moved to ${targetConfig.name}')),
+              Flexible(child: Text(targetConfig.isHidden && targetConfig.uuid.endsWith('-deleted')
+                  ? '${item.title} permanently deleted'
+                  : '${item.title} moved to ${targetConfig.name}')),
               const SizedBox(width: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
