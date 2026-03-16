@@ -44,10 +44,12 @@ _$CardIconEntryImpl _$$CardIconEntryImplFromJson(Map<String, dynamic> json) =>
     _$CardIconEntryImpl(
       iconName: json['iconName'] as String,
       targetListId: json['targetListId'] as String,
+      tooltip: json['tooltip'] as String?,
     );
 
 Map<String, dynamic> _$$CardIconEntryImplToJson(_$CardIconEntryImpl instance) =>
     <String, dynamic>{
       'iconName': instance.iconName,
       'targetListId': instance.targetListId,
+      'tooltip': instance.tooltip,
     };

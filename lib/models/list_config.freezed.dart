@@ -469,6 +469,7 @@ CardIconEntry _$CardIconEntryFromJson(Map<String, dynamic> json) {
 mixin _$CardIconEntry {
   String get iconName => throw _privateConstructorUsedError;
   String get targetListId => throw _privateConstructorUsedError;
+  String? get tooltip => throw _privateConstructorUsedError;
 
   /// Serializes this CardIconEntry to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -487,7 +488,7 @@ abstract class $CardIconEntryCopyWith<$Res> {
     $Res Function(CardIconEntry) then,
   ) = _$CardIconEntryCopyWithImpl<$Res, CardIconEntry>;
   @useResult
-  $Res call({String iconName, String targetListId});
+  $Res call({String iconName, String targetListId, String? tooltip});
 }
 
 /// @nodoc
@@ -504,7 +505,11 @@ class _$CardIconEntryCopyWithImpl<$Res, $Val extends CardIconEntry>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? iconName = null, Object? targetListId = null}) {
+  $Res call({
+    Object? iconName = null,
+    Object? targetListId = null,
+    Object? tooltip = freezed,
+  }) {
     return _then(
       _value.copyWith(
             iconName:
@@ -517,6 +522,11 @@ class _$CardIconEntryCopyWithImpl<$Res, $Val extends CardIconEntry>
                     ? _value.targetListId
                     : targetListId // ignore: cast_nullable_to_non_nullable
                         as String,
+            tooltip:
+                freezed == tooltip
+                    ? _value.tooltip
+                    : tooltip // ignore: cast_nullable_to_non_nullable
+                        as String?,
           )
           as $Val,
     );
@@ -532,7 +542,7 @@ abstract class _$$CardIconEntryImplCopyWith<$Res>
   ) = __$$CardIconEntryImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({String iconName, String targetListId});
+  $Res call({String iconName, String targetListId, String? tooltip});
 }
 
 /// @nodoc
@@ -548,7 +558,11 @@ class __$$CardIconEntryImplCopyWithImpl<$Res>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? iconName = null, Object? targetListId = null}) {
+  $Res call({
+    Object? iconName = null,
+    Object? targetListId = null,
+    Object? tooltip = freezed,
+  }) {
     return _then(
       _$CardIconEntryImpl(
         iconName:
@@ -561,6 +575,11 @@ class __$$CardIconEntryImplCopyWithImpl<$Res>
                 ? _value.targetListId
                 : targetListId // ignore: cast_nullable_to_non_nullable
                     as String,
+        tooltip:
+            freezed == tooltip
+                ? _value.tooltip
+                : tooltip // ignore: cast_nullable_to_non_nullable
+                    as String?,
       ),
     );
   }
@@ -572,6 +591,7 @@ class _$CardIconEntryImpl implements _CardIconEntry {
   const _$CardIconEntryImpl({
     required this.iconName,
     required this.targetListId,
+    this.tooltip,
   });
 
   factory _$CardIconEntryImpl.fromJson(Map<String, dynamic> json) =>
@@ -581,10 +601,12 @@ class _$CardIconEntryImpl implements _CardIconEntry {
   final String iconName;
   @override
   final String targetListId;
+  @override
+  final String? tooltip;
 
   @override
   String toString() {
-    return 'CardIconEntry(iconName: $iconName, targetListId: $targetListId)';
+    return 'CardIconEntry(iconName: $iconName, targetListId: $targetListId, tooltip: $tooltip)';
   }
 
   @override
@@ -595,12 +617,13 @@ class _$CardIconEntryImpl implements _CardIconEntry {
             (identical(other.iconName, iconName) ||
                 other.iconName == iconName) &&
             (identical(other.targetListId, targetListId) ||
-                other.targetListId == targetListId));
+                other.targetListId == targetListId) &&
+            (identical(other.tooltip, tooltip) || other.tooltip == tooltip));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, iconName, targetListId);
+  int get hashCode => Object.hash(runtimeType, iconName, targetListId, tooltip);
 
   /// Create a copy of CardIconEntry
   /// with the given fields replaced by the non-null parameter values.
@@ -620,6 +643,7 @@ abstract class _CardIconEntry implements CardIconEntry {
   const factory _CardIconEntry({
     required final String iconName,
     required final String targetListId,
+    final String? tooltip,
   }) = _$CardIconEntryImpl;
 
   factory _CardIconEntry.fromJson(Map<String, dynamic> json) =
@@ -629,6 +653,8 @@ abstract class _CardIconEntry implements CardIconEntry {
   String get iconName;
   @override
   String get targetListId;
+  @override
+  String? get tooltip;
 
   /// Create a copy of CardIconEntry
   /// with the given fields replaced by the non-null parameter values.

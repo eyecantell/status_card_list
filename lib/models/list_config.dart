@@ -39,6 +39,7 @@ class CardIconEntry with _$CardIconEntry {
   const factory CardIconEntry({
     required String iconName,
     required String targetListId,
+    String? tooltip,
   }) = _CardIconEntry;
 
   factory CardIconEntry.fromJson(Map<String, dynamic> json) =>
