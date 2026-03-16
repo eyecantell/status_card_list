@@ -8,7 +8,7 @@ import 'lists_provider.dart';
 /// All lists as kanban columns. Lists with stageOrder sort first (ascending),
 /// then remaining lists in their original order.
 final kanbanColumnsProvider = Provider<List<ListConfig>>((ref) {
-  final configs = ref.watch(listConfigsProvider).valueOrNull ?? [];
+  final configs = ref.watch(visibleListConfigsProvider);
   final staged = configs.where((c) => c.stageOrder != null).toList()
     ..sort((a, b) => a.stageOrder!.compareTo(b.stageOrder!));
   final unstaged = configs.where((c) => c.stageOrder == null).toList();
