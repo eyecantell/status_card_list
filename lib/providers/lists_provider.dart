@@ -19,16 +19,29 @@ final currentListIdProvider = StateProvider<String>((ref) {
   return ds.defaultListId;
 });
 
+/// Provider for visible (non-hidden) list configs
+final visibleListConfigsProvider = Provider<List<ListConfig>>((ref) {
+  final configs = ref.watch(listConfigsProvider).valueOrNull ?? [];
+  return configs.where((c) => !c.isHidden).toList();
+});
+
 /// Provider for current list config (derived from currentListIdProvider)
+/// Falls back to first visible list if the resolved list is hidden.
 final currentListConfigProvider = Provider<ListConfig?>((ref) {
   final currentId = ref.watch(currentListIdProvider);
   final configsAsync = ref.watch(listConfigsProvider);
   return configsAsync.when(
     data: (configs) {
       try {
-        return configs.firstWhere((c) => c.uuid == currentId);
+        final config = configs.firstWhere((c) => c.uuid == currentId);
+        if (config.isHidden) {
+          final visible = configs.where((c) => !c.isHidden);
+          return visible.isNotEmpty ? visible.first : null;
+        }
+        return config;
       } catch (_) {
-        return configs.isNotEmpty ? configs.first : null;
+        final visible = configs.where((c) => !c.isHidden);
+        return visible.isNotEmpty ? visible.first : null;
       }
     },
     loading: () => null,

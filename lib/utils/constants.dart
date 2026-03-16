@@ -38,6 +38,7 @@ const Map<String, IconData> iconMapForLists = {
   'send': Icons.send,
   'check_circle': Icons.check_circle,
   'cancel': Icons.cancel,
+  'delete_forever': Icons.delete_forever,
 };
 
 /// Available colors for list customization

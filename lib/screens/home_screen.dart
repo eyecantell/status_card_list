@@ -493,7 +493,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
       ),
       drawer: DrawerMenu(
-        listConfigs: allConfigs,
+        listConfigs: allConfigs.where((c) => !c.isHidden).toList(),
         currentListUuid: currentListId,
         onListSelected: _handleSwitchList,
         drawerItems: widget.cardListConfig?.drawerItems,

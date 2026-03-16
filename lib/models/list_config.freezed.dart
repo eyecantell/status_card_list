@@ -34,6 +34,7 @@ mixin _$ListConfig {
   List<CardIconEntry> get cardIcons => throw _privateConstructorUsedError;
   @JsonKey(name: 'stage_order', includeToJson: false)
   int? get stageOrder => throw _privateConstructorUsedError;
+  bool get isHidden => throw _privateConstructorUsedError;
 
   /// Serializes this ListConfig to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -63,6 +64,7 @@ abstract class $ListConfigCopyWith<$Res> {
     int colorValue,
     @CardIconListConverter() List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) int? stageOrder,
+    bool isHidden,
   });
 }
 
@@ -91,6 +93,7 @@ class _$ListConfigCopyWithImpl<$Res, $Val extends ListConfig>
     Object? colorValue = null,
     Object? cardIcons = null,
     Object? stageOrder = freezed,
+    Object? isHidden = null,
   }) {
     return _then(
       _value.copyWith(
@@ -144,6 +147,11 @@ class _$ListConfigCopyWithImpl<$Res, $Val extends ListConfig>
                     ? _value.stageOrder
                     : stageOrder // ignore: cast_nullable_to_non_nullable
                         as int?,
+            isHidden:
+                null == isHidden
+                    ? _value.isHidden
+                    : isHidden // ignore: cast_nullable_to_non_nullable
+                        as bool,
           )
           as $Val,
     );
@@ -170,6 +178,7 @@ abstract class _$$ListConfigImplCopyWith<$Res>
     int colorValue,
     @CardIconListConverter() List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) int? stageOrder,
+    bool isHidden,
   });
 }
 
@@ -197,6 +206,7 @@ class __$$ListConfigImplCopyWithImpl<$Res>
     Object? colorValue = null,
     Object? cardIcons = null,
     Object? stageOrder = freezed,
+    Object? isHidden = null,
   }) {
     return _then(
       _$ListConfigImpl(
@@ -250,6 +260,11 @@ class __$$ListConfigImplCopyWithImpl<$Res>
                 ? _value.stageOrder
                 : stageOrder // ignore: cast_nullable_to_non_nullable
                     as int?,
+        isHidden:
+            null == isHidden
+                ? _value.isHidden
+                : isHidden // ignore: cast_nullable_to_non_nullable
+                    as bool,
       ),
     );
   }
@@ -269,6 +284,7 @@ class _$ListConfigImpl extends _ListConfig {
     this.colorValue = 0xFF2196F3,
     @CardIconListConverter() final List<CardIconEntry> cardIcons = const [],
     @JsonKey(name: 'stage_order', includeToJson: false) this.stageOrder,
+    this.isHidden = false,
   }) : _swipeActions = swipeActions,
        _buttons = buttons,
        _cardIcons = cardIcons,
@@ -322,10 +338,13 @@ class _$ListConfigImpl extends _ListConfig {
   @override
   @JsonKey(name: 'stage_order', includeToJson: false)
   final int? stageOrder;
+  @override
+  @JsonKey()
+  final bool isHidden;
 
   @override
   String toString() {
-    return 'ListConfig(uuid: $uuid, name: $name, swipeActions: $swipeActions, buttons: $buttons, dueDateLabel: $dueDateLabel, sortMode: $sortMode, iconName: $iconName, colorValue: $colorValue, cardIcons: $cardIcons, stageOrder: $stageOrder)';
+    return 'ListConfig(uuid: $uuid, name: $name, swipeActions: $swipeActions, buttons: $buttons, dueDateLabel: $dueDateLabel, sortMode: $sortMode, iconName: $iconName, colorValue: $colorValue, cardIcons: $cardIcons, stageOrder: $stageOrder, isHidden: $isHidden)';
   }
 
   @override
@@ -353,7 +372,9 @@ class _$ListConfigImpl extends _ListConfig {
               _cardIcons,
             ) &&
             (identical(other.stageOrder, stageOrder) ||
-                other.stageOrder == stageOrder));
+                other.stageOrder == stageOrder) &&
+            (identical(other.isHidden, isHidden) ||
+                other.isHidden == isHidden));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -370,6 +391,7 @@ class _$ListConfigImpl extends _ListConfig {
     colorValue,
     const DeepCollectionEquality().hash(_cardIcons),
     stageOrder,
+    isHidden,
   );
 
   /// Create a copy of ListConfig
@@ -398,6 +420,7 @@ abstract class _ListConfig extends ListConfig {
     final int colorValue,
     @CardIconListConverter() final List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) final int? stageOrder,
+    final bool isHidden,
   }) = _$ListConfigImpl;
   const _ListConfig._() : super._();
 
@@ -427,6 +450,8 @@ abstract class _ListConfig extends ListConfig {
   @override
   @JsonKey(name: 'stage_order', includeToJson: false)
   int? get stageOrder;
+  @override
+  bool get isHidden;
 
   /// Create a copy of ListConfig
   /// with the given fields replaced by the non-null parameter values.
