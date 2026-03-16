@@ -55,6 +55,14 @@ abstract class CardListDataSource {
   /// Delete a list by ID.
   Future<void> deleteList(String listId);
 
+  /// Bulk-move all items matching the current view from one list to another.
+  /// Returns the number of items moved.
+  Future<int> bulkMoveItems({
+    required String sourceListId,
+    required String targetListId,
+    String? searchQuery,
+  });
+
   /// Dispose resources.
   Future<void> dispose();
 }

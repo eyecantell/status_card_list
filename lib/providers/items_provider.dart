@@ -16,6 +16,10 @@ final itemsProvider =
 /// Current search query. When non-null/non-empty, filters items server-side.
 final searchQueryProvider = StateProvider<String?>((ref) => null);
 
+/// Total count of items matching current filters/search (from last API response).
+/// Used by bulk-move dialog to show how many notices will be moved.
+final itemsTotalCountProvider = StateProvider<int>((ref) => 0);
+
 /// Accumulated cache of all items seen across lists.
 /// Used for cross-list lookups (related items, detail).
 final itemCacheProvider = StateProvider<Map<String, Item>>((ref) => {});
@@ -82,6 +86,7 @@ class ItemsNotifier extends StateNotifier<AsyncValue<List<Item>>> {
       );
 
       state = AsyncValue.data(page.items);
+      _ref.read(itemsTotalCountProvider.notifier).state = page.totalCount;
 
       // Update the item cache and list index.
       // Preserve detail-enriched items (html loaded) — list items don't carry

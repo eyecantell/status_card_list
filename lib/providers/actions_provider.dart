@@ -50,6 +50,21 @@ class CardListActions {
     }
   }
 
+  Future<int> bulkMoveItems(String sourceListId, String targetListId) async {
+    final ds = _ref.read(dataSourceProvider);
+    final searchQuery = _ref.read(searchQueryProvider);
+    final count = await ds.bulkMoveItems(
+      sourceListId: sourceListId,
+      targetListId: targetListId,
+      searchQuery: searchQuery,
+    );
+    if (count > 0) {
+      await _ref.read(itemsProvider.notifier).refresh();
+      _ref.invalidate(listCountsProvider);
+    }
+    return count;
+  }
+
   Future<Item> loadItemDetail(String itemId) async {
     // Return cached item if detail (html) is already loaded
     final cached = _ref.read(itemCacheProvider)[itemId];

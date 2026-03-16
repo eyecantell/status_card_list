@@ -188,5 +188,15 @@ class _SpyDataSource implements CardListDataSource {
   @override
   Future<void> deleteList(String listId) => _inner.deleteList(listId);
   @override
+  Future<int> bulkMoveItems({
+    required String sourceListId,
+    required String targetListId,
+    String? searchQuery,
+  }) =>
+      _inner.bulkMoveItems(
+          sourceListId: sourceListId,
+          targetListId: targetListId,
+          searchQuery: searchQuery);
+  @override
   Future<void> dispose() => _inner.dispose();
 }

@@ -175,6 +175,30 @@ class HttpDataSource implements CardListDataSource {
   }
 
   @override
+  Future<int> bulkMoveItems({
+    required String sourceListId,
+    required String targetListId,
+    String? searchQuery,
+  }) async {
+    final uri = _buildUri('notices/bulk-move');
+    final body = <String, dynamic>{
+      'source_list_id': sourceListId,
+      'target_list_id': targetListId,
+    };
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      body['search'] = searchQuery;
+    }
+    final resp = await _client.post(
+      uri,
+      headers: _headers,
+      body: jsonEncode(body),
+    );
+    _checkResponse(resp);
+    final json = jsonDecode(resp.body) as Map<String, dynamic>;
+    return json['moved_count'] as int? ?? 0;
+  }
+
+  @override
   Future<void> dispose() async {
     _client.close();
   }

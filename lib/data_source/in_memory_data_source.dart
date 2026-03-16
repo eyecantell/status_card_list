@@ -178,6 +178,24 @@ class InMemoryDataSource implements CardListDataSource {
   }
 
   @override
+  Future<int> bulkMoveItems({
+    required String sourceListId,
+    required String targetListId,
+    String? searchQuery,
+  }) async {
+    final sourceItems = _itemLists[sourceListId] ?? [];
+    final count = sourceItems.length;
+    if (count == 0) return 0;
+
+    _itemLists[targetListId] ??= [];
+    _itemLists[targetListId]!.addAll(sourceItems);
+    _itemLists[sourceListId] = [];
+
+    await _saveItemListsToPrefs();
+    return count;
+  }
+
+  @override
   Future<void> dispose() async {
     // No resources to dispose for in-memory
   }
