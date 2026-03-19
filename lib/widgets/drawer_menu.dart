@@ -82,6 +82,8 @@ class DrawerMenu extends ConsumerWidget {
                         resetContextState(ref, defaultListId: ds.defaultListId);
                       }
                     }
+                    // Close the drawer so it reopens with fresh widget state
+                    if (context.mounted) Navigator.pop(context);
                   }
                 },
               ),
