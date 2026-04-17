@@ -24,6 +24,7 @@ _$ListConfigImpl _$$ListConfigImplFromJson(Map<String, dynamic> json) =>
               ),
       stageOrder: (json['stage_order'] as num?)?.toInt(),
       isHidden: json['isHidden'] as bool? ?? false,
+      isDefaultInbox: json['isDefaultInbox'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$$ListConfigImplToJson(_$ListConfigImpl instance) =>
@@ -38,6 +39,7 @@ Map<String, dynamic> _$$ListConfigImplToJson(_$ListConfigImpl instance) =>
       'colorValue': instance.colorValue,
       'cardIcons': const CardIconListConverter().toJson(instance.cardIcons),
       'isHidden': instance.isHidden,
+      'isDefaultInbox': instance.isDefaultInbox,
     };
 
 _$CardIconEntryImpl _$$CardIconEntryImplFromJson(Map<String, dynamic> json) =>

@@ -35,6 +35,7 @@ mixin _$ListConfig {
   @JsonKey(name: 'stage_order', includeToJson: false)
   int? get stageOrder => throw _privateConstructorUsedError;
   bool get isHidden => throw _privateConstructorUsedError;
+  bool get isDefaultInbox => throw _privateConstructorUsedError;
 
   /// Serializes this ListConfig to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -65,6 +66,7 @@ abstract class $ListConfigCopyWith<$Res> {
     @CardIconListConverter() List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) int? stageOrder,
     bool isHidden,
+    bool isDefaultInbox,
   });
 }
 
@@ -94,6 +96,7 @@ class _$ListConfigCopyWithImpl<$Res, $Val extends ListConfig>
     Object? cardIcons = null,
     Object? stageOrder = freezed,
     Object? isHidden = null,
+    Object? isDefaultInbox = null,
   }) {
     return _then(
       _value.copyWith(
@@ -152,6 +155,11 @@ class _$ListConfigCopyWithImpl<$Res, $Val extends ListConfig>
                     ? _value.isHidden
                     : isHidden // ignore: cast_nullable_to_non_nullable
                         as bool,
+            isDefaultInbox:
+                null == isDefaultInbox
+                    ? _value.isDefaultInbox
+                    : isDefaultInbox // ignore: cast_nullable_to_non_nullable
+                        as bool,
           )
           as $Val,
     );
@@ -179,6 +187,7 @@ abstract class _$$ListConfigImplCopyWith<$Res>
     @CardIconListConverter() List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) int? stageOrder,
     bool isHidden,
+    bool isDefaultInbox,
   });
 }
 
@@ -207,6 +216,7 @@ class __$$ListConfigImplCopyWithImpl<$Res>
     Object? cardIcons = null,
     Object? stageOrder = freezed,
     Object? isHidden = null,
+    Object? isDefaultInbox = null,
   }) {
     return _then(
       _$ListConfigImpl(
@@ -265,6 +275,11 @@ class __$$ListConfigImplCopyWithImpl<$Res>
                 ? _value.isHidden
                 : isHidden // ignore: cast_nullable_to_non_nullable
                     as bool,
+        isDefaultInbox:
+            null == isDefaultInbox
+                ? _value.isDefaultInbox
+                : isDefaultInbox // ignore: cast_nullable_to_non_nullable
+                    as bool,
       ),
     );
   }
@@ -285,6 +300,7 @@ class _$ListConfigImpl extends _ListConfig {
     @CardIconListConverter() final List<CardIconEntry> cardIcons = const [],
     @JsonKey(name: 'stage_order', includeToJson: false) this.stageOrder,
     this.isHidden = false,
+    this.isDefaultInbox = false,
   }) : _swipeActions = swipeActions,
        _buttons = buttons,
        _cardIcons = cardIcons,
@@ -341,10 +357,13 @@ class _$ListConfigImpl extends _ListConfig {
   @override
   @JsonKey()
   final bool isHidden;
+  @override
+  @JsonKey()
+  final bool isDefaultInbox;
 
   @override
   String toString() {
-    return 'ListConfig(uuid: $uuid, name: $name, swipeActions: $swipeActions, buttons: $buttons, dueDateLabel: $dueDateLabel, sortMode: $sortMode, iconName: $iconName, colorValue: $colorValue, cardIcons: $cardIcons, stageOrder: $stageOrder, isHidden: $isHidden)';
+    return 'ListConfig(uuid: $uuid, name: $name, swipeActions: $swipeActions, buttons: $buttons, dueDateLabel: $dueDateLabel, sortMode: $sortMode, iconName: $iconName, colorValue: $colorValue, cardIcons: $cardIcons, stageOrder: $stageOrder, isHidden: $isHidden, isDefaultInbox: $isDefaultInbox)';
   }
 
   @override
@@ -374,7 +393,9 @@ class _$ListConfigImpl extends _ListConfig {
             (identical(other.stageOrder, stageOrder) ||
                 other.stageOrder == stageOrder) &&
             (identical(other.isHidden, isHidden) ||
-                other.isHidden == isHidden));
+                other.isHidden == isHidden) &&
+            (identical(other.isDefaultInbox, isDefaultInbox) ||
+                other.isDefaultInbox == isDefaultInbox));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -392,6 +413,7 @@ class _$ListConfigImpl extends _ListConfig {
     const DeepCollectionEquality().hash(_cardIcons),
     stageOrder,
     isHidden,
+    isDefaultInbox,
   );
 
   /// Create a copy of ListConfig
@@ -421,6 +443,7 @@ abstract class _ListConfig extends ListConfig {
     @CardIconListConverter() final List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) final int? stageOrder,
     final bool isHidden,
+    final bool isDefaultInbox,
   }) = _$ListConfigImpl;
   const _ListConfig._() : super._();
 
@@ -452,6 +475,8 @@ abstract class _ListConfig extends ListConfig {
   int? get stageOrder;
   @override
   bool get isHidden;
+  @override
+  bool get isDefaultInbox;
 
   /// Create a copy of ListConfig
   /// with the given fields replaced by the non-null parameter values.

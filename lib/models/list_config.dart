@@ -20,6 +20,7 @@ class ListConfig with _$ListConfig {
     @CardIconListConverter() @Default([]) List<CardIconEntry> cardIcons,
     @JsonKey(name: 'stage_order', includeToJson: false) int? stageOrder,
     @Default(false) bool isHidden,
+    @Default(false) bool isDefaultInbox,
   }) = _ListConfig;
 
   const ListConfig._();
