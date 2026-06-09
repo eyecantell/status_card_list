@@ -468,7 +468,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: Theme.of(context).cardTheme.color,
             onSelected: _setSortMode,
             itemBuilder: (context) {
-              final sortOptions = widget.cardListConfig?.sortOptions ?? SortOption.defaults;
+              final sortOptions = widget.cardListConfig?.sortOptionsBuilder?.call(currentListId)
+                  ?? widget.cardListConfig?.sortOptions
+                  ?? SortOption.defaults;
               return sortOptions.map((option) {
                 final isSelected = option.id == currentConfig.sortMode;
                 return PopupMenuItem<String>(

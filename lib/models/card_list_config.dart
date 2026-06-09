@@ -30,6 +30,10 @@ class CardListConfig {
   /// Sort options shown in the sort dropdown. If null, uses SortOption.defaults.
   final List<SortOption>? sortOptions;
 
+  /// Per-list override for sort options. Called with the current list ID; return
+  /// null to fall back to [sortOptions] / SortOption.defaults.
+  final List<SortOption>? Function(String listId)? sortOptionsBuilder;
+
   /// Called when user selects a different context in the drawer dropdown.
   /// When provided, the library delegates all provider mutations to the app.
   /// When null, the library handles context switching internally.
@@ -77,6 +81,7 @@ class CardListConfig {
     this.drawerItems,
     this.drawerHeader,
     this.sortOptions,
+    this.sortOptionsBuilder,
     this.onContextChanged,
     this.appBarActionsBuilder,
     this.searchEnabled = false,
