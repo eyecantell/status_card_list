@@ -471,8 +471,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               final sortOptions = widget.cardListConfig?.sortOptionsBuilder?.call(currentListId)
                   ?? widget.cardListConfig?.sortOptions
                   ?? SortOption.defaults;
+              // Fallback: if stored sortMode is not in the current options (e.g. curationDescending
+              // while curation is unavailable), show the first option as selected rather than
+              // rendering the menu with no active selection.
+              final effectiveSortMode = sortOptions.any((o) => o.id == currentConfig.sortMode)
+                  ? currentConfig.sortMode
+                  : sortOptions.first.id;
               return sortOptions.map((option) {
-                final isSelected = option.id == currentConfig.sortMode;
+                final isSelected = option.id == effectiveSortMode;
                 return PopupMenuItem<String>(
                   value: option.id,
                   child: Row(
