@@ -23,6 +23,7 @@ class StatusCard extends StatefulWidget {
   final void Function(String itemId)? onExpand;
   final CardListConfig? cardListConfig;
   final ListConfig listConfig;
+  final ScrollController? scrollController;
 
   const StatusCard({
     super.key,
@@ -44,6 +45,7 @@ class StatusCard extends StatefulWidget {
     this.isNavigated = false,
     this.onExpand,
     this.cardListConfig,
+    this.scrollController,
   });
 
   @override
@@ -248,6 +250,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
 
   void _toggleExpanded() {
     final willExpand = !_isExpanded;
+    // Expanding this card collapses any other expanded card in the same frame.
+    // If that card is above this one, the content above shrinks and this card
+    // jumps up under a fixed scroll offset. Anchor the card's viewport position
+    // across the layout change so the header stays where the user tapped it.
+    final anchorDy = _currentGlobalDy();
     setState(() {
       _isExpanded = willExpand;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -257,6 +264,31 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     if (willExpand) {
       widget.onExpand?.call(widget.item.id);
     }
+    if (anchorDy != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _restoreAnchor(anchorDy);
+      });
+    }
+  }
+
+  double? _currentGlobalDy() {
+    if (widget.scrollController?.hasClients != true) return null;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero).dy;
+  }
+
+  void _restoreAnchor(double anchorDy) {
+    if (!mounted) return;
+    final afterDy = _currentGlobalDy();
+    if (afterDy == null) return;
+    final delta = afterDy - anchorDy;
+    if (delta.abs() < 1.0) return;
+    final position = widget.scrollController!.position;
+    position.jumpTo(
+      (position.pixels + delta)
+          .clamp(position.minScrollExtent, position.maxScrollExtent),
+    );
   }
 
   bool _hasSwipeTarget(String action) {

@@ -76,6 +76,7 @@ class _StatusCardListState extends State<StatusCardList> {
       isNavigated: widget.navigatedItemId == item.id,
       onExpand: widget.onExpand,
       cardListConfig: widget.cardListConfig,
+      scrollController: widget.scrollController,
     );
     final isTarget = widget.scrollTargetKey != null &&
         widget.scrollTargetItemId == item.id;
