@@ -20,6 +20,7 @@ class StatusCardListExample extends StatelessWidget {
   final CardListConfig? cardListConfig;
   final String? scrollTargetItemId;
   final GlobalKey? scrollTargetKey;
+  final Widget? footer;
 
   const StatusCardListExample({
     super.key,
@@ -38,6 +39,7 @@ class StatusCardListExample extends StatelessWidget {
     this.cardListConfig,
     this.scrollTargetItemId,
     this.scrollTargetKey,
+    this.footer,
   });
 
   @override
@@ -45,7 +47,10 @@ class StatusCardListExample extends StatelessWidget {
     final Map<String, IconData> statusIcons = {};
     for (var entry in listConfig.buttons.entries) {
       final targetUuid = entry.value;
-      final targetConfig = allConfigs.firstWhere((config) => config.uuid == targetUuid, orElse: () => listConfig);
+      final targetConfig = allConfigs.firstWhere(
+        (config) => config.uuid == targetUuid,
+        orElse: () => listConfig,
+      );
       statusIcons[targetConfig.name] = targetConfig.icon;
     }
 
@@ -70,6 +75,7 @@ class StatusCardListExample extends StatelessWidget {
       cardListConfig: cardListConfig,
       scrollTargetItemId: scrollTargetItemId,
       scrollTargetKey: scrollTargetKey,
+      footer: footer,
     );
   }
 }

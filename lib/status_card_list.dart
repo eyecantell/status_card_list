@@ -26,6 +26,10 @@ class StatusCardList extends StatefulWidget {
   final String? scrollTargetItemId;
   final GlobalKey? scrollTargetKey;
 
+  /// Rendered below the last card, inside the scroll view.
+  /// Used for pagination ("Load more") affordances.
+  final Widget? footer;
+
   const StatusCardList({
     super.key,
     required this.items,
@@ -48,6 +52,7 @@ class StatusCardList extends StatefulWidget {
     this.cardListConfig,
     this.scrollTargetItemId,
     this.scrollTargetKey,
+    this.footer,
   });
 
   @override
@@ -78,8 +83,8 @@ class _StatusCardListState extends State<StatusCardList> {
       cardListConfig: widget.cardListConfig,
       scrollController: widget.scrollController,
     );
-    final isTarget = widget.scrollTargetKey != null &&
-        widget.scrollTargetItemId == item.id;
+    final isTarget =
+        widget.scrollTargetKey != null && widget.scrollTargetItemId == item.id;
     return isTarget
         ? KeyedSubtree(key: widget.scrollTargetKey!, child: card)
         : card;
@@ -92,38 +97,43 @@ class _StatusCardListState extends State<StatusCardList> {
       child: SingleChildScrollView(
         controller: widget.scrollController,
         physics: const ClampingScrollPhysics(),
-        child: ReorderableListView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          buildDefaultDragHandles: false,
-          onReorder: (oldIndex, newIndex) {
-            widget.onReorder(oldIndex, newIndex);
-          },
-          proxyDecorator: (child, index, animation) {
-            return Material(
-              elevation: 4.0,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                width: MediaQuery.of(context).size.width - 32,
-                padding: const EdgeInsets.all(12.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardTheme.color,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  widget.items[index].title,
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-            );
-          },
+        child: Column(
           children: [
-            for (int index = 0; index < widget.items.length; index++)
-              ReorderableDelayedDragStartListener(
-                key: ValueKey(widget.items[index].id),
-                index: index,
-                child: _buildCard(index),
-              ),
+            ReorderableListView(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              onReorder: (oldIndex, newIndex) {
+                widget.onReorder(oldIndex, newIndex);
+              },
+              proxyDecorator: (child, index, animation) {
+                return Material(
+                  elevation: 4.0,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width - 32,
+                    padding: const EdgeInsets.all(12.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardTheme.color,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      widget.items[index].title,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                );
+              },
+              children: [
+                for (int index = 0; index < widget.items.length; index++)
+                  ReorderableDelayedDragStartListener(
+                    key: ValueKey(widget.items[index].id),
+                    index: index,
+                    child: _buildCard(index),
+                  ),
+              ],
+            ),
+            if (widget.footer != null) widget.footer!,
           ],
         ),
       ),

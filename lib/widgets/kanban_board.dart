@@ -6,6 +6,7 @@ import '../providers/actions_provider.dart';
 import '../providers/items_provider.dart';
 import '../providers/kanban_providers.dart';
 import '../providers/lists_provider.dart';
+import '../utils/confirm_dialogs.dart';
 import 'kanban_card.dart';
 
 class KanbanBoard extends ConsumerWidget {
@@ -32,40 +33,52 @@ class KanbanBoard extends ConsumerWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: columns.map((col) {
-          return SizedBox(
-            width: 280,
-            child: Column(
-              children: [
-                _KanbanColumnHeader(
-                  config: col,
-                  count: counts[col.uuid] ?? 0,
-                  cardListConfig: cardListConfig,
-                  onTap: onColumnTapped != null
-                      ? () => onColumnTapped!(col.uuid)
-                      : null,
+        children:
+            columns.map((col) {
+              return SizedBox(
+                width: 280,
+                child: Column(
+                  children: [
+                    _KanbanColumnHeader(
+                      config: col,
+                      count: counts[col.uuid] ?? 0,
+                      cardListConfig: cardListConfig,
+                      onTap:
+                          onColumnTapped != null
+                              ? () => onColumnTapped!(col.uuid)
+                              : null,
+                    ),
+                    Expanded(
+                      child: _KanbanColumn(
+                        listConfig: col,
+                        allConfigs: allConfigs,
+                        cardListConfig: cardListConfig,
+                        onItemTapped: onItemTapped,
+                        onMove:
+                            (itemId, fromListId, targetListId) => _handleMove(
+                              context,
+                              ref,
+                              itemId,
+                              fromListId,
+                              targetListId,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: _KanbanColumn(
-                    listConfig: col,
-                    allConfigs: allConfigs,
-                    cardListConfig: cardListConfig,
-                    onItemTapped: onItemTapped,
-                    onMove: (itemId, fromListId, targetListId) =>
-                        _handleMove(context, ref, itemId, fromListId,
-                            targetListId),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+              );
+            }).toList(),
       ),
     );
   }
 
-  void _handleMove(BuildContext context, WidgetRef ref, String itemId,
-      String fromListId, String targetListId) async {
+  void _handleMove(
+    BuildContext context,
+    WidgetRef ref,
+    String itemId,
+    String fromListId,
+    String targetListId,
+  ) async {
     final allConfigsList = ref.read(listConfigsProvider).valueOrNull ?? [];
     final messenger = ScaffoldMessenger.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -75,24 +88,34 @@ class KanbanBoard extends ConsumerWidget {
     final item = cache[itemId];
     final itemTitle = item?.title ?? 'Item';
 
-    final success = await ref.read(actionsProvider).moveItem(
-          itemId,
-          fromListId,
-          targetListId,
-        );
+    // Permanent delete is the one move that can't be recovered from the UI —
+    // confirm before acting (nothing has been removed yet at this point).
+    final preTarget =
+        allConfigsList
+            .where((c) => c.uuid == targetListId && c.isHidden)
+            .firstOrNull;
+    if (preTarget != null && preTarget.uuid.endsWith('-deleted')) {
+      final confirmed = await confirmPermanentDelete(context, itemTitle);
+      if (!context.mounted || !confirmed) return;
+    }
 
+    final success = await ref
+        .read(actionsProvider)
+        .moveItem(itemId, fromListId, targetListId);
+
+    // The widget can be disposed mid-await (view-mode toggle, company
+    // switch) — ref is unusable after that.
+    if (!context.mounted) return;
     if (success) {
       // Optimistic remove from source column
-      ref
-          .read(kanbanItemsProvider(fromListId).notifier)
-          .removeItem(itemId);
+      ref.read(kanbanItemsProvider(fromListId).notifier).removeItem(itemId);
       // Refetch target column
       ref.invalidate(kanbanItemsProvider(targetListId));
 
       final targetConfig = allConfigsList.cast<ListConfig?>().firstWhere(
-            (c) => c!.uuid == targetListId,
-            orElse: () => allConfigsList.first,
-          );
+        (c) => c!.uuid == targetListId,
+        orElse: () => allConfigsList.first,
+      );
       final buttonColor = isDark ? Colors.black87 : Colors.white;
       messenger.hideCurrentSnackBar();
       messenger.showSnackBar(
@@ -101,17 +124,23 @@ class KanbanBoard extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Flexible(
-                  child: Text(
-                      targetConfig != null && targetConfig.isHidden && targetConfig.uuid.endsWith('-deleted')
-                          ? '$itemTitle permanently deleted'
-                          : '$itemTitle moved to ${targetConfig?.name ?? ""}')),
+                child: Text(
+                  targetConfig != null &&
+                          targetConfig.isHidden &&
+                          targetConfig.uuid.endsWith('-deleted')
+                      ? '$itemTitle permanently deleted'
+                      : '$itemTitle moved to ${targetConfig?.name ?? ""}',
+                ),
+              ),
               const SizedBox(width: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: buttonColor,
                   side: BorderSide(color: buttonColor.withAlpha(180)),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 4),
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                 ),
                 onPressed: () async {
                   messenger.hideCurrentSnackBar();
@@ -123,8 +152,10 @@ class KanbanBoard extends ConsumerWidget {
                     ref.invalidate(kanbanItemsProvider(targetListId));
                   }
                 },
-                child: const Text('Undo',
-                    style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Undo',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -152,14 +183,15 @@ class _KanbanColumnHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final actions = cardListConfig?.kanbanColumnActionsBuilder?.call(context, config.uuid);
+    final actions = cardListConfig?.kanbanColumnActionsBuilder?.call(
+      context,
+      config.uuid,
+    );
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: config.color, width: 2),
-        ),
+        border: Border(bottom: BorderSide(color: config.color, width: 2)),
       ),
       child: Row(
         children: [
@@ -186,8 +218,7 @@ class _KanbanColumnHeader extends StatelessWidget {
           ),
           if (actions != null) ...actions,
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
               color: config.color.withAlpha(30),
               borderRadius: BorderRadius.circular(12),
@@ -213,7 +244,7 @@ class _KanbanColumn extends ConsumerWidget {
   final CardListConfig? cardListConfig;
   final void Function(String listId, String itemId)? onItemTapped;
   final void Function(String itemId, String fromListId, String targetListId)?
-      onMove;
+  onMove;
 
   const _KanbanColumn({
     required this.listConfig,
@@ -228,34 +259,42 @@ class _KanbanColumn extends ConsumerWidget {
     final asyncItems = ref.watch(kanbanItemsProvider(listConfig.uuid));
 
     return asyncItems.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      error: (error, _) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.error_outline,
-                  color: Theme.of(context).colorScheme.error),
-              const SizedBox(height: 8),
-              Text('Failed to load',
-                  style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () =>
-                    ref.invalidate(kanbanItemsProvider(listConfig.uuid)),
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Retry'),
-              ),
-            ],
+      loading:
+          () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
-        ),
-      ),
+      error:
+          (error, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Failed to load',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed:
+                        () => ref.invalidate(
+                          kanbanItemsProvider(listConfig.uuid),
+                        ),
+                    icon: const Icon(Icons.refresh, size: 16),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          ),
       data: (items) {
         if (items.isEmpty) {
           return Center(
@@ -264,8 +303,8 @@ class _KanbanColumn extends ConsumerWidget {
               child: Text(
                 'No notices',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).disabledColor,
-                    ),
+                  color: Theme.of(context).disabledColor,
+                ),
               ),
             ),
           );
@@ -276,12 +315,14 @@ class _KanbanColumn extends ConsumerWidget {
             if (items.length >= 200)
               Padding(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 4),
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 child: Text(
                   'Showing first 200',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).disabledColor,
-                      ),
+                    color: Theme.of(context).disabledColor,
+                  ),
                 ),
               ),
             Expanded(

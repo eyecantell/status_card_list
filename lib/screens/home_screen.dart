@@ -35,11 +35,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _searchDebounce;
 
   @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_maybeLoadMore);
+  }
+
+  @override
   void dispose() {
     _scrollController.dispose();
     _searchController.dispose();
     _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  /// Infinite scroll: fetch the next page when nearing the bottom.
+  /// loadMore() itself guards against duplicate/pointless fetches.
+  void _maybeLoadMore() {
+    if (!_scrollController.hasClients) return;
+    if (_scrollController.position.extentAfter < 600) {
+      ref.read(itemsProvider.notifier).loadMore();
+    }
+  }
+
+  /// Footer below the last card: shows load progress while more pages exist.
+  /// The explicit button covers cases infinite scroll can't reach (e.g. the
+  /// loaded page doesn't fill the viewport, or a failed fetch needs a retry).
+  Widget? _buildLoadMoreFooter() {
+    final hasMore = ref.watch(itemsHasMoreProvider);
+    if (!hasMore) return null;
+    final loadingMore = ref.watch(itemsLoadingMoreProvider);
+    final loadedCount = ref.watch(itemsProvider).valueOrNull?.length ?? 0;
+    final totalCount = ref.watch(itemsTotalCountProvider);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child:
+          loadingMore
+              ? const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2.5),
+                ),
+              )
+              : Center(
+                child: TextButton(
+                  onPressed: () => ref.read(itemsProvider.notifier).loadMore(),
+                  child: Text(
+                    'Showing $loadedCount of $totalCount · Load more',
+                  ),
+                ),
+              ),
+    );
   }
 
   /// Scroll to the pending scroll target. Retries once if the target widget
@@ -66,13 +112,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _startSearch() {
-    setState(() { _isSearching = true; });
+    setState(() {
+      _isSearching = true;
+    });
   }
 
   void _stopSearch() {
     _searchDebounce?.cancel();
     _searchController.clear();
-    setState(() { _isSearching = false; });
+    setState(() {
+      _isSearching = false;
+    });
     ref.read(searchQueryProvider.notifier).state = null;
     ref.read(itemsProvider.notifier).refresh();
   }
@@ -86,19 +136,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  void _handleStatusChange(BuildContext context, item, String targetListUuid) async {
+  void _handleStatusChange(
+    BuildContext context,
+    item,
+    String targetListUuid,
+  ) async {
     final currentListId = ref.read(currentListIdProvider);
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
     final messenger = ScaffoldMessenger.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Note: permanent-delete confirmation happens inside StatusCard
+    // (_triggerAction), BEFORE the card animates away — by the time this
+    // callback runs the move is already confirmed.
     ref.read(expandedItemIdProvider.notifier).state = null;
 
-    final success = await ref.read(actionsProvider).moveItem(
-      item.id,
-      currentListId,
-      targetListUuid,
-    );
+    final success = await ref
+        .read(actionsProvider)
+        .moveItem(item.id, currentListId, targetListUuid);
 
     if (success && mounted) {
       final targetConfig = allConfigs.firstWhere(
@@ -112,28 +167,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Flexible(child: Text(targetConfig.isHidden && targetConfig.uuid.endsWith('-deleted')
-                  ? '${item.title} permanently deleted'
-                  : '${item.title} moved to ${targetConfig.name}')),
+              Flexible(
+                child: Text(
+                  targetConfig.isHidden &&
+                          targetConfig.uuid.endsWith('-deleted')
+                      ? '${item.title} permanently deleted'
+                      : '${item.title} moved to ${targetConfig.name}',
+                ),
+              ),
               const SizedBox(width: 12),
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
                   foregroundColor: buttonColor,
                   side: BorderSide(color: buttonColor.withAlpha(180)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                 ),
                 onPressed: () async {
                   messenger.hideCurrentSnackBar();
-                  final success = await ref.read(actionsProvider).moveItem(
-                    item.id,
-                    targetListUuid,
-                    currentListId,
-                  );
+                  final success = await ref
+                      .read(actionsProvider)
+                      .moveItem(item.id, targetListUuid, currentListId);
                   if (success && mounted) {
                     ref.read(itemsProvider.notifier).refresh();
                   }
                 },
-                child: const Text('Undo', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text(
+                  'Undo',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -147,20 +211,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _handleReorder(int oldIndex, int newIndex) async {
     final currentListId = ref.read(currentListIdProvider);
 
-    await ref.read(actionsProvider).reorderItems(
-      currentListId,
-      oldIndex,
-      newIndex,
-    );
+    await ref
+        .read(actionsProvider)
+        .reorderItems(currentListId, oldIndex, newIndex);
 
     // Set sort mode to manual
-    await ref.read(listConfigsProvider.notifier).setSortMode(
-      currentListId,
-      'manual',
-    );
+    await ref
+        .read(listConfigsProvider.notifier)
+        .setSortMode(currentListId, 'manual');
   }
 
-  void _handleNavigateToItem(BuildContext context, String targetListUuid, String itemId) async {
+  void _handleNavigateToItem(
+    BuildContext context,
+    String targetListUuid,
+    String itemId,
+  ) async {
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
     final targetConfig = allConfigs.firstWhere(
       (c) => c.uuid == targetListUuid,
@@ -194,21 +259,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showSettingsDialog(BuildContext context, ListConfig config) {
     final allConfigs = ref.read(listConfigsProvider).value ?? [];
-    final isDeletable = widget.cardListConfig?.isListDeletable?.call(config) ?? false;
+    final isDeletable =
+        widget.cardListConfig?.isListDeletable?.call(config) ?? false;
 
     showDialog(
       context: context,
-      builder: (context) => ListSettingsDialog(
-        listConfig: config,
-        allConfigs: allConfigs,
-        isDeletable: isDeletable,
-        onDelete: isDeletable
-            ? () => widget.cardListConfig?.onDeleteList?.call(config.uuid)
-            : null,
-        onSave: (updatedConfig) async {
-          await ref.read(listConfigsProvider.notifier).updateConfig(updatedConfig);
-        },
-      ),
+      builder:
+          (context) => ListSettingsDialog(
+            listConfig: config,
+            allConfigs: allConfigs,
+            isDeletable: isDeletable,
+            onDelete:
+                isDeletable
+                    ? () =>
+                        widget.cardListConfig?.onDeleteList?.call(config.uuid)
+                    : null,
+            onSave: (updatedConfig) async {
+              await ref
+                  .read(listConfigsProvider.notifier)
+                  .updateConfig(updatedConfig);
+            },
+          ),
     );
   }
 
@@ -229,7 +300,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _setSortMode(String modeId) async {
     final currentListId = ref.read(currentListIdProvider);
-    await ref.read(listConfigsProvider.notifier).setSortMode(currentListId, modeId);
+    await ref
+        .read(listConfigsProvider.notifier)
+        .setSortMode(currentListId, modeId);
     // Refresh items with new sort mode
     ref.read(itemsProvider.notifier).refresh();
   }
@@ -304,203 +377,262 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       }
       // Still loading
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _stopSearch,
-              )
-            : null,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                onChanged: _onSearchChanged,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                decoration: InputDecoration(
-                  hintText: 'Search notices...',
-                  border: InputBorder.none,
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            _onSearchChanged('');
-                          },
-                        )
-                      : null,
-                ),
-              )
-            : Builder(
-          builder: (context) {
-            final showLabels = MediaQuery.sizeOf(context).width >= 600;
-            return Row(
-          children: [
-            if (!isKanban)
-              PopupMenuButton<String>(
-                onSelected: _handleSwitchList,
-                tooltip: 'Select list',
-                color: Theme.of(context).cardTheme.color,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: currentConfig.color, width: 2),
-                    borderRadius: BorderRadius.circular(4),
+        leading:
+            _isSearching
+                ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _stopSearch,
+                )
+                : null,
+        title:
+            _isSearching
+                ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: _onSearchChanged,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(currentConfig.icon, color: currentConfig.color),
-                      if (showLabels) ...[
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            currentConfig.name,
-                            overflow: TextOverflow.ellipsis,
+                  decoration: InputDecoration(
+                    hintText: 'Search notices...',
+                    border: InputBorder.none,
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                            : null,
+                  ),
+                )
+                : Builder(
+                  builder: (context) {
+                    final showLabels = MediaQuery.sizeOf(context).width >= 600;
+                    return Row(
+                      children: [
+                        if (!isKanban)
+                          PopupMenuButton<String>(
+                            onSelected: _handleSwitchList,
+                            tooltip: 'Select list',
+                            color: Theme.of(context).cardTheme.color,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: currentConfig.color,
+                                  width: 2,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    currentConfig.icon,
+                                    color: currentConfig.color,
+                                  ),
+                                  if (showLabels) ...[
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        currentConfig.name,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                  ],
+                                  Icon(
+                                    Icons.arrow_drop_down,
+                                    color: currentConfig.color,
+                                    size: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            itemBuilder: (context) {
+                              final items =
+                                  allConfigs.where((c) => !c.isHidden).map((
+                                    config,
+                                  ) {
+                                    final isSelected =
+                                        config.uuid == currentListId;
+                                    final count = counts[config.uuid] ?? 0;
+                                    return PopupMenuItem<String>(
+                                      value: config.uuid,
+                                      child: Row(
+                                        children: [
+                                          if (isSelected)
+                                            Icon(
+                                              Icons.check,
+                                              color: config.color,
+                                              size: 18,
+                                            )
+                                          else
+                                            const SizedBox(width: 18),
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            config.icon,
+                                            color: config.color,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            config.name,
+                                            style: TextStyle(
+                                              fontWeight:
+                                                  isSelected
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            '($count)',
+                                            style: TextStyle(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall?.color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList();
+                              if (widget.cardListConfig?.onCreateList != null) {
+                                items.add(
+                                  const PopupMenuItem<String>(
+                                    enabled: false,
+                                    height: 1,
+                                    child: Divider(),
+                                  ),
+                                );
+                                items.add(
+                                  const PopupMenuItem<String>(
+                                    value: '__create_new__',
+                                    child: Row(
+                                      children: [
+                                        SizedBox(width: 18),
+                                        SizedBox(width: 8),
+                                        Icon(Icons.add),
+                                        SizedBox(width: 8),
+                                        Text('New list'),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }
+                              return items;
+                            },
+                          ),
+                        if (isKanban)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              'Board',
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                        Expanded(
+                          child: Center(
+                            child: _CompanySelector(
+                              onContextChanged:
+                                  widget.cardListConfig?.onContextChanged,
+                              showLabel: showLabels,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 4),
                       ],
-                      Icon(Icons.arrow_drop_down, color: currentConfig.color, size: 20),
-                    ],
-                  ),
-                ),
-                itemBuilder: (context) {
-                  final items = allConfigs.where((c) => !c.isHidden).map((config) {
-                    final isSelected = config.uuid == currentListId;
-                    final count = counts[config.uuid] ?? 0;
-                    return PopupMenuItem<String>(
-                      value: config.uuid,
-                      child: Row(
-                        children: [
-                          if (isSelected)
-                            Icon(Icons.check, color: config.color, size: 18)
-                          else
-                            const SizedBox(width: 18),
-                          const SizedBox(width: 8),
-                          Icon(config.icon, color: config.color),
-                          const SizedBox(width: 8),
-                          Text(
-                            config.name,
-                            style: TextStyle(
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '($count)',
-                            style: TextStyle(
-                              color: Theme.of(context).textTheme.bodySmall?.color,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
                     );
-                  }).toList();
-                  if (widget.cardListConfig?.onCreateList != null) {
-                    items.add(const PopupMenuItem<String>(
-                      enabled: false,
-                      height: 1,
-                      child: Divider(),
-                    ));
-                    items.add(const PopupMenuItem<String>(
-                      value: '__create_new__',
-                      child: Row(
-                        children: [
-                          SizedBox(width: 18),
-                          SizedBox(width: 8),
-                          Icon(Icons.add),
-                          SizedBox(width: 8),
-                          Text('New list'),
-                        ],
-                      ),
-                    ));
-                  }
-                  return items;
-                },
-              ),
-            if (isKanban)
-              Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Text(
-                  'Board',
-                  style: Theme.of(context).textTheme.titleMedium,
+                  },
                 ),
-              ),
-            Expanded(
-              child: Center(
-                child: _CompanySelector(
-                  onContextChanged: widget.cardListConfig?.onContextChanged,
-                  showLabel: showLabels,
-                ),
-              ),
-            ),
-          ],
-        );
-          },
-        ),
-        actions: _isSearching ? null : [
-          if (kanbanColumns.isNotEmpty)
-            IconButton(
-              icon: Icon(isKanban ? Icons.view_list : Icons.view_kanban),
-              tooltip: isKanban ? 'List view' : 'Board view',
-              onPressed: () => ref.read(viewModeProvider.notifier).toggle(),
-            ),
-          if (!isKanban && widget.cardListConfig?.searchEnabled == true)
-            IconButton(
-              icon: const Icon(Icons.search),
-              tooltip: 'Search',
-              onPressed: _startSearch,
-            ),
-          if (!isKanban && widget.cardListConfig?.appBarActionsBuilder != null)
-            ...widget.cardListConfig!.appBarActionsBuilder!(context, currentListId),
-          if (!isKanban) PopupMenuButton<String>(
-            icon: const Icon(Icons.sort),
-            tooltip: 'Sort order',
-            color: Theme.of(context).cardTheme.color,
-            onSelected: _setSortMode,
-            itemBuilder: (context) {
-              final sortOptions = widget.cardListConfig?.sortOptionsBuilder?.call(currentListId)
-                  ?? widget.cardListConfig?.sortOptions
-                  ?? SortOption.defaults;
-              // Fallback: if stored sortMode is not in the current options (e.g. curationDescending
-              // while curation is unavailable), show the first option as selected rather than
-              // rendering the menu with no active selection.
-              final effectiveSortMode = sortOptions.any((o) => o.id == currentConfig.sortMode)
-                  ? currentConfig.sortMode
-                  : sortOptions.first.id;
-              return sortOptions.map((option) {
-                final isSelected = option.id == effectiveSortMode;
-                return PopupMenuItem<String>(
-                  value: option.id,
-                  child: Row(
-                    children: [
-                      if (isSelected)
-                        Icon(Icons.check, color: currentConfig.color, size: 18)
-                      else
-                        const SizedBox(width: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        option.label,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
+        actions:
+            _isSearching
+                ? null
+                : [
+                  if (kanbanColumns.isNotEmpty)
+                    IconButton(
+                      icon: Icon(
+                        isKanban ? Icons.view_list : Icons.view_kanban,
                       ),
-                    ],
-                  ),
-                );
-              }).toList();
-            },
-          ),
-        ],
+                      tooltip: isKanban ? 'List view' : 'Board view',
+                      onPressed:
+                          () => ref.read(viewModeProvider.notifier).toggle(),
+                    ),
+                  if (!isKanban && widget.cardListConfig?.searchEnabled == true)
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      tooltip: 'Search',
+                      onPressed: _startSearch,
+                    ),
+                  if (!isKanban &&
+                      widget.cardListConfig?.appBarActionsBuilder != null)
+                    ...widget.cardListConfig!.appBarActionsBuilder!(
+                      context,
+                      currentListId,
+                    ),
+                  if (!isKanban)
+                    PopupMenuButton<String>(
+                      icon: const Icon(Icons.sort),
+                      tooltip: 'Sort order',
+                      color: Theme.of(context).cardTheme.color,
+                      onSelected: _setSortMode,
+                      itemBuilder: (context) {
+                        final sortOptions =
+                            widget.cardListConfig?.sortOptionsBuilder?.call(
+                              currentListId,
+                            ) ??
+                            widget.cardListConfig?.sortOptions ??
+                            SortOption.defaults;
+                        // Fallback: if stored sortMode is not in the current options (e.g. curationDescending
+                        // while curation is unavailable), show the first option as selected rather than
+                        // rendering the menu with no active selection.
+                        final effectiveSortMode =
+                            sortOptions.any(
+                                  (o) => o.id == currentConfig.sortMode,
+                                )
+                                ? currentConfig.sortMode
+                                : sortOptions.first.id;
+                        return sortOptions.map((option) {
+                          final isSelected = option.id == effectiveSortMode;
+                          return PopupMenuItem<String>(
+                            value: option.id,
+                            child: Row(
+                              children: [
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check,
+                                    color: currentConfig.color,
+                                    size: 18,
+                                  )
+                                else
+                                  const SizedBox(width: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  option.label,
+                                  style: TextStyle(
+                                    fontWeight:
+                                        isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
+                ],
       ),
       drawer: DrawerMenu(
         listConfigs: allConfigs.where((c) => !c.isHidden).toList(),
@@ -523,65 +655,85 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _showSettingsDialog(context, config);
         },
       ),
-      body: isKanban
-          ? KanbanBoard(
-              columns: kanbanColumns,
-              allConfigs: allConfigs,
-              cardListConfig: widget.cardListConfig,
-              onItemTapped: (listId, itemId) {
-                ref.read(viewModeProvider.notifier).set('list');
-                navigateToItem(ref, listId, itemId);
-              },
-              onColumnTapped: _handleSwitchList,
-            )
-          : Builder(
-        builder: (BuildContext scaffoldContext) {
-          final searchQuery = ref.watch(searchQueryProvider);
-          if (searchQuery != null && searchQuery.isNotEmpty && currentItems.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.search_off, size: 64, color: Theme.of(context).disabledColor),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No results for "$searchQuery"',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ],
+      body:
+          isKanban
+              ? KanbanBoard(
+                columns: kanbanColumns,
+                allConfigs: allConfigs,
+                cardListConfig: widget.cardListConfig,
+                onItemTapped: (listId, itemId) {
+                  ref.read(viewModeProvider.notifier).set('list');
+                  navigateToItem(ref, listId, itemId);
+                },
+                onColumnTapped: _handleSwitchList,
+              )
+              : Builder(
+                builder: (BuildContext scaffoldContext) {
+                  final searchQuery = ref.watch(searchQueryProvider);
+                  if (searchQuery != null &&
+                      searchQuery.isNotEmpty &&
+                      currentItems.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: Theme.of(context).disabledColor,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No results for "$searchQuery"',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  // Empty state (non-search) — only when data is loaded (not during loading)
+                  final rawItemsState = ref.watch(itemsProvider);
+                  if (currentItems.isEmpty &&
+                      rawItemsState is AsyncData &&
+                      widget.cardListConfig?.emptyStateBuilder != null) {
+                    return widget.cardListConfig!.emptyStateBuilder!(
+                      context,
+                      currentConfig,
+                      allConfigs,
+                      counts,
+                    );
+                  }
+                  return StatusCardListExample(
+                    items: currentItems,
+                    listConfig: currentConfig,
+                    onStatusChanged:
+                        (item, targetListUuid) => _handleStatusChange(
+                          scaffoldContext,
+                          item,
+                          targetListUuid,
+                        ),
+                    onReorder: _handleReorder,
+                    allConfigs: allConfigs,
+                    itemMap: itemCache,
+                    itemToListIndex: itemToListIndex,
+                    onNavigateToItem:
+                        (targetListUuid, itemId) => _handleNavigateToItem(
+                          scaffoldContext,
+                          targetListUuid,
+                          itemId,
+                        ),
+                    expandedItemId: expandedItemId,
+                    navigatedItemId: navigatedItemId,
+                    scrollController: _scrollController,
+                    onExpand: _handleExpand,
+                    cardListConfig: widget.cardListConfig,
+                    scrollTargetItemId: pendingScrollItemId,
+                    scrollTargetKey:
+                        pendingScrollItemId != null ? _scrollTargetKey : null,
+                    footer: _buildLoadMoreFooter(),
+                  );
+                },
               ),
-            );
-          }
-          // Empty state (non-search) — only when data is loaded (not during loading)
-          final rawItemsState = ref.watch(itemsProvider);
-          if (currentItems.isEmpty &&
-              rawItemsState is AsyncData &&
-              widget.cardListConfig?.emptyStateBuilder != null) {
-            return widget.cardListConfig!.emptyStateBuilder!(
-              context, currentConfig, allConfigs, counts,
-            );
-          }
-          return StatusCardListExample(
-            items: currentItems,
-            listConfig: currentConfig,
-            onStatusChanged: (item, targetListUuid) =>
-                _handleStatusChange(scaffoldContext, item, targetListUuid),
-            onReorder: _handleReorder,
-            allConfigs: allConfigs,
-            itemMap: itemCache,
-            itemToListIndex: itemToListIndex,
-            onNavigateToItem: (targetListUuid, itemId) =>
-                _handleNavigateToItem(scaffoldContext, targetListUuid, itemId),
-            expandedItemId: expandedItemId,
-            navigatedItemId: navigatedItemId,
-            scrollController: _scrollController,
-            onExpand: _handleExpand,
-            cardListConfig: widget.cardListConfig,
-            scrollTargetItemId: pendingScrollItemId,
-            scrollTargetKey: pendingScrollItemId != null ? _scrollTargetKey : null,
-          );
-        },
-      ),
     );
   }
 }
@@ -618,27 +770,36 @@ class _CompanySelector extends ConsumerWidget {
             }
           }
         },
-        itemBuilder: (context) => contexts.map((ctx) {
-          final isSelected = ctx.id == currentContext?.id;
-          return PopupMenuItem<String>(
-            value: ctx.id,
-            child: Row(
-              children: [
-                if (isSelected)
-                  Icon(Icons.check, color: Theme.of(context).colorScheme.primary, size: 18)
-                else
-                  const SizedBox(width: 18),
-                const SizedBox(width: 8),
-                Text(
-                  ctx.name,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+        itemBuilder:
+            (context) =>
+                contexts.map((ctx) {
+                  final isSelected = ctx.id == currentContext?.id;
+                  return PopupMenuItem<String>(
+                    value: ctx.id,
+                    child: Row(
+                      children: [
+                        if (isSelected)
+                          Icon(
+                            Icons.check,
+                            color: Theme.of(context).colorScheme.primary,
+                            size: 18,
+                          )
+                        else
+                          const SizedBox(width: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          ctx.name,
+                          style: TextStyle(
+                            fontWeight:
+                                isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 150),
           child: Padding(

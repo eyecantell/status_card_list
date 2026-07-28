@@ -3,6 +3,7 @@ import 'package:flutter_html/flutter_html.dart';
 import 'models/item.dart';
 import 'models/list_config.dart';
 import 'models/card_list_config.dart';
+import 'utils/confirm_dialogs.dart';
 
 class StatusCard extends StatefulWidget {
   final Item item;
@@ -95,13 +96,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       duration: const Duration(seconds: 2),
     );
     _highlightAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(
-        parent: _highlightController,
-        curve: Curves.easeOut,
-      ),
+      CurvedAnimation(parent: _highlightController, curve: Curves.easeOut),
     )..addListener(() {
-        setState(() {});
-      });
+      setState(() {});
+    });
 
     if (widget.isNavigated && widget.isExpanded) {
       _highlightController.forward();
@@ -135,7 +133,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   void _updateCardHeight() {
-    final RenderBox? renderBox = _cardKey.currentContext?.findRenderObject() as RenderBox?;
+    final RenderBox? renderBox =
+        _cardKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null && renderBox.hasSize) {
       setState(() {
         _cardHeight = renderBox.size.height;
@@ -176,13 +175,14 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
       final action = _dragOffset > 0 ? 'right' : 'left';
       if (_hasSwipeTarget(action)) {
         final target = _dragOffset > 0 ? _buttonWidth : -_buttonWidth;
-        _animation = Tween<double>(begin: _dragOffset, end: target)
-            .animate(_controller)
-          ..addListener(() {
-            setState(() {
-              _dragOffset = _animation.value;
-            });
+        _animation = Tween<double>(
+          begin: _dragOffset,
+          end: target,
+        ).animate(_controller)..addListener(() {
+          setState(() {
+            _dragOffset = _animation.value;
           });
+        });
         _controller.forward(from: 0);
       } else {
         _animateBack();
@@ -209,19 +209,38 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
   }
 
   Future<void> _animateOffScreen(double target) async {
-    _animation = Tween<double>(begin: _dragOffset, end: target)
-        .animate(_controller)
-      ..addListener(() {
-        setState(() {
-          _dragOffset = _animation.value;
-        });
+    _animation = Tween<double>(
+      begin: _dragOffset,
+      end: target,
+    ).animate(_controller)..addListener(() {
+      setState(() {
+        _dragOffset = _animation.value;
       });
+    });
     await _controller.forward(from: 0);
   }
 
-  void _triggerAction({String? action, String? targetListUuid}) {
-    targetListUuid = targetListUuid ?? (action != null ? widget.swipeActions[action] : null);
+  void _triggerAction({String? action, String? targetListUuid}) async {
+    targetListUuid =
+        targetListUuid ?? (action != null ? widget.swipeActions[action] : null);
     if (targetListUuid != null) {
+      // Permanent delete needs explicit confirmation BEFORE the card animates
+      // away — a cancelled dialog must leave the card intact in place.
+      final targetConfig =
+          widget.allConfigs.where((c) => c.uuid == targetListUuid).firstOrNull;
+      if (targetConfig != null &&
+          targetConfig.isHidden &&
+          targetConfig.uuid.endsWith('-deleted')) {
+        final confirmed = await confirmPermanentDelete(
+          context,
+          widget.item.title,
+        );
+        if (!mounted) return;
+        if (!confirmed) {
+          _animateBack();
+          return;
+        }
+      }
       setState(() {
         _swipeState = null;
         _isActionTriggered = true;
@@ -234,14 +253,13 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         animationDirection = -screenWidth;
       } else {
         // Card icon tap: match swipe direction by checking swipeActions
-        animationDirection = widget.swipeActions['left'] == targetListUuid
-            ? -screenWidth
-            : screenWidth;
+        animationDirection =
+            widget.swipeActions['left'] == targetListUuid
+                ? -screenWidth
+                : screenWidth;
       }
       _animateOffScreen(animationDirection).then((_) {
-        _collapseController
-            .animateTo(0.0, curve: Curves.easeOut)
-            .then((_) {
+        _collapseController.animateTo(0.0, curve: Curves.easeOut).then((_) {
           widget.onStatusChanged(widget.item, targetListUuid!);
         });
       });
@@ -286,8 +304,10 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     if (delta.abs() < 1.0) return;
     final position = widget.scrollController!.position;
     position.jumpTo(
-      (position.pixels + delta)
-          .clamp(position.minScrollExtent, position.maxScrollExtent),
+      (position.pixels + delta).clamp(
+        position.minScrollExtent,
+        position.maxScrollExtent,
+      ),
     );
   }
 
@@ -371,9 +391,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                 Text(
                   'Related Items:',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 ListView.builder(
@@ -383,26 +403,33 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                   itemBuilder: (context, index) {
                     final relatedId = widget.item.relatedItemIds[index];
                     final relatedItem = widget.itemMap[relatedId];
-                    final targetListUuid = widget.itemToListIndex[relatedId] ?? '';
+                    final targetListUuid =
+                        widget.itemToListIndex[relatedId] ?? '';
                     final targetConfig = widget.allConfigs.firstWhere(
                       (config) => config.uuid == targetListUuid,
-                      orElse: () => const ListConfig(
-                        uuid: '',
-                        name: 'Unknown List',
-                        swipeActions: {},
-                        buttons: {},
-                      ),
+                      orElse:
+                          () => const ListConfig(
+                            uuid: '',
+                            name: 'Unknown List',
+                            swipeActions: {},
+                            buttons: {},
+                          ),
                     );
                     return TextButton(
-                      onPressed: targetListUuid.isNotEmpty
-                          ? () {
-                              widget.onNavigateToItem(targetListUuid, relatedId);
-                            }
-                          : null,
+                      onPressed:
+                          targetListUuid.isNotEmpty
+                              ? () {
+                                widget.onNavigateToItem(
+                                  targetListUuid,
+                                  relatedId,
+                                );
+                              }
+                              : null,
                       child: Text(
                         '${index + 1}. ${relatedItem?.title ?? 'Unknown Item'} (${targetConfig.name})',
                         style: TextStyle(
-                          color: isDarkMode ? Colors.blue[300] : Colors.blue[700],
+                          color:
+                              isDarkMode ? Colors.blue[300] : Colors.blue[700],
                           decoration: TextDecoration.underline,
                         ),
                       ),
@@ -438,7 +465,8 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                   ),
                 ),
                 'th': Style(
-                  backgroundColor: isDarkMode ? Colors.grey[700] : Colors.grey[200],
+                  backgroundColor:
+                      isDarkMode ? Colors.grey[700] : Colors.grey[200],
                   padding: HtmlPaddings.all(8.0),
                   fontWeight: FontWeight.bold,
                   color: isDarkMode ? Colors.white : Colors.black,
@@ -468,189 +496,44 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
     return SizeTransition(
       sizeFactor: _collapseController,
       child: Stack(
-      alignment: Alignment.center,
-      children: [
-        Positioned(
-          left: 0,
-          child: Visibility(
-            visible: !_isActionTriggered && (_swipeState == 'right' || _dragOffset > 0),
-            child: Container(
-              width: _buttonWidth,
-              height: _cardHeight ?? _defaultCardHeight,
-              color: _getTargetColor('right'),
-              child: TextButton(
-                onPressed: _hasSwipeTarget('right')
-                    ? () => _triggerAction(action: 'right')
-                    : null,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      rightListName.toUpperCase(),
-                      style: TextStyle(
-                        color: _hasSwipeTarget('right') ? Colors.white : Colors.white60,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Icon(
-                      _getTargetIcon('right'),
-                      color: _hasSwipeTarget('right') ? Colors.white : Colors.white60,
-                      size: 36,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 0,
-          child: Visibility(
-            visible: !_isActionTriggered && (_swipeState == 'left' || _dragOffset < 0),
-            child: Container(
-              width: _buttonWidth,
-              height: _cardHeight ?? _defaultCardHeight,
-              color: _getTargetColor('left'),
-              child: TextButton(
-                onPressed: _hasSwipeTarget('left')
-                    ? () => _triggerAction(action: 'left')
-                    : null,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      leftListName.toUpperCase(),
-                      style: TextStyle(
-                        color: _hasSwipeTarget('left') ? Colors.white : Colors.white60,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Icon(
-                      _getTargetIcon('left'),
-                      color: _hasSwipeTarget('left') ? Colors.white : Colors.white60,
-                      size: 36,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-        Transform.translate(
-          offset: Offset(_dragOffset, 0),
-          child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(8),
-              border: widget.isNavigated && _highlightAnimation.value > 0
-                  ? Border.all(
-                      color: Colors.blue.withValues(alpha: _highlightAnimation.value),
-                      width: 2.0,
-                    )
-                  : null,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: _toggleExpanded,
-              onHorizontalDragStart: _handleHorizontalDragStart,
-              onHorizontalDragUpdate: _handleHorizontalDragUpdate,
-              onHorizontalDragEnd: _handleHorizontalDragEnd,
-              child: Card(
-                key: _cardKey,
-                margin: EdgeInsets.zero,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+        alignment: Alignment.center,
+        children: [
+          Positioned(
+            left: 0,
+            child: Visibility(
+              visible:
+                  !_isActionTriggered &&
+                  (_swipeState == 'right' || _dragOffset > 0),
+              child: Container(
+                width: _buttonWidth,
+                height: _cardHeight ?? _defaultCardHeight,
+                color: _getTargetColor('right'),
+                child: TextButton(
+                  onPressed:
+                      _hasSwipeTarget('right')
+                          ? () => _triggerAction(action: 'right')
+                          : null,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Expanded(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (widget.cardListConfig?.collapsedBuilder != null)
-                              widget.cardListConfig!.collapsedBuilder!(
-                                  context, widget.item, widget.listConfig)
-                            else
-                              ListTile(
-                                title: Text(
-                                  widget.item.title,
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                                subtitle: widget.cardListConfig?.subtitleBuilder != null
-                                    ? widget.cardListConfig!.subtitleBuilder!(
-                                        context, widget.item)
-                                    : Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4.0),
-                                            child: Text(
-                                              'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
-                                              style: Theme.of(context).textTheme.bodyMedium,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.only(top: 4.0),
-                                            child: Text(
-                                              _formatDueDateAndDays(widget.item.dueDate),
-                                              style: Theme.of(context).textTheme.bodyMedium,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                trailing: widget.cardListConfig?.trailingBuilder != null
-                                    ? widget.cardListConfig!.trailingBuilder!(
-                                        context, widget.item)
-                                    : null,
-                                contentPadding: EdgeInsets.zero,
-                                dense: true,
-                              ),
-                            if (_isExpanded) ...[
-                              if (widget.cardListConfig?.expandedBuilder != null)
-                                widget.cardListConfig!.expandedBuilder!(
-                                  context, widget.item, widget.item.html == null)
-                              else ...[
-                                _buildDefaultExpanded(context, isDarkMode),
-                              ],
-                            ],
-                            if (widget.cardIcons.isNotEmpty)
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: widget.cardIcons.map((entry) {
-                                  final targetListUuid = entry.targetListId;
-                                  final targetConfig = widget.allConfigs.firstWhere(
-                                    (config) => config.uuid == targetListUuid,
-                                    orElse: () => widget.allConfigs[0],
-                                  );
-                                  final icon = targetConfig.icon;
-                                  final color = targetConfig.color;
-
-                                  return IconButton(
-                                    icon: Icon(icon),
-                                    color: color,
-                                    iconSize: 48.0,
-                                    tooltip: entry.tooltip ?? 'Move to ${targetConfig.name}',
-                                    onPressed: () => _triggerAction(targetListUuid: targetListUuid),
-                                  );
-                                }).toList(),
-                              ),
-                          ],
+                      Text(
+                        rightListName.toUpperCase(),
+                        style: TextStyle(
+                          color:
+                              _hasSwipeTarget('right')
+                                  ? Colors.white
+                                  : Colors.white60,
+                          fontSize: 16,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Icon(
+                        _getTargetIcon('right'),
+                        color:
+                            _hasSwipeTarget('right')
+                                ? Colors.white
+                                : Colors.white60,
+                        size: 36,
                       ),
                     ],
                   ),
@@ -658,9 +541,221 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
               ),
             ),
           ),
-        ),
-      ],
-    ),
+          Positioned(
+            right: 0,
+            child: Visibility(
+              visible:
+                  !_isActionTriggered &&
+                  (_swipeState == 'left' || _dragOffset < 0),
+              child: Container(
+                width: _buttonWidth,
+                height: _cardHeight ?? _defaultCardHeight,
+                color: _getTargetColor('left'),
+                child: TextButton(
+                  onPressed:
+                      _hasSwipeTarget('left')
+                          ? () => _triggerAction(action: 'left')
+                          : null,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        leftListName.toUpperCase(),
+                        style: TextStyle(
+                          color:
+                              _hasSwipeTarget('left')
+                                  ? Colors.white
+                                  : Colors.white60,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Icon(
+                        _getTargetIcon('left'),
+                        color:
+                            _hasSwipeTarget('left')
+                                ? Colors.white
+                                : Colors.white60,
+                        size: 36,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: Offset(_dragOffset, 0),
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                borderRadius: BorderRadius.circular(8),
+                border:
+                    widget.isNavigated && _highlightAnimation.value > 0
+                        ? Border.all(
+                          color: Colors.blue.withValues(
+                            alpha: _highlightAnimation.value,
+                          ),
+                          width: 2.0,
+                        )
+                        : null,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: isDarkMode ? 0.2 : 0.1,
+                    ),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _toggleExpanded,
+                onHorizontalDragStart: _handleHorizontalDragStart,
+                onHorizontalDragUpdate: _handleHorizontalDragUpdate,
+                onHorizontalDragEnd: _handleHorizontalDragEnd,
+                child: Card(
+                  key: _cardKey,
+                  margin: EdgeInsets.zero,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (widget.cardListConfig?.collapsedBuilder !=
+                                  null)
+                                widget.cardListConfig!.collapsedBuilder!(
+                                  context,
+                                  widget.item,
+                                  widget.listConfig,
+                                )
+                              else
+                                ListTile(
+                                  title: Text(
+                                    widget.item.title,
+                                    style:
+                                        Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  subtitle:
+                                      widget.cardListConfig?.subtitleBuilder !=
+                                              null
+                                          ? widget
+                                              .cardListConfig!
+                                              .subtitleBuilder!(
+                                            context,
+                                            widget.item,
+                                          )
+                                          : Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4.0,
+                                                ),
+                                                child: Text(
+                                                  'Status: ${widget.item.status}${widget.item.relatedItemIds.isNotEmpty ? ", ${widget.item.relatedItemIds.length} related item${widget.item.relatedItemIds.length == 1 ? '' : 's'}" : ''}',
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.bodyMedium,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4.0,
+                                                ),
+                                                child: Text(
+                                                  _formatDueDateAndDays(
+                                                    widget.item.dueDate,
+                                                  ),
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.bodyMedium,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  trailing:
+                                      widget.cardListConfig?.trailingBuilder !=
+                                              null
+                                          ? widget
+                                              .cardListConfig!
+                                              .trailingBuilder!(
+                                            context,
+                                            widget.item,
+                                          )
+                                          : null,
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                ),
+                              if (_isExpanded) ...[
+                                if (widget.cardListConfig?.expandedBuilder !=
+                                    null)
+                                  widget.cardListConfig!.expandedBuilder!(
+                                    context,
+                                    widget.item,
+                                    widget.item.html == null,
+                                  )
+                                else ...[
+                                  _buildDefaultExpanded(context, isDarkMode),
+                                ],
+                              ],
+                              if (widget.cardIcons.isNotEmpty)
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children:
+                                      widget.cardIcons.map((entry) {
+                                        final targetListUuid =
+                                            entry.targetListId;
+                                        final targetConfig = widget.allConfigs
+                                            .firstWhere(
+                                              (config) =>
+                                                  config.uuid == targetListUuid,
+                                              orElse:
+                                                  () => widget.allConfigs[0],
+                                            );
+                                        final icon = targetConfig.icon;
+                                        final color = targetConfig.color;
+
+                                        return IconButton(
+                                          icon: Icon(icon),
+                                          color: color,
+                                          iconSize: 48.0,
+                                          tooltip:
+                                              entry.tooltip ??
+                                              'Move to ${targetConfig.name}',
+                                          onPressed:
+                                              () => _triggerAction(
+                                                targetListUuid: targetListUuid,
+                                              ),
+                                        );
+                                      }).toList(),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
