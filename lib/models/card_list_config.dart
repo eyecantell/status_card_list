@@ -55,6 +55,16 @@ class CardListConfig {
     Map<String, int> counts,
   )? emptyStateBuilder;
 
+  /// Build the view shown when loading the item list failed (network error,
+  /// permission error, …). Receives the error and a retry callback. If null,
+  /// a default error + retry view is shown. Without this surface a failed
+  /// load renders as an empty list / "no results", which reads as success.
+  final Widget Function(
+    BuildContext context,
+    Object error,
+    VoidCallback retry,
+  )? errorStateBuilder;
+
   /// Called when the user taps "New list" in the drawer or popup menu.
   final VoidCallback? onCreateList;
 
@@ -86,6 +96,7 @@ class CardListConfig {
     this.appBarActionsBuilder,
     this.searchEnabled = false,
     this.emptyStateBuilder,
+    this.errorStateBuilder,
     this.onCreateList,
     this.onDeleteList,
     this.isListDeletable,

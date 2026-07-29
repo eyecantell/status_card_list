@@ -136,7 +136,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
-  void _handleStatusChange(
+  /// Returns whether the move succeeded — StatusCard uses `false` to animate
+  /// the card back into place instead of leaving it dismissed.
+  Future<bool> _handleStatusChange(
     BuildContext context,
     item,
     String targetListUuid,
@@ -151,11 +153,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // callback runs the move is already confirmed.
     ref.read(expandedItemIdProvider.notifier).state = null;
 
-    final success = await ref
-        .read(actionsProvider)
-        .moveItem(item.id, currentListId, targetListUuid);
+    bool success;
+    try {
+      success = await ref
+          .read(actionsProvider)
+          .moveItem(item.id, currentListId, targetListUuid);
+    } catch (_) {
+      success = false;
+    }
 
-    if (success && mounted) {
+    if (!success) {
+      // Deliberately not gated on `mounted`: the messenger was captured
+      // before the await, and the failure must be visible even if the user
+      // navigated away mid-move.
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Couldn't move ${item.title} — check your connection and try again.",
+          ),
+          backgroundColor: Colors.red[700],
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return false;
+    }
+
+    if (mounted) {
       final targetConfig = allConfigs.firstWhere(
         (c) => c.uuid == targetListUuid,
         orElse: () => allConfigs.first,
@@ -187,11 +212,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 onPressed: () async {
                   messenger.hideCurrentSnackBar();
-                  final success = await ref
-                      .read(actionsProvider)
-                      .moveItem(item.id, targetListUuid, currentListId);
-                  if (success && mounted) {
+                  bool undone;
+                  try {
+                    undone = await ref
+                        .read(actionsProvider)
+                        .moveItem(item.id, targetListUuid, currentListId);
+                  } catch (_) {
+                    undone = false;
+                  }
+                  if (undone && mounted) {
                     ref.read(itemsProvider.notifier).refresh();
+                  } else if (!undone) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Couldn't undo — ${item.title} is still in the new list.",
+                        ),
+                        backgroundColor: Colors.red[700],
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
                   }
                 },
                 child: const Text(
@@ -206,6 +246,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
       );
     }
+    return true;
   }
 
   void _handleReorder(int oldIndex, int newIndex) async {
@@ -286,14 +327,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _handleExpand(String itemId) async {
     // Toggle expand state
     final currentExpanded = ref.read(expandedItemIdProvider);
+    final willExpand = currentExpanded != itemId;
     ref.read(expandedItemIdProvider.notifier).state =
-        currentExpanded == itemId ? null : itemId;
+        willExpand ? itemId : null;
+    if (!willExpand) return; // collapsing — nothing to load
 
     // Load detail if html is null
     final cache = ref.read(itemCacheProvider);
     final item = cache[itemId];
     if (item != null && item.html == null) {
-      await ref.read(actionsProvider).loadItemDetail(itemId);
+      // Failure is tracked in detailLoadFailedProvider — the expanded card
+      // renders an error + retry instead of spinning forever.
+      await loadItemDetailTracked(ref, itemId);
       // No refresh needed - itemsForCurrentListProvider watches itemCacheProvider
     }
   }
@@ -670,6 +715,44 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               : Builder(
                 builder: (BuildContext scaffoldContext) {
                   final searchQuery = ref.watch(searchQueryProvider);
+                  // Failed load — surface the error instead of rendering an
+                  // empty list / "no results", which would read as success.
+                  final itemsState = ref.watch(itemsProvider);
+                  if (currentItems.isEmpty && itemsState is AsyncError) {
+                    final error = (itemsState as AsyncError).error;
+                    void retry() =>
+                        ref.read(itemsProvider.notifier).refresh();
+                    if (widget.cardListConfig?.errorStateBuilder != null) {
+                      return widget.cardListConfig!.errorStateBuilder!(
+                        context,
+                        error,
+                        retry,
+                      );
+                    }
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            "Couldn't load items",
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: retry,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
                   if (searchQuery != null &&
                       searchQuery.isNotEmpty &&
                       currentItems.isEmpty) {

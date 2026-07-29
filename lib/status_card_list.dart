@@ -8,7 +8,7 @@ class StatusCardList extends StatefulWidget {
   final List<Item> items;
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
-  final Function(Item, String) onStatusChanged;
+  final Future<bool> Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
   final String dueDateLabel;
   final Color listColor;

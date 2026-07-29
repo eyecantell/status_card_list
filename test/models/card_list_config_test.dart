@@ -221,7 +221,7 @@ void main() {
             index: 0,
             statusIcons: const {},
             swipeActions: const {},
-            onStatusChanged: (_, __) {},
+            onStatusChanged: (_, __) async => true,
             onReorder: (_, __) {},
             dueDateLabel: 'Deadline',
             listColor: Colors.blue,

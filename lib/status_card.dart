@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'models/item.dart';
+import 'providers/navigation_provider.dart';
 import 'models/list_config.dart';
 import 'models/card_list_config.dart';
 import 'utils/confirm_dialogs.dart';
@@ -10,7 +12,9 @@ class StatusCard extends StatefulWidget {
   final int index;
   final Map<String, IconData> statusIcons;
   final Map<String, String> swipeActions;
-  final Function(Item, String) onStatusChanged;
+  /// Called after the card animates away. Must return whether the move
+  /// actually succeeded — on `false` the card animates back into place.
+  final Future<bool> Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
   final String dueDateLabel;
   final Color listColor;
@@ -258,11 +262,16 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                 ? -screenWidth
                 : screenWidth;
       }
-      _animateOffScreen(animationDirection).then((_) {
-        _collapseController.animateTo(0.0, curve: Curves.easeOut).then((_) {
-          widget.onStatusChanged(widget.item, targetListUuid!);
-        });
-      });
+      await _animateOffScreen(animationDirection);
+      if (!mounted) return;
+      await _collapseController.animateTo(0.0, curve: Curves.easeOut);
+      final moved = await widget.onStatusChanged(widget.item, targetListUuid);
+      if (!moved && mounted) {
+        // The move failed — the item is still in the list and this State is
+        // reused, so un-collapse and slide the card back into place.
+        await _collapseController.animateTo(1.0, curve: Curves.easeOut);
+        if (mounted) _animateBack();
+      }
     }
   }
 
@@ -479,9 +488,36 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
             ),
           )
         else
-          const Padding(
-            padding: EdgeInsets.all(24.0),
-            child: Center(child: CircularProgressIndicator()),
+          Consumer(
+            builder: (context, ref, _) {
+              final failed = ref
+                  .watch(detailLoadFailedProvider)
+                  .contains(widget.item.id);
+              if (failed) {
+                return Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text("Couldn't load details."),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                          onPressed:
+                              () => loadItemDetailTracked(ref, widget.item.id),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              return const Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            },
           ),
       ],
     );

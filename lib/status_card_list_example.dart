@@ -7,7 +7,7 @@ import 'status_card_list.dart';
 class StatusCardListExample extends StatelessWidget {
   final List<Item> items;
   final ListConfig listConfig;
-  final Function(Item, String) onStatusChanged;
+  final Future<bool> Function(Item, String) onStatusChanged;
   final Function(int, int) onReorder;
   final List<ListConfig> allConfigs;
   final Map<String, Item> itemMap;

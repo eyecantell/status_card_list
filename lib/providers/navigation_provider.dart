@@ -6,6 +6,27 @@ import 'lists_provider.dart';
 /// Provider for the currently expanded item ID (only one at a time)
 final expandedItemIdProvider = StateProvider<String?>((ref) => null);
 
+/// Item IDs whose detail load failed. Expanded-card builders watch this to
+/// render an error + retry affordance instead of an endless spinner
+/// (detail "loading" is otherwise indistinguishable from "failed" — both
+/// leave `item.html` null).
+final detailLoadFailedProvider = StateProvider<Set<String>>((ref) => {});
+
+/// Load an item's detail, tracking failure in [detailLoadFailedProvider].
+/// Returns whether the load succeeded. Safe to call again to retry — the
+/// failed flag is cleared up front so the spinner shows during the retry.
+Future<bool> loadItemDetailTracked(WidgetRef ref, String itemId) async {
+  final failed = ref.read(detailLoadFailedProvider.notifier);
+  failed.update((s) => s.contains(itemId) ? ({...s}..remove(itemId)) : s);
+  try {
+    await ref.read(actionsProvider).loadItemDetail(itemId);
+    return true;
+  } catch (_) {
+    failed.update((s) => {...s, itemId});
+    return false;
+  }
+}
+
 /// Provider for the navigated item ID (for highlight animation)
 final navigatedItemIdProvider = StateProvider<String?>((ref) => null);
 

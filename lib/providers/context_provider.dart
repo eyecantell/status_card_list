@@ -38,6 +38,7 @@ void resetContextState(WidgetRef ref, {required String defaultListId}) {
   ref.read(navigatedItemIdProvider.notifier).state = null;
   ref.read(pendingScrollItemIdProvider.notifier).state = null;
   ref.read(searchQueryProvider.notifier).state = null;
+  ref.read(detailLoadFailedProvider.notifier).state = {};
   // 5. Invalidate async providers to refetch for new context
   ref.invalidate(listConfigsProvider);
   ref.invalidate(itemsProvider);

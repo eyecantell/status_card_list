@@ -99,13 +99,34 @@ class KanbanBoard extends ConsumerWidget {
       if (!context.mounted || !confirmed) return;
     }
 
-    final success = await ref
-        .read(actionsProvider)
-        .moveItem(itemId, fromListId, targetListId);
+    bool success;
+    try {
+      success = await ref
+          .read(actionsProvider)
+          .moveItem(itemId, fromListId, targetListId);
+    } catch (_) {
+      success = false;
+    }
 
     // The widget can be disposed mid-await (view-mode toggle, company
     // switch) — ref is unusable after that.
     if (!context.mounted) return;
+    if (!success) {
+      // The dragged card snaps back to its source column on rebuild — just
+      // tell the user why nothing moved.
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            "Couldn't move $itemTitle — check your connection and try again.",
+          ),
+          backgroundColor: Colors.red[700],
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (success) {
       // Optimistic remove from source column
       ref.read(kanbanItemsProvider(fromListId).notifier).removeItem(itemId);
@@ -144,12 +165,27 @@ class KanbanBoard extends ConsumerWidget {
                 ),
                 onPressed: () async {
                   messenger.hideCurrentSnackBar();
-                  final undone = await ref
-                      .read(actionsProvider)
-                      .moveItem(itemId, targetListId, fromListId);
+                  bool undone;
+                  try {
+                    undone = await ref
+                        .read(actionsProvider)
+                        .moveItem(itemId, targetListId, fromListId);
+                  } catch (_) {
+                    undone = false;
+                  }
                   if (undone) {
                     ref.invalidate(kanbanItemsProvider(fromListId));
                     ref.invalidate(kanbanItemsProvider(targetListId));
+                  } else {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Couldn't undo — $itemTitle is still in the new list.",
+                        ),
+                        backgroundColor: Colors.red[700],
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
                   }
                 },
                 child: const Text(
