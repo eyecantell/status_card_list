@@ -22,7 +22,7 @@ Future<bool> confirmPermanentDelete(
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Delete permanently'),
+              child: const Text('Permanently delete'),
             ),
           ],
         ),
