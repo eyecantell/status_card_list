@@ -769,7 +769,9 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
                                         return IconButton(
                                           icon: Icon(icon),
                                           color: color,
-                                          iconSize: 48.0,
+                                          iconSize: 32.0,
+                                          visualDensity:
+                                              VisualDensity.compact,
                                           tooltip:
                                               entry.tooltip ??
                                               'Move to ${targetConfig.name}',
