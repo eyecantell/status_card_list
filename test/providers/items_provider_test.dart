@@ -176,6 +176,13 @@ class _SpyDataSource implements CardListDataSource {
   Future<void> updateList(String listId, ListConfig config) =>
       _inner.updateList(listId, config);
   @override
+  Future<void> updateListFields(
+    String listId,
+    ListConfig config,
+    Set<String> fields,
+  ) =>
+      _inner.updateListFields(listId, config, fields);
+  @override
   Future<String?> findListContainingItem(String itemId) =>
       _inner.findListContainingItem(itemId);
   @override

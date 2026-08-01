@@ -39,6 +39,18 @@ abstract class CardListDataSource {
   /// Update a list's configuration (sort mode, name, icon, color, etc.).
   Future<void> updateList(String listId, ListConfig config);
 
+  /// Update only specific fields of a list's configuration. [fields] are
+  /// JSON keys as produced by [ListConfig.toJson]. Sending a partial payload
+  /// avoids clobbering fields another session may have changed (e.g. a
+  /// rename) with this client's cached copy. Default implementation falls
+  /// back to a full [updateList] for data sources without partial support.
+  Future<void> updateListFields(
+    String listId,
+    ListConfig config,
+    Set<String> fields,
+  ) =>
+      updateList(listId, config);
+
   /// Find which list contains a given item. Returns list ID or null.
   /// Used for related item navigation.
   Future<String?> findListContainingItem(String itemId);

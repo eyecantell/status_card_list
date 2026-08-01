@@ -122,13 +122,22 @@ class ListConfigsNotifier extends StateNotifier<AsyncValue<List<ListConfig>>> {
     await sanitizeConfigs(validIds);
   }
 
-  /// Set sort mode for a specific list
+  /// Set sort mode for a specific list. Sends a partial update (sort_mode
+  /// only) so a stale cached config can't clobber fields another session
+  /// changed (e.g. a rename).
   Future<void> setSortMode(String listId, String mode) async {
     final configs = state.value ?? [];
     final index = configs.indexWhere((c) => c.uuid == listId);
     if (index >= 0) {
       final updated = configs[index].copyWith(sortMode: mode);
-      await updateConfig(updated);
+      try {
+        await _dataSource.updateListFields(listId, updated, {'sort_mode'});
+        final newConfigs = [...configs];
+        newConfigs[index] = updated;
+        state = AsyncValue.data(newConfigs);
+      } catch (e, stack) {
+        state = AsyncValue.error(e, stack);
+      }
     }
   }
 

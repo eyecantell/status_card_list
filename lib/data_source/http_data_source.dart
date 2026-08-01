@@ -135,6 +135,27 @@ class HttpDataSource implements CardListDataSource {
   }
 
   @override
+  Future<void> updateListFields(
+    String listId,
+    ListConfig config,
+    Set<String> fields,
+  ) async {
+    final json = config.toJson();
+    final partial = <String, dynamic>{
+      for (final key in fields)
+        if (json.containsKey(key)) key: json[key],
+    };
+    if (partial.isEmpty) return;
+    final uri = _buildUri('lists/$listId');
+    final resp = await _client.put(
+      uri,
+      headers: _headers,
+      body: jsonEncode(partial),
+    );
+    _checkResponse(resp);
+  }
+
+  @override
   Future<String?> findListContainingItem(String itemId) async {
     final uri = _buildUri('notices/$itemId');
     final resp = await _client.get(uri, headers: _headers);

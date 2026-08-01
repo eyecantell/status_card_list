@@ -12,6 +12,10 @@ class SortOption {
   final String id;
   final String label;
 
+  /// Optional helper text rendered under the label in the sort menu
+  /// (e.g. a caveat about the sort's behavior). Purely presentational.
+  final String? subtitle;
+
   /// Comparator used by InMemoryDataSource for local sorting.
   /// Null means "preserve insertion order" (manual/drag-to-reorder).
   /// HttpDataSource ignores this — the server sorts by the `id` string.
@@ -20,6 +24,7 @@ class SortOption {
   const SortOption({
     required this.id,
     required this.label,
+    this.subtitle,
     this.comparator,
   });
 

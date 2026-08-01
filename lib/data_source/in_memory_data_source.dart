@@ -131,6 +131,15 @@ class InMemoryDataSource implements CardListDataSource {
   }
 
   @override
+  Future<void> updateListFields(
+    String listId,
+    ListConfig config,
+    Set<String> fields,
+  ) =>
+      // Local storage has no partial-write concern — full replace.
+      updateList(listId, config);
+
+  @override
   Future<String?> findListContainingItem(String itemId) async {
     for (final entry in _itemLists.entries) {
       if (entry.value.contains(itemId)) {

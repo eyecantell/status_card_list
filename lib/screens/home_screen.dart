@@ -662,14 +662,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 else
                                   const SizedBox(width: 18),
                                 const SizedBox(width: 8),
-                                Text(
-                                  option.label,
-                                  style: TextStyle(
-                                    fontWeight:
-                                        isSelected
-                                            ? FontWeight.bold
-                                            : FontWeight.normal,
-                                  ),
+                                Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      option.label,
+                                      style: TextStyle(
+                                        fontWeight:
+                                            isSelected
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                      ),
+                                    ),
+                                    if (option.subtitle != null)
+                                      Text(
+                                        option.subtitle!,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.color
+                                              ?.withValues(alpha: 0.7),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ],
                             ),

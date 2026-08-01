@@ -269,6 +269,64 @@ void main() {
       });
     });
 
+    group('updateListFields', () {
+      test('sends PUT with only the requested fields', () async {
+        String? capturedBody;
+        final client = MockClient((request) async {
+          capturedBody = request.body;
+          expect(request.method, 'PUT');
+          expect(request.url.path, '/lists/list-1');
+          return http.Response('', 200);
+        });
+
+        final ds = HttpDataSource(
+          baseUrl: baseUrl,
+          mapper: mapper,
+          defaultListId: defaultListId,
+          client: client,
+        );
+
+        final config = ListConfig(
+          uuid: 'list-1',
+          name: 'Cached Stale Name',
+          sortMode: 'deadlineSoonest',
+          swipeActions: {},
+          buttons: {},
+        );
+
+        await ds.updateListFields('list-1', config, {'sort_mode'});
+        final body = jsonDecode(capturedBody!) as Map<String, dynamic>;
+        expect(body, {'sort_mode': 'deadlineSoonest'});
+        // The stale cached name must NOT ride along — that's the point.
+        expect(body.containsKey('name'), false);
+      });
+
+      test('skips the request entirely when no requested field exists', () async {
+        var called = false;
+        final client = MockClient((request) async {
+          called = true;
+          return http.Response('', 200);
+        });
+
+        final ds = HttpDataSource(
+          baseUrl: baseUrl,
+          mapper: mapper,
+          defaultListId: defaultListId,
+          client: client,
+        );
+
+        final config = ListConfig(
+          uuid: 'list-1',
+          name: 'Name',
+          swipeActions: {},
+          buttons: {},
+        );
+
+        await ds.updateListFields('list-1', config, {'nonexistent_key'});
+        expect(called, false);
+      });
+    });
+
     group('findListContainingItem', () {
       test('returns list ID from response', () async {
         final client = MockClient((request) async {
