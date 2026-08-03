@@ -25,6 +25,13 @@ class StatusCard extends StatefulWidget {
   final Function(String, String) onNavigateToItem;
   final bool isExpanded;
   final bool isNavigated;
+
+  /// Called on EVERY tap-toggle (expand AND collapse) with the item id.
+  /// The handler owns the toggle decision (home_screen's `_handleExpand`
+  /// compares against `expandedItemIdProvider`), so reporting only the
+  /// expand direction would leave the provider stale after a tap-collapse
+  /// — external consumers of the provider (URL sync, per-card expansion
+  /// state in custom builders) then desync from the card's local state.
   final void Function(String itemId)? onExpand;
   final CardListConfig? cardListConfig;
   final ListConfig listConfig;
@@ -288,9 +295,11 @@ class _StatusCardState extends State<StatusCard> with TickerProviderStateMixin {
         _updateCardHeight();
       });
     });
-    if (willExpand) {
-      widget.onExpand?.call(widget.item.id);
-    }
+    // Report BOTH directions — the handler toggles the shared
+    // expandedItemIdProvider by comparison, so skipping the collapse
+    // report leaves the provider stale (stuck URL ?notice= param, and a
+    // third tap on the same card being misread as a collapse).
+    widget.onExpand?.call(widget.item.id);
     if (anchorDy != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _restoreAnchor(anchorDy);
